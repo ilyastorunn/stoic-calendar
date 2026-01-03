@@ -64,7 +64,7 @@ export const Colors = {
 
     // Dots
     dotFilled: '#007AFF',
-    dotEmpty: '#3A3A3C',
+    dotEmpty: '#333333',
     dotEmptyBorder: '#48484A',
 
     // UI Elements
@@ -221,9 +221,9 @@ export const Layout = {
   cardGap: 12,
 
   // Grid dot sizing (calculated dynamically, these are reference values)
-  minDotSize: 4,
-  maxDotSize: 12,
-  dotSpacingRatio: 0.15, // 15% of dot size
+  minDotSize: 6,
+  maxDotSize: 14,
+  dotSpacingRatio: 0.10, // 10% of dot size
 };
 
 /**

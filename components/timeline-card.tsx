@@ -132,23 +132,18 @@ export function TimelineCard({
         {/* Delete Button */}
         {showDelete && (
           <TouchableOpacity
-            style={[
-              styles.deleteButton,
-              {
-                backgroundColor: colors.destructive,
-              },
-            ]}
+            style={styles.deleteButton}
             onPress={() => onDelete?.(timeline)}
           >
             <Text
               style={[
                 styles.deleteText,
                 {
-                  color: '#FFFFFF',
+                  color: colors.textTertiary,
                 },
               ]}
             >
-              ×
+              🗑
             </Text>
           </TouchableOpacity>
         )}
@@ -168,6 +163,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.large,
     marginBottom: Spacing.md,
+    overflow: 'hidden',
   },
   leftContent: {
     flex: 1,
@@ -191,18 +187,18 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     marginLeft: Spacing.md,
+    overflow: 'hidden',
+    borderRadius: BorderRadius.small,
   },
   deleteButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: Spacing.sm,
+    opacity: 0.6,
   },
   deleteText: {
-    fontSize: 24,
-    fontWeight: FontWeights.bold,
-    lineHeight: 24,
+    fontSize: 18,
   },
 });

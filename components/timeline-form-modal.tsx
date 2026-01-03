@@ -20,7 +20,10 @@ import {
   ScrollView,
   useColorScheme,
   Platform,
+  Animated,
+  Dimensions,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { createTimeline } from '@/services/timeline-calculator';
@@ -66,6 +69,10 @@ export function TimelineFormModal({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
 
+  // Animation state
+  const [scaleAnim] = useState(new Animated.Value(0.9));
+  const [fadeAnim] = useState(new Animated.Value(0));
+
   // Form state
   const [selectedType, setSelectedType] = useState<TimelineType>(TimelineType.YEAR);
   const [customTitle, setCustomTitle] = useState('');
@@ -74,9 +81,10 @@ export function TimelineFormModal({
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  // Reset form when modal opens
+  // Reset form and animate when modal opens
   useEffect(() => {
     if (visible) {
+      // Reset form
       if (timeline) {
         // Edit mode
         setSelectedType(timeline.type);
@@ -92,8 +100,27 @@ export function TimelineFormModal({
         futureDate.setMonth(futureDate.getMonth() + 3);
         setCustomEndDate(futureDate);
       }
+
+      // Animate in
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Reset animation values
+      scaleAnim.setValue(0.9);
+      fadeAnim.setValue(0);
     }
-  }, [visible, timeline]);
+  }, [visible, timeline, fadeAnim, scaleAnim]);
 
   /**
    * Handle save
@@ -330,91 +357,136 @@ export function TimelineFormModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
+      animationType="none"
+      transparent
       onRequestClose={onClose}
     >
-      <View
-        style={[
-          styles.modalContainer,
-          {
-            backgroundColor: colors.background,
-          },
-        ]}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Text
-              style={[
-                styles.cancelButton,
-                {
-                  color: colors.accent,
-                },
-              ]}
-            >
-              Cancel
-            </Text>
-          </TouchableOpacity>
+      <View style={styles.modalOverlay}>
+        {/* Blurred Background */}
+        <BlurView
+          intensity={50}
+          tint="dark"
+          style={StyleSheet.absoluteFill}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={onClose}
+          />
+        </BlurView>
 
-          <Text
+        {/* Animated Card Container */}
+        <Animated.View
+          style={[
+            styles.cardContainer,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        >
+          <View
             style={[
-              styles.headerTitle,
+              styles.card,
               {
-                color: colors.textPrimary,
+                backgroundColor: colors.secondaryBackground,
               },
             ]}
           >
-            New Timeline
-          </Text>
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={onClose}>
+                <Text
+                  style={[
+                    styles.cancelButton,
+                    {
+                      color: colors.accent,
+                    },
+                  ]}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleSave}>
-            <Text
-              style={[
-                styles.saveButton,
-                {
-                  color: colors.accent,
-                },
-              ]}
-            >
-              Save
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <Text
+                style={[
+                  styles.headerTitle,
+                  {
+                    color: colors.textPrimary,
+                  },
+                ]}
+              >
+                New Timeline
+              </Text>
 
-        {/* Content */}
-        <ScrollView style={styles.content}>
-          <View style={styles.section}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                {
-                  color: colors.textSecondary,
-                },
-              ]}
-            >
-              TYPE
-            </Text>
-            {renderTypePicker()}
+              <TouchableOpacity onPress={handleSave}>
+                <Text
+                  style={[
+                    styles.saveButton,
+                    {
+                      color: colors.accent,
+                    },
+                  ]}
+                >
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+              <View style={styles.section}>
+                <Text
+                  style={[
+                    styles.sectionTitle,
+                    {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  TYPE
+                </Text>
+                {renderTypePicker()}
+              </View>
+
+              {renderCustomFields()}
+            </ScrollView>
           </View>
-
-          {renderCustomFields()}
-        </ScrollView>
+        </Animated.View>
       </View>
     </Modal>
   );
 }
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  cardContainer: {
+    width: SCREEN_WIDTH * 0.9,
+    maxWidth: 500,
+    maxHeight: SCREEN_HEIGHT * 0.75,
+  },
+  card: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
   cancelButton: {
@@ -430,8 +502,8 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.semibold,
   },
   content: {
-    flex: 1,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   section: {
     marginBottom: Spacing.xl,

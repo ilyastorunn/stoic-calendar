@@ -18,12 +18,14 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Timeline } from '@/types/timeline';
+import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
-import { getActiveTimeline } from '@/services/storage';
+import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
 import {
   getTimelineProgress,
   getTimelineRemaining,
+  getTimelineProgressPercentage,
+  createTimeline,
 } from '@/services/timeline-calculator';
 import {
   Colors,
@@ -43,12 +45,31 @@ export default function HomeScreen() {
 
   /**
    * Load active timeline
+   * Auto-creates a default "Current Year" timeline if none exist
    */
   const loadActiveTimeline = useCallback(async () => {
     try {
       setLoading(true);
-      const timeline = await getActiveTimeline();
-      setActiveTimeline(timeline);
+
+      // Check if there are any timelines
+      const allTimelines = await loadTimelines();
+
+      // If no timelines exist, create a default "Current Year" timeline
+      if (allTimelines.length === 0) {
+        const currentYear = new Date().getFullYear();
+        const defaultTimeline = createTimeline(TimelineType.YEAR, {
+          year: currentYear,
+          isActive: true,
+        });
+
+        await saveTimeline(defaultTimeline);
+        await setActiveTimelineInStorage(defaultTimeline.id);
+        setActiveTimeline(defaultTimeline);
+      } else {
+        // Load the active timeline
+        const timeline = await getActiveTimeline();
+        setActiveTimeline(timeline);
+      }
     } catch (error) {
       console.error('Error loading active timeline:', error);
     } finally {
@@ -119,6 +140,7 @@ export default function HomeScreen() {
 
   const progress = getTimelineProgress(activeTimeline);
   const remaining = getTimelineRemaining(activeTimeline);
+  const percentage = getTimelineProgressPercentage(activeTimeline);
 
   return (
     <SafeAreaView
@@ -172,6 +194,16 @@ export default function HomeScreen() {
           >
             {remaining}
           </Text>
+          <Text
+            style={[
+              styles.percentage,
+              {
+                color: colors.textTertiary,
+              },
+            ]}
+          >
+            {percentage}% passed
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -211,6 +243,11 @@ const styles = StyleSheet.create({
   },
   remaining: {
     fontSize: FontSizes.body,
+    fontWeight: FontWeights.regular,
+    marginBottom: Spacing.xs,
+  },
+  percentage: {
+    fontSize: FontSizes.caption1,
     fontWeight: FontWeights.regular,
   },
   onboardingContainer: {

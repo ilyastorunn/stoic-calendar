@@ -119,9 +119,7 @@ export function StoicGrid({ timeline, animated = false, mini = false }: StoicGri
               width: gridLayout.dotSize,
               height: gridLayout.dotSize,
               borderRadius: gridLayout.dotSize / 2,
-              backgroundColor: isFilled ? colors.dotFilled : 'transparent',
-              borderWidth: isFilled ? 0 : 1,
-              borderColor: colors.dotEmptyBorder,
+              backgroundColor: isFilled ? colors.dotFilled : colors.dotEmpty,
             },
           ]}
         />
