@@ -1,0 +1,187 @@
+You are building an iOS-first, widget-centric application called “Stoic Calendar”.
+
+This project must strictly follow two guiding documents:
+1) A product MVP plan
+2) A NorthStar design philosophy
+
+You must treat these principles as immutable.
+
+────────────────────────────────
+PRODUCT OVERVIEW
+────────────────────────────────
+
+Stoic Calendar visualizes the passage of time using a grid of dots.
+Each dot represents exactly one real day.
+
+- Filled dots = past days
+- Empty dots = remaining days
+
+The app does not motivate, warn, or optimize productivity.
+It simply shows reality, calmly and neutrally.
+
+Widgets are the primary product.
+The app exists mainly to configure widgets.
+
+────────────────────────────────
+TECH STACK
+────────────────────────────────
+
+- React Native
+- Expo (managed workflow)
+- iOS Widgets via Expo config plugin + native widget extension
+- Local storage only (no auth, no Firebase in MVP)
+
+Target platform: iOS only.
+
+────────────────────────────────
+CORE CONCEPTS
+────────────────────────────────
+
+1 dot = 1 day (always)
+
+No grouping, no abstraction, no averages.
+
+Examples:
+- Year: 365 dots
+- Week: 7 dots
+- Custom deadline (e.g. 3 years): 1095 dots
+
+The grid must ALWAYS fit its container.
+Dot count never changes.
+Dot size and spacing scale dynamically.
+
+Widgets must never scroll.
+
+────────────────────────────────
+APP STRUCTURE (MVP)
+────────────────────────────────
+
+The app has exactly 3 screens.
+
+1) Home / Timeline Screen
+- Displays the selected timeline
+- Shows:
+  - Timeline title (e.g. “2025”, “This Month”, “Project X”)
+  - Stoic dot grid
+- No analytics
+- No extra details
+- This screen mirrors the widget, but slightly more spacious
+
+2) Customize Widgets Screen
+- Create and manage timelines
+- Timeline types:
+  - Year
+  - Month
+  - Week
+  - Custom (name + deadline date)
+- List all timelines
+- Widget previews are shown in MODALS only
+- Preview must accurately reflect Small / Medium / Large widgets
+
+3) Settings Screen
+- Minimal
+- System light / dark appearance
+- About section
+- No account or sync logic in MVP
+
+────────────────────────────────
+WIDGET REQUIREMENTS
+────────────────────────────────
+
+Widget sizes (ALL required in MVP):
+- Small
+- Medium
+- Large
+
+Rules:
+- One widget shows exactly one timeline
+- No interaction inside widgets
+- Widgets update automatically at 00:00 (midnight)
+- At midnight, exactly one more dot becomes filled
+
+Widgets must be time-aware, not snapshot-based.
+
+────────────────────────────────
+DATA MODEL (LOCAL)
+────────────────────────────────
+
+Each timeline must store:
+- id
+- type (year | month | week | custom)
+- title
+- startDate
+- endDate
+- createdAt
+- widgetPreferences (reserved for future)
+- accentOverride (reserved for future)
+
+Data is local only.
+Structure must be Firebase-ready but Firebase is NOT implemented.
+
+────────────────────────────────
+STOIC GRID RENDERING RULES
+────────────────────────────────
+
+- The grid must always fit the available width and height
+- Dot count never changes
+- Dot size and spacing are dynamically calculated
+- No scroll
+- No container decorations
+- No background cards
+- Grid is the visual focus
+
+────────────────────────────────
+STYLE & DESIGN RULES (HIGH LEVEL)
+────────────────────────────────
+
+Follow Apple Human Interface Guidelines.
+
+Colors:
+- Apple semantic system colors only
+- One subtle accent color (blue / indigo range)
+- Automatic light / dark mode
+
+Typography:
+- SF Pro as base font
+- Serif accent font ONLY for timeline titles
+
+Motion:
+- Subtle fill animation on first render is allowed
+- No bounce, no spring
+- Widgets may be static
+
+Tone:
+- Calm
+- Neutral
+- Minimal
+- No motivational language
+
+────────────────────────────────
+NON-GOALS (DO NOT IMPLEMENT)
+────────────────────────────────
+
+- Analytics dashboards
+- Productivity metrics
+- Gamification
+- Reminders or notifications
+- Social or sharing features
+- Excessive text explanations
+
+────────────────────────────────
+DELIVERABLE EXPECTATION
+────────────────────────────────
+
+Generate:
+- Project structure
+- Core components
+- Stoic grid rendering logic
+- Widget extension setup
+- Midnight refresh logic
+- Clear separation between app UI and widget UI
+
+The output should be production-oriented but MVP-focused.
+Avoid overengineering.
+Avoid unnecessary abstractions.
+
+If a decision is unclear, choose the solution that:
+“makes time clearer without making it louder”.
