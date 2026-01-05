@@ -19,6 +19,7 @@ import {
   Appearance,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { SettingsGroup } from '@/components/settings-group';
 import { updateThemeMode, getThemeMode } from '@/services/storage';
 import { ThemeMode } from '@/types/timeline';
@@ -33,6 +34,7 @@ import {
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const router = useRouter();
 
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('dark');
 
@@ -98,6 +100,16 @@ export default function SettingsScreen() {
   ];
 
   /**
+   * Premium settings
+   */
+  const premiumItems = [
+    {
+      label: 'Premium',
+      onPress: () => router.push('/paywall'),
+    },
+  ];
+
+  /**
    * About settings
    */
   const aboutItems = [
@@ -148,6 +160,9 @@ export default function SettingsScreen() {
       >
         {/* Appearance */}
         <SettingsGroup title="Appearance" items={appearanceItems} />
+
+        {/* Premium */}
+        <SettingsGroup items={premiumItems} />
 
         {/* About */}
         <SettingsGroup title="About" items={aboutItems} />
