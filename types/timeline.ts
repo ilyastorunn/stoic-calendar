@@ -81,10 +81,17 @@ export interface Timeline {
 export type ThemeMode = 'system' | 'light' | 'dark';
 
 /**
+ * Grid Color Theme Options
+ * Predefined color palettes for grid visualization
+ */
+export type GridColorTheme = 'classic' | 'forest' | 'sunset' | 'monochrome';
+
+/**
  * App Settings Interface
  * For storing user preferences in AsyncStorage
  */
 export interface AppSettings {
   themeMode: ThemeMode;
+  gridColorTheme: GridColorTheme;
   // Future: notification preferences, widget settings, etc.
 }

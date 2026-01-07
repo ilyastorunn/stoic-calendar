@@ -1,180 +1,205 @@
 /**
- * RevenueCat Service (Placeholder)
- * Structure ready for future monetization
+ * RevenueCat Service
+ * Handles subscription management, entitlements, and purchases
  *
- * TODO: Install react-native-purchases package
- * TODO: Add RevenueCat API key from RevenueCat Dashboard
- * TODO: Configure entitlements and offerings
- * TODO: Implement paywall logic
- * TODO: Add restore purchases functionality
+ * Products:
+ * - monthly: Monthly subscription
+ * - yearly: Yearly subscription
  *
- * Commands to install:
- * npm install react-native-purchases
- * npx pod-install (for iOS)
+ * Entitlements:
+ * - Memento Calendar Pro: Premium features access
  */
+
+import Purchases, {
+  CustomerInfo,
+  PurchasesOffering,
+  PurchasesPackage,
+  LOG_LEVEL,
+} from 'react-native-purchases';
+import { Platform } from 'react-native';
 
 /**
- * Initialize RevenueCat
- * NOT ACTIVE IN MVP - Structure only
+ * RevenueCat API Key
+ * Loaded from environment variable for security
+ * IMPORTANT: Never commit API keys to version control
  */
-export function initializeRevenueCat(): void {
-  // PLACEHOLDER - Not active in MVP
-  console.log('RevenueCat: Structure ready, not initialized');
+const REVENUECAT_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY || '';
 
-  /*
-  TODO: Implement RevenueCat initialization
+/**
+ * Entitlement identifier
+ */
+export const ENTITLEMENTS = {
+  PRO: 'Memento Calendar Pro',
+} as const;
 
-  import Purchases from 'react-native-purchases';
+/**
+ * Product identifiers
+ */
+export const PRODUCT_IDS = {
+  MONTHLY: 'monthly',
+  YEARLY: 'yearly',
+} as const;
 
-  const API_KEY = Platform.select({
-    ios: 'YOUR_IOS_API_KEY',
-    android: 'YOUR_ANDROID_API_KEY',
-  });
+/**
+ * Initialize RevenueCat SDK
+ * Call this once when the app starts
+ */
+export async function initializeRevenueCat(): Promise<void> {
+  try {
+    // Enable debug logs in development
+    if (__DEV__) {
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    }
 
-  if (API_KEY) {
-    Purchases.configure({ apiKey: API_KEY });
+    // Configure Purchases SDK
+    Purchases.configure({
+      apiKey: REVENUECAT_API_KEY,
+    });
+
+    console.log('RevenueCat initialized successfully');
+  } catch (error) {
+    console.error('Error initializing RevenueCat:', error);
+    throw error;
   }
-  */
 }
 
 /**
- * Check if user has pro subscription
- * NOT ACTIVE IN MVP
+ * Get current customer info
+ * Contains all purchase and subscription information
+ */
+export async function getCustomerInfo(): Promise<CustomerInfo> {
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    return customerInfo;
+  } catch (error) {
+    console.error('Error getting customer info:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if user has Pro subscription
+ * Checks for active "Memento Calendar Pro" entitlement
  */
 export async function isPro(): Promise<boolean> {
-  // PLACEHOLDER - Always return true in MVP (all features unlocked)
-  console.log('RevenueCat: isPro called, returning true (MVP mode)');
-  return true;
-
-  /*
-  TODO: Implement pro status check
-
-  import Purchases from 'react-native-purchases';
-
   try {
-    const purchaserInfo = await Purchases.getCustomerInfo();
-    return purchaserInfo.entitlements.active['pro'] !== undefined;
+    const customerInfo = await getCustomerInfo();
+    const hasProEntitlement =
+      customerInfo.entitlements.active[ENTITLEMENTS.PRO] !== undefined;
+
+    console.log('Pro status:', hasProEntitlement);
+    return hasProEntitlement;
   } catch (error) {
     console.error('Error checking pro status:', error);
+    // Fail open - allow access if error checking
     return false;
   }
-  */
 }
 
 /**
  * Get available offerings (subscription plans)
- * NOT ACTIVE IN MVP
+ * Returns the current offering with available packages
  */
-export async function getOfferings(): Promise<any> {
-  // PLACEHOLDER
-  console.log('RevenueCat: getOfferings called, but not implemented');
-  return null;
-
-  /*
-  TODO: Implement get offerings
-
-  import Purchases from 'react-native-purchases';
-
+export async function getOfferings(): Promise<PurchasesOffering | null> {
   try {
     const offerings = await Purchases.getOfferings();
-    return offerings.current;
+
+    if (offerings.current !== null) {
+      console.log('Current offering:', offerings.current.identifier);
+      console.log(
+        'Available packages:',
+        offerings.current.availablePackages.map((pkg) => pkg.identifier)
+      );
+      return offerings.current;
+    } else {
+      console.log('No current offering available');
+      return null;
+    }
   } catch (error) {
     console.error('Error getting offerings:', error);
     return null;
   }
-  */
 }
 
 /**
  * Purchase a package
- * NOT ACTIVE IN MVP
+ * Handles the purchase flow and returns updated customer info
  */
-export async function purchasePackage(packageId: string): Promise<boolean> {
-  // PLACEHOLDER
-  console.log('RevenueCat: purchasePackage called, but not implemented', packageId);
-  return false;
-
-  /*
-  TODO: Implement purchase
-
-  import Purchases from 'react-native-purchases';
-
+export async function purchasePackage(
+  packageToPurchase: PurchasesPackage
+): Promise<{ customerInfo: CustomerInfo; userCancelled: boolean }> {
   try {
-    const { customerInfo } = await Purchases.purchasePackage(packageId);
-    return customerInfo.entitlements.active['pro'] !== undefined;
-  } catch (error) {
-    console.error('Error purchasing package:', error);
-    return false;
+    const { customerInfo, productIdentifier } =
+      await Purchases.purchasePackage(packageToPurchase);
+
+    console.log('Purchase successful:', productIdentifier);
+    console.log(
+      'Active entitlements:',
+      Object.keys(customerInfo.entitlements.active)
+    );
+
+    return { customerInfo, userCancelled: false };
+  } catch (error: any) {
+    if (error.userCancelled) {
+      console.log('User cancelled purchase');
+      return { customerInfo: await getCustomerInfo(), userCancelled: true };
+    } else {
+      console.error('Error purchasing package:', error);
+      throw error;
+    }
   }
-  */
 }
 
 /**
  * Restore purchases
- * NOT ACTIVE IN MVP
+ * Restores previous purchases from App Store/Play Store
  */
-export async function restorePurchases(): Promise<boolean> {
-  // PLACEHOLDER
-  console.log('RevenueCat: restorePurchases called, but not implemented');
-  return false;
-
-  /*
-  TODO: Implement restore purchases
-
-  import Purchases from 'react-native-purchases';
-
+export async function restorePurchases(): Promise<CustomerInfo> {
   try {
-    const { customerInfo } = await Purchases.restorePurchases();
-    return customerInfo.entitlements.active['pro'] !== undefined;
+    const customerInfo = await Purchases.restorePurchases();
+    console.log('Purchases restored successfully');
+    console.log(
+      'Active entitlements:',
+      Object.keys(customerInfo.entitlements.active)
+    );
+    return customerInfo;
   } catch (error) {
     console.error('Error restoring purchases:', error);
-    return false;
+    throw error;
   }
-  */
 }
 
 /**
- * Entitlements configuration (for reference)
+ * Get specific package by identifier
+ * Useful for direct purchase of monthly or yearly plans
  */
-export const ENTITLEMENTS = {
-  PRO: 'pro',
-} as const;
+export async function getPackageByIdentifier(
+  identifier: string
+): Promise<PurchasesPackage | null> {
+  try {
+    const offering = await getOfferings();
+    if (!offering) {
+      return null;
+    }
+
+    const packageFound = offering.availablePackages.find(
+      (pkg) => pkg.identifier === identifier
+    );
+
+    return packageFound || null;
+  } catch (error) {
+    console.error('Error getting package by identifier:', error);
+    return null;
+  }
+}
 
 /**
- * Feature limits for free tier (for reference)
- * NOT ENFORCED IN MVP - All features unlocked
+ * Check if a specific feature is available
+ * Returns true if user has Pro or if feature is free
  */
-export const FREE_TIER_LIMITS = {
-  MAX_TIMELINES: 3,
-  MAX_CUSTOM_TIMELINES: 1,
-  WIDGET_SIZES: ['small', 'medium'], // Pro unlocks 'large'
-} as const;
-
-/**
- * Pro features (for reference)
- * NOT ENFORCED IN MVP - All features unlocked
- */
-export const PRO_FEATURES = {
-  UNLIMITED_TIMELINES: true,
-  UNLIMITED_CUSTOM_TIMELINES: true,
-  ALL_WIDGET_SIZES: true,
-  CUSTOM_ACCENT_COLORS: true, // Future feature
-  CLOUD_SYNC: true, // Future feature with Firebase
-  PRIORITY_SUPPORT: true,
-} as const;
-
-/**
- * Check if a feature is available
- * NOT ENFORCED IN MVP - All features unlocked
- */
-export async function isFeatureAvailable(feature: keyof typeof PRO_FEATURES): Promise<boolean> {
-  // PLACEHOLDER - Always return true in MVP
-  console.log(`RevenueCat: isFeatureAvailable(${feature}) called, returning true (MVP mode)`);
-  return true;
-
-  /*
-  TODO: Implement feature availability check
-
+export async function isFeatureAvailable(
+  feature: keyof typeof PRO_FEATURES
+): Promise<boolean> {
   const hasProAccess = await isPro();
 
   if (hasProAccess) {
@@ -193,22 +218,69 @@ export async function isFeatureAvailable(feature: keyof typeof PRO_FEATURES): Pr
     default:
       return true;
   }
-  */
 }
 
 /**
- * Show paywall
- * NOT ACTIVE IN MVP
+ * Get anonymous user ID from RevenueCat
+ * Useful for customer support
  */
-export async function showPaywall(): Promise<void> {
-  // PLACEHOLDER
-  console.log('RevenueCat: showPaywall called, but not implemented');
-
-  /*
-  TODO: Implement paywall presentation
-
-  import { useNavigation } from '@react-navigation/native';
-
-  navigation.navigate('Paywall');
-  */
+export async function getAnonymousUserId(): Promise<string> {
+  try {
+    const appUserId = await Purchases.getAppUserID();
+    return appUserId;
+  } catch (error) {
+    console.error('Error getting anonymous user ID:', error);
+    return 'unknown';
+  }
 }
+
+/**
+ * Login user (for cross-device sync)
+ * Call this when user logs in with your authentication system
+ */
+export async function loginUser(userId: string): Promise<CustomerInfo> {
+  try {
+    const { customerInfo } = await Purchases.logIn(userId);
+    console.log('User logged in:', userId);
+    return customerInfo;
+  } catch (error) {
+    console.error('Error logging in user:', error);
+    throw error;
+  }
+}
+
+/**
+ * Logout user
+ * Call this when user logs out
+ */
+export async function logoutUser(): Promise<CustomerInfo> {
+  try {
+    const { customerInfo } = await Purchases.logOut();
+    console.log('User logged out');
+    return customerInfo;
+  } catch (error) {
+    console.error('Error logging out user:', error);
+    throw error;
+  }
+}
+
+/**
+ * Feature limits for free tier
+ */
+export const FREE_TIER_LIMITS = {
+  MAX_TIMELINES: 3,
+  MAX_CUSTOM_TIMELINES: 1,
+  WIDGET_SIZES: ['small', 'medium'], // Pro unlocks 'large'
+} as const;
+
+/**
+ * Pro features configuration
+ */
+export const PRO_FEATURES = {
+  UNLIMITED_TIMELINES: true,
+  UNLIMITED_CUSTOM_TIMELINES: true,
+  ALL_WIDGET_SIZES: true,
+  CUSTOM_ACCENT_COLORS: true, // Future feature
+  CLOUD_SYNC: true, // Future feature with Firebase
+  PRIORITY_SUPPORT: true,
+} as const;

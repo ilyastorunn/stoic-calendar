@@ -21,6 +21,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Timeline } from '@/types/timeline';
 import { TimelineCard } from '@/components/timeline-card';
 import { TimelineFormModal } from '@/components/timeline-form-modal';
@@ -31,6 +32,7 @@ import {
   setActiveTimeline,
 } from '@/services/storage';
 import { sortTimelinesWithActiveFirst } from '@/services/timeline-calculator';
+import { isPro, FREE_TIER_LIMITS } from '@/services/revenue-cat-service';
 import {
   Colors,
   FontSizes,
@@ -43,6 +45,7 @@ export default function TimelinesScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const navigation = useNavigation();
+  const router = useRouter();
 
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -116,6 +119,45 @@ export default function TimelinesScreen() {
   };
 
   /**
+   * Handle add button press
+   * Check premium limits before showing create modal
+   */
+  const handleAddButtonPress = async () => {
+    try {
+      // Check if user has pro access
+      const hasPro = await isPro();
+
+      if (!hasPro) {
+        // Check if user has reached timeline limit
+        if (timelines.length >= FREE_TIER_LIMITS.MAX_TIMELINES) {
+          Alert.alert(
+            'Timeline Limit Reached',
+            `Free users can create up to ${FREE_TIER_LIMITS.MAX_TIMELINES} timelines. Upgrade to Pro for unlimited timelines.`,
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Upgrade to Pro',
+                onPress: () => router.push('/paywall'),
+              },
+            ]
+          );
+          return;
+        }
+      }
+
+      // User can create timeline
+      setShowCreateModal(true);
+    } catch (error) {
+      console.error('Error checking timeline limits:', error);
+      // On error, allow timeline creation (fail open)
+      setShowCreateModal(true);
+    }
+  };
+
+  /**
    * Handle timeline save (create new)
    */
   const handleTimelineSave = async (newTimeline: Timeline) => {
@@ -169,7 +211,7 @@ export default function TimelinesScreen() {
               backgroundColor: colors.accent,
             },
           ]}
-          onPress={() => setShowCreateModal(true)}
+          onPress={handleAddButtonPress}
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>

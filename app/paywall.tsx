@@ -1,252 +1,134 @@
 /**
  * Paywall Screen
- * Static MVP paywall UI for App Store Connect review
+ * Presents RevenueCat Paywall UI for subscription purchases
  *
- * Design: Minimalist, calm, and honest - no urgency or marketing pressure
- * Purpose: Review placeholder (no functional logic)
+ * Products: monthly, yearly
+ * Entitlement: Memento Calendar Pro
  */
 
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  useColorScheme,
-  SafeAreaView,
-  Dimensions,
-} from 'react-native';
-import { BlurView } from 'expo-blur';
-import { SymbolView } from 'expo-symbols';
-import {
-  Colors,
-  Fonts,
-  FontSizes,
-  FontWeights,
-  Spacing,
-  BorderRadius,
-  Shadows,
-} from '@/constants/theme';
+import { useEffect, useState } from 'react';
+import { View, StyleSheet, Alert, ActivityIndicator, Text } from 'react-native';
+import { useRouter } from 'expo-router';
+import { RevenueCatUI, PAYWALL_RESULT } from 'react-native-purchases-ui';
+import { getCustomerInfo } from '@/services/revenue-cat-service';
 
 export default function PaywallScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [paywallPresented, setPaywallPresented] = useState(false);
 
-  /**
-   * Feature list items
-   */
-  const features = [
-    {
-      icon: 'calendar',
-      text: 'All timeline views',
-    },
-    {
-      icon: 'square.grid.2x2',
-      text: 'Premium widgets',
-    },
-    {
-      icon: 'infinity',
-      text: 'Unlimited access',
-    },
-  ];
+  useEffect(() => {
+    presentPaywall();
+  }, []);
 
-  return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-        },
-      ]}
-    >
-      {/* Background Blur Effect */}
-      <View style={styles.backgroundContainer}>
-        <BlurView
-          intensity={100}
-          tint={colorScheme === 'dark' ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
+  const presentPaywall = async () => {
+    try {
+      setIsLoading(true);
 
-      {/* Centered Content */}
-      <View style={styles.contentContainer}>
-        {/* Floating Card */}
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.secondaryBackground,
-            },
-            Shadows.large,
-          ]}
-        >
-          {/* Header - Serif Font */}
-          <Text
-            style={[
-              styles.title,
-              {
-                fontFamily: Fonts?.serif || 'Georgia',
-                color: colors.textPrimary,
-              },
-            ]}
-          >
-            Premium Monthly
-          </Text>
+      // Present the paywall using RevenueCat UI
+      // This will show a pre-built paywall screen with your configured offerings
+      const paywallResult = await RevenueCatUI.presentPaywall();
 
-          {/* Description - SF Pro */}
-          <Text
-            style={[
-              styles.description,
-              {
-                color: colors.textSecondary,
-              },
-            ]}
-          >
-            Access all visualization tools and widget types.
-          </Text>
+      setPaywallPresented(true);
 
-          {/* Feature List */}
-          <View style={styles.featuresContainer}>
-            {features.map((feature, index) => (
-              <View key={index} style={styles.featureRow}>
-                <SymbolView
-                  name={feature.icon}
-                  size={20}
-                  tintColor={colors.accent}
-                  style={styles.featureIcon}
-                />
-                <Text
-                  style={[
-                    styles.featureText,
-                    {
-                      color: colors.textPrimary,
-                    },
-                  ]}
-                >
-                  {feature.text}
-                </Text>
-              </View>
-            ))}
-          </View>
+      // Handle paywall result
+      switch (paywallResult) {
+        case PAYWALL_RESULT.PURCHASED:
+        case PAYWALL_RESULT.RESTORED:
+          // Purchase or restore successful
+          const customerInfo = await getCustomerInfo();
+          const hasProAccess =
+            customerInfo.entitlements.active['Memento Calendar Pro'] !== undefined;
 
-          {/* Price */}
-          <Text
-            style={[
-              styles.price,
-              {
-                color: colors.textPrimary,
-              },
-            ]}
-          >
-            $3.99 / month
-          </Text>
-
-          {/* Subscribe Button */}
-          <TouchableOpacity
-            style={[
-              styles.subscribeButton,
-              {
-                backgroundColor: colors.accent,
-              },
-            ]}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.subscribeButtonText}>Subscribe</Text>
-          </TouchableOpacity>
-
-          {/* Restore Purchases */}
-          <TouchableOpacity style={styles.restoreButton} activeOpacity={0.6}>
-            <Text
-              style={[
-                styles.restoreButtonText,
+          if (hasProAccess) {
+            Alert.alert(
+              'Welcome to Pro!',
+              'You now have access to all premium features.',
+              [
                 {
-                  color: colors.accent,
+                  text: 'Get Started',
+                  onPress: () => router.back(),
                 },
-              ]}
-            >
-              Restore Purchases
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
-}
+              ]
+            );
+          }
+          break;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+        case PAYWALL_RESULT.CANCELLED:
+          // User cancelled
+          console.log('User cancelled paywall');
+          router.back();
+          break;
+
+        case PAYWALL_RESULT.ERROR:
+          // Error occurred
+          Alert.alert(
+            'Error',
+            'Something went wrong. Please try again.',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.back(),
+              },
+            ]
+          );
+          break;
+
+        case PAYWALL_RESULT.NOT_PRESENTED:
+          // Paywall not presented (no offering configured in RevenueCat dashboard)
+          Alert.alert(
+            'Not Available',
+            'Subscription options are not available at the moment. Please configure offerings in RevenueCat dashboard.',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.back(),
+              },
+            ]
+          );
+          break;
+      }
+    } catch (error) {
+      console.error('Error presenting paywall:', error);
+      Alert.alert(
+        'Error',
+        'Failed to load subscription options. Please try again.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Show loading state while paywall is being presented
+  if (isLoading || !paywallPresented) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Loading subscription options...</Text>
+      </View>
+    );
+  }
+
+  // Return null once paywall is presented (it will be shown as a native modal)
+  return null;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backgroundContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  contentContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
+    backgroundColor: '#000',
   },
-  card: {
-    width: SCREEN_WIDTH * 0.9,
-    maxWidth: 420,
-    borderRadius: BorderRadius.xlarge,
-    paddingVertical: Spacing.xxl,
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: FontWeights.semibold,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-  },
-  description: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: Spacing.xl,
-  },
-  featuresContainer: {
-    width: '100%',
-    marginBottom: Spacing.xl,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  featureIcon: {
-    marginRight: Spacing.md,
-  },
-  featureText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.regular,
-  },
-  price: {
-    fontSize: FontSizes.title2,
-    fontWeight: FontWeights.semibold,
-    marginBottom: Spacing.lg,
-  },
-  subscribeButton: {
-    width: '100%',
-    paddingVertical: Spacing.md + 2,
-    borderRadius: BorderRadius.medium,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  subscribeButtonText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
-    color: '#FFFFFF',
-  },
-  restoreButton: {
-    paddingVertical: Spacing.sm,
-  },
-  restoreButtonText: {
-    fontSize: FontSizes.subheadline,
-    fontWeight: FontWeights.regular,
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#888',
   },
 });

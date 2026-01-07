@@ -17,18 +17,22 @@ import {
   useColorScheme,
   SafeAreaView,
   Appearance,
+  ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { SettingsGroup } from '@/components/settings-group';
-import { updateThemeMode, getThemeMode } from '@/services/storage';
-import { ThemeMode } from '@/types/timeline';
+import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
+import { ThemeMode, GridColorTheme } from '@/types/timeline';
+import { isPro } from '@/services/revenue-cat-service';
 import {
   Colors,
   FontSizes,
   FontWeights,
   Spacing,
   Layout,
+  GridColorPalettes,
 } from '@/constants/theme';
 
 export default function SettingsScreen() {
@@ -37,6 +41,9 @@ export default function SettingsScreen() {
   const router = useRouter();
 
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('dark');
+  const [currentGridColorTheme, setCurrentGridColorTheme] = useState<GridColorTheme>('classic');
+  const [hasPro, setHasPro] = useState<boolean>(false);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState<boolean>(true);
 
   /**
    * Load current theme setting
@@ -51,12 +58,42 @@ export default function SettingsScreen() {
   }, []);
 
   /**
+   * Load current grid color theme
+   */
+  const loadGridColorTheme = useCallback(async () => {
+    try {
+      const theme = await getGridColorTheme();
+      setCurrentGridColorTheme(theme);
+    } catch (error) {
+      console.error('Error loading grid color theme:', error);
+    }
+  }, []);
+
+  /**
+   * Load subscription status
+   */
+  const loadSubscriptionStatus = useCallback(async () => {
+    try {
+      setIsLoadingSubscription(true);
+      const proStatus = await isPro();
+      setHasPro(proStatus);
+    } catch (error) {
+      console.error('Error loading subscription status:', error);
+      setHasPro(false);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  }, []);
+
+  /**
    * Load settings when screen comes into focus
    */
   useFocusEffect(
     useCallback(() => {
       loadThemeSetting();
-    }, [loadThemeSetting])
+      loadGridColorTheme();
+      loadSubscriptionStatus();
+    }, [loadThemeSetting, loadGridColorTheme, loadSubscriptionStatus])
   );
 
   /**
@@ -75,6 +112,18 @@ export default function SettingsScreen() {
       }
     } catch (error) {
       console.error('Error updating theme:', error);
+    }
+  };
+
+  /**
+   * Handle grid color theme change
+   */
+  const handleGridColorThemeChange = async (theme: GridColorTheme) => {
+    try {
+      await updateGridColorTheme(theme);
+      setCurrentGridColorTheme(theme);
+    } catch (error) {
+      console.error('Error updating grid color theme:', error);
     }
   };
 
@@ -102,12 +151,31 @@ export default function SettingsScreen() {
   /**
    * Premium settings
    */
-  const premiumItems = [
-    {
-      label: 'Premium',
-      onPress: () => router.push('/paywall'),
-    },
-  ];
+  const premiumItems = isLoadingSubscription
+    ? []
+    : hasPro
+    ? [
+        {
+          label: 'Subscription Status',
+          value: 'Pro',
+          pressable: false,
+        },
+        {
+          label: 'Manage Subscription',
+          onPress: () => router.push('/customer-center'),
+        },
+      ]
+    : [
+        {
+          label: 'Subscription Status',
+          value: 'Free',
+          pressable: false,
+        },
+        {
+          label: 'Upgrade to Pro',
+          onPress: () => router.push('/paywall'),
+        },
+      ];
 
   /**
    * About settings
@@ -161,8 +229,147 @@ export default function SettingsScreen() {
         {/* Appearance */}
         <SettingsGroup title="Appearance" items={appearanceItems} />
 
+        {/* Grid Colors */}
+        <SettingsGroup title="Grid Colors" items={[]}>
+          <View style={styles.colorPaletteContainer}>
+            {/* Classic Blue */}
+            <TouchableOpacity
+              style={styles.colorPaletteItem}
+              onPress={() => handleGridColorThemeChange('classic')}
+              activeOpacity={0.6}
+            >
+              <View
+                style={[
+                  styles.colorPreview,
+                  {
+                    backgroundColor: colorScheme === 'dark'
+                      ? GridColorPalettes.classic.dark.dotFilled
+                      : GridColorPalettes.classic.light.dotFilled,
+                  },
+                  currentGridColorTheme === 'classic' && {
+                    borderColor: colors.accent,
+                    borderWidth: 3,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.colorPaletteLabel,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                {GridColorPalettes.classic.name}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Forest Green */}
+            <TouchableOpacity
+              style={styles.colorPaletteItem}
+              onPress={() => handleGridColorThemeChange('forest')}
+              activeOpacity={0.6}
+            >
+              <View
+                style={[
+                  styles.colorPreview,
+                  {
+                    backgroundColor: colorScheme === 'dark'
+                      ? GridColorPalettes.forest.dark.dotFilled
+                      : GridColorPalettes.forest.light.dotFilled,
+                  },
+                  currentGridColorTheme === 'forest' && {
+                    borderColor: colors.accent,
+                    borderWidth: 3,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.colorPaletteLabel,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                {GridColorPalettes.forest.name}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Sunset Orange */}
+            <TouchableOpacity
+              style={styles.colorPaletteItem}
+              onPress={() => handleGridColorThemeChange('sunset')}
+              activeOpacity={0.6}
+            >
+              <View
+                style={[
+                  styles.colorPreview,
+                  {
+                    backgroundColor: colorScheme === 'dark'
+                      ? GridColorPalettes.sunset.dark.dotFilled
+                      : GridColorPalettes.sunset.light.dotFilled,
+                  },
+                  currentGridColorTheme === 'sunset' && {
+                    borderColor: colors.accent,
+                    borderWidth: 3,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.colorPaletteLabel,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                {GridColorPalettes.sunset.name}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Monochrome */}
+            <TouchableOpacity
+              style={styles.colorPaletteItem}
+              onPress={() => handleGridColorThemeChange('monochrome')}
+              activeOpacity={0.6}
+            >
+              <View
+                style={[
+                  styles.colorPreview,
+                  {
+                    backgroundColor: colorScheme === 'dark'
+                      ? GridColorPalettes.monochrome.dark.dotFilled
+                      : GridColorPalettes.monochrome.light.dotFilled,
+                  },
+                  currentGridColorTheme === 'monochrome' && {
+                    borderColor: colors.accent,
+                    borderWidth: 3,
+                  },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.colorPaletteLabel,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                {GridColorPalettes.monochrome.name}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SettingsGroup>
+
         {/* Premium */}
-        <SettingsGroup items={premiumItems} />
+        {isLoadingSubscription ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.accent} />
+          </View>
+        ) : (
+          <SettingsGroup title="Subscription" items={premiumItems} />
+        )}
 
         {/* About */}
         <SettingsGroup title="About" items={aboutItems} />
@@ -179,7 +386,7 @@ export default function SettingsScreen() {
                 },
               ]}
             >
-              "Time is presented neutrally, calmly, and honestly."
+              &ldquo;Time is presented neutrally, calmly, and honestly.&rdquo;
             </Text>
 
             <View style={styles.philosophyDivider} />
@@ -220,6 +427,30 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Layout.screenPadding,
+  },
+  loadingContainer: {
+    paddingVertical: Spacing.lg,
+    alignItems: 'center',
+  },
+  colorPaletteContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.sm,
+  },
+  colorPaletteItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  colorPreview: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginBottom: Spacing.xs,
+  },
+  colorPaletteLabel: {
+    fontSize: FontSizes.caption1,
+    textAlign: 'center',
   },
   philosophyContainer: {
     paddingVertical: Spacing.sm,

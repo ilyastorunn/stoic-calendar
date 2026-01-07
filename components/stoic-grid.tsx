@@ -9,12 +9,13 @@
  * - Minimal, calm, no excessive animation
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, StyleSheet, useColorScheme } from 'react-native';
-import { Timeline } from '@/types/timeline';
+import { Timeline, GridColorTheme } from '@/types/timeline';
 import { calculateGridLayout, generateDotPositions, calculateGridCenterOffset } from '@/utils/grid-layout';
 import { getTimelineDaysPassed, getTimelineTotalDays } from '@/services/timeline-calculator';
-import { Colors } from '@/constants/theme';
+import { GridColorPalettes } from '@/constants/theme';
+import { getGridColorTheme } from '@/services/storage';
 
 export interface StoicGridProps {
   /**
@@ -41,9 +42,25 @@ export interface StoicGridProps {
  */
 export function StoicGrid({ timeline, animated = false, mini = false }: StoicGridProps) {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
 
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+  const [gridColorTheme, setGridColorTheme] = useState<GridColorTheme>('classic');
+
+  /**
+   * Load grid color theme
+   */
+  useEffect(() => {
+    const loadColorTheme = async () => {
+      try {
+        const theme = await getGridColorTheme();
+        setGridColorTheme(theme);
+      } catch (error) {
+        console.error('Error loading grid color theme:', error);
+      }
+    };
+
+    loadColorTheme();
+  }, []);
 
   /**
    * Calculate timeline stats
@@ -99,6 +116,15 @@ export function StoicGrid({ timeline, animated = false, mini = false }: StoicGri
   }, [gridLayout, containerDimensions]);
 
   /**
+   * Get grid colors based on selected theme
+   */
+  const gridColors = useMemo(() => {
+    const palette = GridColorPalettes[gridColorTheme];
+    const mode = colorScheme ?? 'dark';
+    return palette[mode];
+  }, [gridColorTheme, colorScheme]);
+
+  /**
    * Render dots
    */
   const renderDots = () => {
@@ -119,7 +145,7 @@ export function StoicGrid({ timeline, animated = false, mini = false }: StoicGri
               width: gridLayout.dotSize,
               height: gridLayout.dotSize,
               borderRadius: gridLayout.dotSize / 2,
-              backgroundColor: isFilled ? colors.dotFilled : colors.dotEmpty,
+              backgroundColor: isFilled ? gridColors.dotFilled : gridColors.dotEmpty,
             },
           ]}
         />

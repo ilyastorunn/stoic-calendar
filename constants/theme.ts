@@ -29,7 +29,7 @@ export const Colors = {
     accent: '#007AFF',
     accentLight: '#5AC8FA',
 
-    // Dots
+    // Dots (default colors - overridden by GridColorPalettes)
     dotFilled: '#007AFF',
     dotEmpty: '#D1D1D6',
     dotEmptyBorder: '#C7C7CC',
@@ -62,7 +62,7 @@ export const Colors = {
     accent: '#007AFF',
     accentLight: '#5AC8FA',
 
-    // Dots
+    // Dots (default colors - overridden by GridColorPalettes)
     dotFilled: '#007AFF',
     dotEmpty: '#333333',
     dotEmptyBorder: '#48484A',
@@ -79,6 +79,58 @@ export const Colors = {
 
     // Interactive States
     destructive: '#FF453A',
+  },
+};
+
+/**
+ * Grid Color Palettes
+ * Predefined color themes for grid visualization
+ * Filled dots = vibrant color, Empty dots = neutral gray (high contrast)
+ */
+export const GridColorPalettes = {
+  classic: {
+    name: 'Classic Blue',
+    light: {
+      dotFilled: '#007AFF',
+      dotEmpty: '#D1D1D6',
+    },
+    dark: {
+      dotFilled: '#007AFF',
+      dotEmpty: '#333333',
+    },
+  },
+  forest: {
+    name: 'Forest Green',
+    light: {
+      dotFilled: '#34C759',
+      dotEmpty: '#D1D1D6',
+    },
+    dark: {
+      dotFilled: '#30D158',
+      dotEmpty: '#333333',
+    },
+  },
+  sunset: {
+    name: 'Sunset Orange',
+    light: {
+      dotFilled: '#FF9500',
+      dotEmpty: '#D1D1D6',
+    },
+    dark: {
+      dotFilled: '#FF9F0A',
+      dotEmpty: '#333333',
+    },
+  },
+  monochrome: {
+    name: 'Monochrome',
+    light: {
+      dotFilled: '#000000',
+      dotEmpty: '#D1D1D6',
+    },
+    dark: {
+      dotFilled: '#FFFFFF',
+      dotEmpty: '#333333',
+    },
   },
 };
 

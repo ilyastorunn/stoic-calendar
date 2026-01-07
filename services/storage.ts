@@ -7,7 +7,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Timeline, AppSettings, ThemeMode } from '@/types/timeline';
+import { Timeline, AppSettings, ThemeMode, GridColorTheme } from '@/types/timeline';
 
 /**
  * Storage Keys
@@ -23,6 +23,7 @@ const STORAGE_KEYS = {
  */
 const DEFAULT_SETTINGS: AppSettings = {
   themeMode: 'dark', // Dark mode by default (dark-mode-first)
+  gridColorTheme: 'classic', // Classic Blue by default
 };
 
 // ============================================================================
@@ -261,6 +262,35 @@ export async function getThemeMode(): Promise<ThemeMode> {
   } catch (error) {
     console.error('Error getting theme mode:', error);
     return 'dark'; // Default to dark
+  }
+}
+
+/**
+ * Update grid color theme
+ * @param theme - Grid color theme to set
+ */
+export async function updateGridColorTheme(theme: GridColorTheme): Promise<void> {
+  try {
+    const settings = await loadSettings();
+    settings.gridColorTheme = theme;
+    await saveSettings(settings);
+  } catch (error) {
+    console.error('Error updating grid color theme:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current grid color theme
+ * @returns Current grid color theme
+ */
+export async function getGridColorTheme(): Promise<GridColorTheme> {
+  try {
+    const settings = await loadSettings();
+    return settings.gridColorTheme;
+  } catch (error) {
+    console.error('Error getting grid color theme:', error);
+    return 'classic'; // Default to classic
   }
 }
 
