@@ -9,6 +9,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Timeline, AppSettings, ThemeMode, GridColorTheme } from '@/types/timeline';
 
+// Lazy import to avoid require cycle with widget-data-service
+const syncWidgetData = async (type: 'timeline' | 'settings') => {
+  const { syncActiveTimelineToWidget, syncSettingsToWidget } = await import('@/services/widget-data-service');
+  if (type === 'timeline') {
+    await syncActiveTimelineToWidget();
+  } else {
+    await syncSettingsToWidget();
+  }
+};
+
 /**
  * Storage Keys
  */
@@ -146,6 +156,9 @@ export async function setActiveTimeline(id: string): Promise<void> {
     }));
 
     await AsyncStorage.setItem(STORAGE_KEYS.TIMELINES, JSON.stringify(updated));
+
+    // Sync to widgets
+    await syncWidgetData('timeline');
   } catch (error) {
     console.error('Error setting active timeline:', error);
     throw error;
@@ -230,6 +243,9 @@ export async function loadSettings(): Promise<AppSettings> {
 export async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+
+    // Sync to widgets
+    await syncWidgetData('settings');
   } catch (error) {
     console.error('Error saving settings:', error);
     throw error;

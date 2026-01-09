@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/EvanBacon/apple-targets/refs/heads/main/packages/apple-targets/schema/expo-target.config.schema.json",
+  "type": "widget",
+  "name": "StoicGridWidget",
+  "icon": "../../assets/images/icon.png",
+  "colors": {
+    "$accent": "#007AFF"
+  },
+  "deploymentTarget": "17.0",
+  "frameworks": ["SwiftUI", "WidgetKit"],
+  "entitlements": {
+    "com.apple.security.application-groups": ["group.com.stoiccalendar.shared"]
+  }
+}

@@ -16,12 +16,19 @@ export enum TimelineType {
 export type WidgetSize = 'small' | 'medium' | 'large';
 
 /**
+ * Lock Screen Widget Family Options
+ */
+export type LockScreenFamily = 'circular' | 'rectangular' | 'inline';
+
+/**
  * Widget Preferences
- * Reserved for future widget customization
+ * Configuration for iOS home screen and lock screen widgets
  */
 export interface WidgetPreferences {
   size?: WidgetSize;
-  // Future: accentColor override, grid style options
+  showOnLockScreen?: boolean;
+  lockScreenFamily?: LockScreenFamily;
+  // Future: custom quotes, visual styles for premium
 }
 
 /**

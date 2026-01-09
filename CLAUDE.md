@@ -11,6 +11,7 @@ Stoic Calendar is a React Native/Expo mobile application for tracking time throu
 ## Development Commands
 
 ### Starting the App
+
 ```bash
 npm install              # Install dependencies
 npx expo start           # Start development server
@@ -20,11 +21,13 @@ npm run web              # Run in web browser
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint             # Run ESLint (expo lint)
 ```
 
 ### Utilities
+
 ```bash
 npm run reset-project    # Reset to blank app (moves starter code to app-example/)
 ```
@@ -32,6 +35,7 @@ npm run reset-project    # Reset to blank app (moves starter code to app-example
 ## Architecture
 
 ### File-Based Routing (Expo Router)
+
 The app uses Expo Router's file-based routing system with a tab-based navigation structure:
 
 - `app/_layout.tsx` - Root layout with theme provider
@@ -45,18 +49,21 @@ The `(tabs)` folder name creates a route group without affecting the URL structu
 ### Data Flow Architecture
 
 **Storage Layer** (`services/storage.ts`):
+
 - AsyncStorage wrapper for all data persistence
 - Centralized storage operations for timelines and settings
 - Firebase-ready data structure (all data is stored in a format that can be migrated to Firestore)
 - Key functions: `loadTimelines()`, `saveTimeline()`, `getActiveTimeline()`, `setActiveTimeline()`
 
 **Business Logic Layer** (`services/timeline-calculator.ts`):
+
 - Timeline creation from types (YEAR, MONTH, WEEK, CUSTOM)
 - Progress calculations (days passed, remaining, percentage)
 - Timeline validation and updates
 - Key functions: `createTimeline()`, `calculateTimelineStats()`, `updateWeekTimeline()`
 
 **UI Components** (`components/`):
+
 - `stoic-grid.tsx` - Core grid visualization component (displays timeline as grid of squares)
 - `timeline-card.tsx` - Timeline list item with progress display
 - `timeline-form-modal.tsx` - Modal for creating/editing timelines
@@ -66,6 +73,7 @@ The `(tabs)` folder name creates a route group without affecting the URL structu
 ### Type System (`types/timeline.ts`)
 
 Core data model:
+
 ```typescript
 interface Timeline {
   id: string;              // Unique identifier
@@ -82,6 +90,7 @@ interface Timeline {
 ### Date Utilities (`utils/date-helpers.ts`)
 
 Centralized date manipulation functions:
+
 - `getStartOfCurrentYear()`, `getEndOfCurrentYear()` - Current year boundaries
 - `getStartOfCurrentMonth()`, `getEndOfCurrentMonth()` - Current month boundaries
 - `getStartOfCurrentWeek()`, `getEndOfCurrentWeek()` - Current week boundaries (Monday-Sunday)
@@ -92,6 +101,7 @@ Centralized date manipulation functions:
 ### Grid Layout Utilities (`utils/grid-layout.ts`)
 
 Grid rendering calculations:
+
 - Determines grid dimensions based on total days
 - Calculates square sizes and spacing
 - Handles responsive layout for different screen sizes
@@ -99,18 +109,22 @@ Grid rendering calculations:
 ## Important Patterns
 
 ### Timeline Types
+
 1. **YEAR**: Fixed year timeline (e.g., 2026)
 2. **MONTH**: Fixed month timeline (e.g., January 2026)
 3. **WEEK**: Auto-updating current week (Monday-Sunday)
 4. **CUSTOM**: User-defined date range
 
 ### Active Timeline Pattern
+
 - Only ONE timeline can be `isActive: true` at a time
 - Active timeline is displayed on the Home screen
 - Use `setActiveTimeline(id)` to switch active timeline (automatically updates all timeline flags)
 
 ### Week Timeline Auto-Update
+
 Week timelines should auto-update to current week:
+
 - Check with `weekTimelineNeedsUpdate(timeline)`
 - Update with `updateWeekTimeline(timeline)`
 - App should check on launch or when user navigates to home
@@ -118,6 +132,7 @@ Week timelines should auto-update to current week:
 ## Path Aliases
 
 The project uses `@/` as an alias for the root directory:
+
 ```typescript
 import { Timeline } from '@/types/timeline';
 import { loadTimelines } from '@/services/storage';
@@ -136,16 +151,19 @@ import { StoicGrid } from '@/components/stoic-grid';
 ## Future Integration Notes
 
 ### Firebase (Not Active in MVP)
+
 - `services/firebase-service.ts` contains placeholder structure
 - Data structure is Firebase-ready (all dates in ISO 8601, flat structure)
 - To activate: Install `firebase` package and implement functions in firebase-service.ts
 - See inline TODO comments for implementation guidance
 
 ### RevenueCat (Not Active in MVP)
+
 - `services/revenue-cat-service.ts` contains placeholder for subscription management
 - Reserved for future premium features
 
 ### iOS Widgets (Not Active in MVP)
+
 - Timeline model includes `widgetPreferences` field
 - Reserved for future WidgetKit integration
 
@@ -154,12 +172,14 @@ import { StoicGrid } from '@/components/stoic-grid';
 **Dark-Mode-First**: App defaults to dark mode (`DEFAULT_SETTINGS.themeMode = 'dark'`)
 
 **Stoic Minimalism**:
+
 - Clean, focused UI with minimal distractions
 - Grid-based visualization makes time tangible
 - No gamification or notifications
 - Emphasizes awareness over motivation
 
 **Firebase-Ready Structure**:
+
 - All data uses ISO 8601 date strings
 - Flat data structure (no nested objects that can't serialize)
 - Ready for Firestore migration without data model changes
