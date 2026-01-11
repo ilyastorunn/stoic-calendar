@@ -81,12 +81,23 @@ export default function TimelinesScreen() {
    */
   const handleTimelinePress = async (timeline: Timeline) => {
     try {
+      // Immediately update local state for instant UI feedback
+      setTimelines((prev) =>
+        prev.map((t) => ({
+          ...t,
+          isActive: t.id === timeline.id,
+        }))
+      );
+
+      // Then persist to storage
       await setActiveTimeline(timeline.id);
-      await loadAllTimelines(); // Reload to update active states
+
       // Navigate to home tab
       navigation.navigate('home' as never);
     } catch (error) {
       console.error('Error setting active timeline:', error);
+      // Reload on error to sync state
+      await loadAllTimelines();
     }
   };
 

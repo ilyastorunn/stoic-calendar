@@ -13,6 +13,7 @@ import { Platform } from 'react-native';
 /**
  * Native module for App Groups access
  * Only available on iOS with development build
+ * Uses try-catch to gracefully handle missing module
  */
 let AppGroupsModule: any = null;
 
@@ -20,10 +21,9 @@ if (Platform.OS === 'ios') {
   try {
     const { requireNativeModule } = require('expo-modules-core');
     AppGroupsModule = requireNativeModule('AppGroups');
-  } catch (error) {
-    // Module not available (likely running in Expo Go)
-    console.warn('⚠️ AppGroups module not available. Widgets require a development build.');
-    AppGroupsModule = null;
+  } catch (e) {
+    // Module not available - this is expected in Expo Go or if native module isn't registered
+    console.warn('AppGroups native module not available:', e);
   }
 }
 

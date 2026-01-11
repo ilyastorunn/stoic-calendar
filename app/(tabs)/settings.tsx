@@ -19,6 +19,7 @@ import {
   Appearance,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -34,6 +35,7 @@ import {
   Layout,
   GridColorPalettes,
 } from '@/constants/theme';
+import { debugWidgetSync } from '@/scripts/debug-widget-sync';
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -128,6 +130,28 @@ export default function SettingsScreen() {
   };
 
   /**
+   * Debug widget sync
+   */
+  const handleDebugWidgetSync = async () => {
+    try {
+      console.log('\n🔍 Running widget sync debug...\n');
+      await debugWidgetSync();
+      Alert.alert(
+        'Widget Debug Complete',
+        'Check the console logs for detailed information about widget sync status.',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Debug error:', error);
+      Alert.alert(
+        'Debug Error',
+        error instanceof Error ? error.message : 'Unknown error occurred',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  /**
    * Appearance settings
    */
   const appearanceItems = [
@@ -192,6 +216,18 @@ export default function SettingsScreen() {
       pressable: false,
     },
   ];
+
+  /**
+   * Debug settings (only in __DEV__ mode)
+   */
+  const debugItems = __DEV__
+    ? [
+        {
+          label: 'Debug Widget Sync',
+          onPress: handleDebugWidgetSync,
+        },
+      ]
+    : [];
 
   return (
     <SafeAreaView
@@ -373,6 +409,9 @@ export default function SettingsScreen() {
 
         {/* About */}
         <SettingsGroup title="About" items={aboutItems} />
+
+        {/* Debug (development only) */}
+        {__DEV__ && <SettingsGroup title="Debug" items={debugItems} />}
 
         {/* Philosophy */}
         <SettingsGroup title="Philosophy" items={[]}>

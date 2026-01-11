@@ -52,6 +52,9 @@
       ],
       "@bacons/apple-targets"
     ],
+    "autolinking": {
+      "nativeModulesDir": "./modules"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

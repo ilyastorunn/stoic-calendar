@@ -1,0 +1,21 @@
+{
+  "name": "app-groups",
+  "version": "1.0.0",
+  "description": "App Groups module for widget data sharing",
+  "main": "index.ts",
+  "types": "index.ts",
+  "license": "MIT",
+  "author": "Stoic Calendar",
+  "homepage": "https://github.com/stoiccalendar",
+  "expo": {
+    "autolinking": {
+      "nativeModulesDir": "."
+    }
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "expo-modules-core": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}

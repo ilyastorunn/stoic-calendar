@@ -3,13 +3,15 @@
  *
  * Exports timeline data to iOS App Groups for widget consumption.
  * Widgets read from the shared container to display timeline progress.
+ *
+ * Uses ExtensionStorage from @bacons/apple-targets which is already
+ * properly integrated with Expo autolinking.
  */
 
 import { Platform } from 'react-native';
-import { Timeline, AppSettings } from '@/types/timeline';
+import { Timeline } from '@/types/timeline';
 import { calculateTimelineStats } from '@/services/timeline-calculator';
 import { loadTimelines, getActiveTimelineId, loadSettings } from '@/services/storage';
-import { setSharedData, removeSharedData } from '@/modules/app-groups';
 
 /**
  * App Group identifier - must match app.json entitlements
@@ -51,18 +53,33 @@ export interface WidgetSettingsData {
 }
 
 /**
+ * ExtensionStorage instance - lazy loaded
+ */
+let extensionStorage: any = null;
+
+/**
+ * Get or create ExtensionStorage instance
+ */
+function getExtensionStorage() {
+  if (Platform.OS !== 'ios') return null;
+
+  if (!extensionStorage) {
+    try {
+      const { ExtensionStorage } = require('@bacons/apple-targets');
+      extensionStorage = new ExtensionStorage(APP_GROUP_ID);
+    } catch (e) {
+      console.warn('ExtensionStorage not available:', e);
+      return null;
+    }
+  }
+  return extensionStorage;
+}
+
+/**
  * Check if widget sync is available (requires development build)
  */
 function isWidgetSyncAvailable(): boolean {
-  if (Platform.OS !== 'ios') return false;
-
-  // Check if running in Expo Go by detecting __DEV__ and lack of native module
-  try {
-    const { setSharedData: testModule } = require('@/modules/app-groups');
-    return testModule !== undefined;
-  } catch {
-    return false;
-  }
+  return getExtensionStorage() !== null;
 }
 
 /**
@@ -76,7 +93,8 @@ function isWidgetSyncAvailable(): boolean {
  * NOTE: Widget sync requires a development build and will not work in Expo Go.
  */
 export async function syncActiveTimelineToWidget(): Promise<void> {
-  if (!isWidgetSyncAvailable()) {
+  const storage = getExtensionStorage();
+  if (!storage) {
     return;
   }
 
@@ -116,19 +134,17 @@ export async function syncActiveTimelineToWidget(): Promise<void> {
       progressPercentage: stats.progressPercentage,
     };
 
-    // Write to App Groups
-    await setSharedData(
-      APP_GROUP_ID,
-      WIDGET_DATA_KEYS.ACTIVE_TIMELINE,
-      JSON.stringify(widgetData)
-    );
+    // Write to App Groups using ExtensionStorage
+    storage.set(WIDGET_DATA_KEYS.ACTIVE_TIMELINE, JSON.stringify(widgetData));
+    storage.set(WIDGET_DATA_KEYS.LAST_UPDATE, new Date().toISOString());
 
-    // Update last sync timestamp
-    await setSharedData(
-      APP_GROUP_ID,
-      WIDGET_DATA_KEYS.LAST_UPDATE,
-      new Date().toISOString()
-    );
+    // Reload widgets to show updated data
+    try {
+      const { ExtensionStorage } = require('@bacons/apple-targets');
+      ExtensionStorage.reloadWidget();
+    } catch {
+      // Ignore if reload not available
+    }
 
     console.log('✅ Widget timeline data synced:', widgetData.title);
   } catch (error) {
@@ -147,7 +163,8 @@ export async function syncActiveTimelineToWidget(): Promise<void> {
  * NOTE: Widget sync requires a development build and will not work in Expo Go.
  */
 export async function syncSettingsToWidget(): Promise<void> {
-  if (!isWidgetSyncAvailable()) {
+  const storage = getExtensionStorage();
+  if (!storage) {
     return;
   }
 
@@ -159,11 +176,7 @@ export async function syncSettingsToWidget(): Promise<void> {
       themeMode: settings.themeMode,
     };
 
-    await setSharedData(
-      APP_GROUP_ID,
-      WIDGET_DATA_KEYS.SETTINGS,
-      JSON.stringify(widgetSettings)
-    );
+    storage.set(WIDGET_DATA_KEYS.SETTINGS, JSON.stringify(widgetSettings));
 
     console.log('✅ Widget settings synced:', widgetSettings.gridColorTheme, widgetSettings.themeMode);
   } catch (error) {
@@ -176,12 +189,31 @@ export async function syncSettingsToWidget(): Promise<void> {
  * Called when there's no active timeline
  */
 async function clearWidgetData(): Promise<void> {
+  const storage = getExtensionStorage();
+  if (!storage) return;
+
   try {
-    await removeSharedData(APP_GROUP_ID, WIDGET_DATA_KEYS.ACTIVE_TIMELINE);
-    await removeSharedData(APP_GROUP_ID, WIDGET_DATA_KEYS.LAST_UPDATE);
+    storage.remove(WIDGET_DATA_KEYS.ACTIVE_TIMELINE);
+    storage.remove(WIDGET_DATA_KEYS.LAST_UPDATE);
   } catch (error) {
     console.error('❌ Error clearing widget data:', error);
   }
+}
+
+/**
+ * Get widget data from App Groups (for debugging)
+ */
+export function getWidgetData(): { timeline: string | null; settings: string | null; lastUpdate: string | null } {
+  const storage = getExtensionStorage();
+  if (!storage) {
+    return { timeline: null, settings: null, lastUpdate: null };
+  }
+
+  return {
+    timeline: storage.get(WIDGET_DATA_KEYS.ACTIVE_TIMELINE),
+    settings: storage.get(WIDGET_DATA_KEYS.SETTINGS),
+    lastUpdate: storage.get(WIDGET_DATA_KEYS.LAST_UPDATE),
+  };
 }
 
 /**
