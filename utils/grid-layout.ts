@@ -25,9 +25,14 @@ export interface GridLayout {
   dotSize: number;
 
   /**
-   * Spacing between dots (in pixels)
+   * Horizontal spacing between dots (in pixels)
    */
-  spacing: number;
+  spacingHorizontal: number;
+
+  /**
+   * Vertical spacing between dots (in pixels)
+   */
+  spacingVertical: number;
 
   /**
    * Total width required for the grid
@@ -65,15 +70,16 @@ export function calculateGridLayout(
       columns: 0,
       rows: 0,
       dotSize: 0,
-      spacing: 0,
+      spacingHorizontal: 0,
+      spacingVertical: 0,
       gridWidth: 0,
       gridHeight: 0,
     };
   }
 
   // Step 1: Determine optimal columns
-  // For small grids (≤49 dots), use fewer columns for better visibility
-  // For larger grids, aim for 15-20 columns for readability
+  // Optimized for Manus.ai MVP style (16 columns)
+  // Reference: Wide horizontal spacing, tight vertical spacing
   let optimalColumns: number;
 
   if (totalDots <= 7) {
@@ -86,37 +92,35 @@ export function calculateGridLayout(
     // Medium grids: 10 columns
     optimalColumns = 10;
   } else {
-    // Large grids (e.g., 365 days): 15-20 columns
-    // Choose based on aspect ratio
+    // Large grids (e.g., 365 days): 16 columns (Manus.ai MVP style)
+    // 365 days ÷ 16 columns ≈ 23 rows
     const aspectRatio = containerWidth / containerHeight;
     if (aspectRatio > 1.5) {
-      // Wide container: more columns
-      optimalColumns = 20;
-    } else if (aspectRatio > 1.0) {
-      // Slightly wide: medium columns
+      // Wide container (landscape): more columns
       optimalColumns = 18;
     } else {
-      // Tall or square: fewer columns
-      optimalColumns = 15;
+      // Portrait mode (default): 16 columns
+      optimalColumns = 16;
     }
   }
 
   // Step 2: Calculate rows
   const rows = Math.ceil(totalDots / optimalColumns);
 
-  // Step 3: Calculate maximum dot size that fits both dimensions
-  // We need to account for spacing between dots
-  // Formula: (columns * dotSize) + ((columns - 1) * spacing) = containerWidth
-  // Where: spacing = dotSize * spacingRatio
-  // Solving: dotSize = containerWidth / (columns + (columns - 1) * spacingRatio)
+  // Step 3: Calculate maximum dot size with asymmetric spacing
+  // Horizontal spacing: wider gaps (25%)
+  // Vertical spacing: tighter gaps (8%)
+  // Formula: (columns * dotSize) + ((columns - 1) * horizontalSpacing) = containerWidth
+  //          (rows * dotSize) + ((rows - 1) * verticalSpacing) = containerHeight
 
-  const spacingRatio = Layout.dotSpacingRatio;
+  const horizontalSpacingRatio = Layout.dotSpacingRatioHorizontal;
+  const verticalSpacingRatio = Layout.dotSpacingRatioVertical;
 
   const maxDotSizeFromWidth =
-    containerWidth / (optimalColumns + (optimalColumns - 1) * spacingRatio);
+    containerWidth / (optimalColumns + (optimalColumns - 1) * horizontalSpacingRatio);
 
   const maxDotSizeFromHeight =
-    containerHeight / (rows + (rows - 1) * spacingRatio);
+    containerHeight / (rows + (rows - 1) * verticalSpacingRatio);
 
   // Use the smaller of the two to ensure fit in both dimensions
   let dotSize = Math.min(maxDotSizeFromWidth, maxDotSizeFromHeight);
@@ -124,18 +128,20 @@ export function calculateGridLayout(
   // Step 4: Clamp dot size to reasonable bounds
   dotSize = Math.max(Layout.minDotSize, Math.min(Layout.maxDotSize, dotSize));
 
-  // Step 5: Calculate spacing
-  const spacing = dotSize * spacingRatio;
+  // Step 5: Calculate asymmetric spacing
+  const spacingHorizontal = dotSize * horizontalSpacingRatio;
+  const spacingVertical = dotSize * verticalSpacingRatio;
 
   // Step 6: Calculate actual grid dimensions
-  const gridWidth = optimalColumns * dotSize + (optimalColumns - 1) * spacing;
-  const gridHeight = rows * dotSize + (rows - 1) * spacing;
+  const gridWidth = optimalColumns * dotSize + (optimalColumns - 1) * spacingHorizontal;
+  const gridHeight = rows * dotSize + (rows - 1) * spacingVertical;
 
   return {
     columns: optimalColumns,
     rows,
     dotSize: Math.floor(dotSize), // Round down for crisp pixels
-    spacing: Math.floor(spacing),
+    spacingHorizontal: Math.floor(spacingHorizontal),
+    spacingVertical: Math.floor(spacingVertical),
     gridWidth: Math.floor(gridWidth),
     gridHeight: Math.floor(gridHeight),
   };
@@ -155,8 +161,8 @@ export function getDotPosition(
   const row = Math.floor(index / layout.columns);
   const col = index % layout.columns;
 
-  const x = col * (layout.dotSize + layout.spacing);
-  const y = row * (layout.dotSize + layout.spacing);
+  const x = col * (layout.dotSize + layout.spacingHorizontal);
+  const y = row * (layout.dotSize + layout.spacingVertical);
 
   return { x, y };
 }

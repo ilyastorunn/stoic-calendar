@@ -275,7 +275,9 @@ export const Layout = {
   // Grid dot sizing (calculated dynamically, these are reference values)
   minDotSize: 6,
   maxDotSize: 14,
-  dotSpacingRatio: 0.15, // 15% of dot size
+  dotSpacingRatioHorizontal: 0.25, // 25% of dot size (wider horizontal gaps)
+  dotSpacingRatioVertical: 0.08,   // 8% of dot size (tighter vertical gaps)
+  // Reference: Manus.ai MVP style - horizontal spacing > vertical spacing
 };
 
 /**

@@ -457,13 +457,13 @@ struct StoicGridView: View {
             let offsetX = (size.width - layout.gridWidth) / 2
             let offsetY = (size.height - layout.gridHeight) / 2
 
-            // Draw each dot
+            // Draw each dot with asymmetric spacing
             for index in 0..<totalDays {
                 let row = index / layout.columns
                 let col = index % layout.columns
 
-                let x = offsetX + CGFloat(col) * (layout.dotSize + layout.spacing)
-                let y = offsetY + CGFloat(row) * (layout.dotSize + layout.spacing)
+                let x = offsetX + CGFloat(col) * (layout.dotSize + layout.spacingHorizontal)
+                let y = offsetY + CGFloat(row) * (layout.dotSize + layout.spacingVertical)
 
                 let isFilled = index < daysPassed
                 let color = isFilled ? filledColor : emptyColor
@@ -491,7 +491,8 @@ struct GridLayout {
     let columns: Int
     let rows: Int
     let dotSize: CGFloat
-    let spacing: CGFloat
+    let spacingHorizontal: CGFloat
+    let spacingVertical: CGFloat
     let gridWidth: CGFloat
     let gridHeight: CGFloat
 }
@@ -499,10 +500,11 @@ struct GridLayout {
 /// Calculate optimal grid layout with optimizations for large timelines
 func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> GridLayout {
     guard totalDays > 0 && width > 0 && height > 0 else {
-        return GridLayout(columns: 0, rows: 0, dotSize: 0, spacing: 0, gridWidth: 0, gridHeight: 0)
+        return GridLayout(columns: 0, rows: 0, dotSize: 0, spacingHorizontal: 0, spacingVertical: 0, gridWidth: 0, gridHeight: 0)
     }
 
-    // Step 1: Determine optimal columns (optimized for large timelines)
+    // Step 1: Determine optimal columns (Manus.ai MVP style: 16 columns)
+    // Reference: Wide horizontal spacing, tight vertical spacing
     let optimalColumns: Int
 
     if totalDays <= 7 {
@@ -514,32 +516,30 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> Gri
     } else if totalDays <= 100 {
         // Medium grids: 10 columns
         optimalColumns = 10
-    } else if totalDays <= 180 {
-        // Medium-large grids: 15 columns
-        optimalColumns = 15
     } else {
-        // Large grids (365 days): More aggressive columns for better visibility
+        // Large grids (365 days): 16 columns (Manus.ai MVP style)
+        // 365 days ÷ 16 columns ≈ 23 rows
         let aspectRatio = width / height
         if aspectRatio > 1.5 {
-            // Wide widgets (medium, large): Use more columns
-            optimalColumns = 30
-        } else if aspectRatio > 1.0 {
-            optimalColumns = 25
+            // Wide widgets (medium, large): more columns
+            optimalColumns = 18
         } else {
-            // Narrow widgets (small): Still use many columns to keep dots visible
-            optimalColumns = 20
+            // Portrait/square widgets: 16 columns
+            optimalColumns = 16
         }
     }
 
     // Step 2: Calculate rows
     let rows = Int(ceil(Double(totalDays) / Double(optimalColumns)))
 
-    // Step 3: Calculate spacing ratio (reduced for large timelines)
-    let spacingRatio: CGFloat = totalDays > 180 ? 0.08 : 0.15 // 8% for large timelines, 15% for small
+    // Step 3: Calculate asymmetric spacing ratios (Manus.ai MVP style)
+    // Horizontal: wider gaps (25%), Vertical: tighter gaps (8%)
+    let horizontalSpacingRatio: CGFloat = 0.25
+    let verticalSpacingRatio: CGFloat = 0.08
 
-    // Step 4: Calculate maximum dot size
-    let maxDotSizeFromWidth = width / (CGFloat(optimalColumns) + CGFloat(optimalColumns - 1) * spacingRatio)
-    let maxDotSizeFromHeight = height / (CGFloat(rows) + CGFloat(rows - 1) * spacingRatio)
+    // Step 4: Calculate maximum dot size with asymmetric spacing
+    let maxDotSizeFromWidth = width / (CGFloat(optimalColumns) + CGFloat(optimalColumns - 1) * horizontalSpacingRatio)
+    let maxDotSizeFromHeight = height / (CGFloat(rows) + CGFloat(rows - 1) * verticalSpacingRatio)
 
     var dotSize = min(maxDotSizeFromWidth, maxDotSizeFromHeight)
 
@@ -549,18 +549,20 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> Gri
     let maxDotSize: CGFloat = totalDays > 180 ? 10 : 14
     dotSize = max(minDotSize, min(maxDotSize, dotSize))
 
-    // Step 6: Calculate spacing
-    let spacing = dotSize * spacingRatio
+    // Step 6: Calculate asymmetric spacing
+    let spacingHorizontal = dotSize * horizontalSpacingRatio
+    let spacingVertical = dotSize * verticalSpacingRatio
 
     // Step 7: Calculate grid dimensions
-    let gridWidth = CGFloat(optimalColumns) * dotSize + CGFloat(optimalColumns - 1) * spacing
-    let gridHeight = CGFloat(rows) * dotSize + CGFloat(rows - 1) * spacing
+    let gridWidth = CGFloat(optimalColumns) * dotSize + CGFloat(optimalColumns - 1) * spacingHorizontal
+    let gridHeight = CGFloat(rows) * dotSize + CGFloat(rows - 1) * spacingVertical
 
     return GridLayout(
         columns: optimalColumns,
         rows: rows,
         dotSize: floor(dotSize),
-        spacing: floor(spacing),
+        spacingHorizontal: floor(spacingHorizontal),
+        spacingVertical: floor(spacingVertical),
         gridWidth: floor(gridWidth),
         gridHeight: floor(gridHeight)
     )
