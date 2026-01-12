@@ -293,6 +293,74 @@ struct StoicGridWidgetView: View {
     }
 }
 
+// MARK: - Lock Screen Provider (Simple TimelineProvider for lock screen widgets)
+
+struct StoicLockScreenProvider: TimelineProvider {
+    typealias Entry = StoicGridEntry
+
+    private let appGroupId = "group.com.stoiccalendar.shared"
+
+    func placeholder(in context: Context) -> StoicGridEntry {
+        StoicGridEntry(
+            date: Date(),
+            timeline: WidgetTimelineData(
+                id: "placeholder",
+                type: "year",
+                title: "2026",
+                startDate: "2026-01-01T00:00:00.000Z",
+                endDate: "2026-12-31T23:59:59.999Z",
+                daysPassed: 7,
+                daysRemaining: 358,
+                totalDays: 365,
+                progressPercentage: 2
+            ),
+            settings: WidgetSettingsData(
+                gridColorTheme: "classic",
+                themeMode: "dark"
+            )
+        )
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (StoicGridEntry) -> Void) {
+        let entry = loadActiveTimelineData()
+        completion(entry)
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<StoicGridEntry>) -> Void) {
+        let entry = loadActiveTimelineData()
+
+        // Update every hour
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        completion(timeline)
+    }
+
+    /// Load active timeline data from App Groups (lock screen widgets don't have configuration)
+    private func loadActiveTimelineData() -> StoicGridEntry {
+        guard let userDefaults = UserDefaults(suiteName: appGroupId) else {
+            return StoicGridEntry(date: Date(), timeline: nil, settings: nil)
+        }
+
+        let timelineData: WidgetTimelineData? = {
+            guard let jsonString = userDefaults.string(forKey: "widget_active_timeline"),
+                  let data = jsonString.data(using: .utf8) else {
+                return nil
+            }
+            return try? JSONDecoder().decode(WidgetTimelineData.self, from: data)
+        }()
+
+        let settingsData: WidgetSettingsData? = {
+            guard let jsonString = userDefaults.string(forKey: "widget_settings"),
+                  let data = jsonString.data(using: .utf8) else {
+                return nil
+            }
+            return try? JSONDecoder().decode(WidgetSettingsData.self, from: data)
+        }()
+
+        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData)
+    }
+}
+
 // MARK: - Lock Screen Widget View
 
 struct StoicLockScreenWidgetView: View {
@@ -572,7 +640,7 @@ struct StoicLockScreenWidget: Widget {
     let kind: String = "StoicLockWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: StoicGridProvider()) { entry in
+        StaticConfiguration(kind: kind, provider: StoicLockScreenProvider()) { entry in
             StoicLockScreenWidgetView(entry: entry)
         }
         .configurationDisplayName("Stoic Progress")
