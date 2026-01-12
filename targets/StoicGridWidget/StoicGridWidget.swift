@@ -7,6 +7,7 @@
 
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 // MARK: - Data Models
 
@@ -29,6 +30,59 @@ struct WidgetSettingsData: Codable {
     let themeMode: String
 }
 
+
+// MARK: - AppIntent Configuration
+
+/// Timeline entity for widget configuration picker
+struct TimelineEntity: AppEntity {
+    let id: String
+    let title: String
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation {
+        TypeDisplayRepresentation(name: "Timeline")
+    }
+
+    static var defaultQuery = TimelineQuery()
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(title)")
+    }
+}
+
+/// Query provider to fetch available timelines from App Groups
+struct TimelineQuery: EntityQuery {
+    private let appGroupId = "group.com.stoiccalendar.shared"
+
+    func entities(for identifiers: [TimelineEntity.ID]) async throws -> [TimelineEntity] {
+        let allTimelines = loadAllTimelines()
+        return allTimelines.filter { identifiers.contains($0.id) }
+    }
+
+    func suggestedEntities() async throws -> [TimelineEntity] {
+        return loadAllTimelines()
+    }
+
+    private func loadAllTimelines() -> [TimelineEntity] {
+        guard let userDefaults = UserDefaults(suiteName: appGroupId),
+              let jsonString = userDefaults.string(forKey: "widget_all_timelines"),
+              let data = jsonString.data(using: .utf8),
+              let timelinesData = try? JSONDecoder().decode([WidgetTimelineData].self, from: data) else {
+            return []
+        }
+
+        return timelinesData.map { TimelineEntity(id: $0.id, title: $0.title) }
+    }
+}
+
+/// Intent for selecting which timeline to display in widget
+struct SelectTimelineIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Select Timeline"
+    static var description = IntentDescription("Choose which timeline to display in this widget")
+
+    @Parameter(title: "Timeline")
+    var timeline: TimelineEntity?
+}
+
 // MARK: - Widget Entry
 
 struct StoicGridEntry: TimelineEntry {
@@ -39,8 +93,9 @@ struct StoicGridEntry: TimelineEntry {
 
 // MARK: - Timeline Provider
 
-struct StoicGridProvider: TimelineProvider {
+struct StoicGridProvider: AppIntentTimelineProvider {
     typealias Entry = StoicGridEntry
+    typealias Intent = SelectTimelineIntent
 
     private let appGroupId = "group.com.stoiccalendar.shared"
 
@@ -65,13 +120,12 @@ struct StoicGridProvider: TimelineProvider {
         )
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (StoicGridEntry) -> Void) {
-        let entry = loadTimelineData()
-        completion(entry)
+    func snapshot(for configuration: SelectTimelineIntent, in context: Context) async -> StoicGridEntry {
+        return loadTimelineData(for: configuration)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<StoicGridEntry>) -> Void) {
-        let entry = loadTimelineData()
+    func timeline(for configuration: SelectTimelineIntent, in context: Context) async -> Timeline<StoicGridEntry> {
+        let entry = loadTimelineData(for: configuration)
 
         // Update every hour, or at midnight for day changes
         let calendar = Calendar.current
@@ -81,22 +135,36 @@ struct StoicGridProvider: TimelineProvider {
 
         let nextUpdate = min(nextMidnight, nextHour)
 
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-        completion(timeline)
+        return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
 
     /// Load timeline and settings data from App Groups
-    private func loadTimelineData() -> StoicGridEntry {
+    /// If configuration has a selected timeline, load that specific timeline
+    /// Otherwise, fallback to active timeline (backward compatibility)
+    private func loadTimelineData(for configuration: SelectTimelineIntent) -> StoicGridEntry {
         guard let userDefaults = UserDefaults(suiteName: appGroupId) else {
             return StoicGridEntry(date: Date(), timeline: nil, settings: nil)
         }
 
+        // Load timeline data based on configuration
         let timelineData: WidgetTimelineData? = {
-            guard let jsonString = userDefaults.string(forKey: "widget_active_timeline"),
-                  let data = jsonString.data(using: .utf8) else {
-                return nil
+            // If user selected a specific timeline in widget configuration
+            if let selectedTimeline = configuration.timeline {
+                // Load all timelines and find the selected one
+                guard let jsonString = userDefaults.string(forKey: "widget_all_timelines"),
+                      let data = jsonString.data(using: .utf8),
+                      let allTimelines = try? JSONDecoder().decode([WidgetTimelineData].self, from: data) else {
+                    return nil
+                }
+                return allTimelines.first { $0.id == selectedTimeline.id }
+            } else {
+                // No specific timeline selected - fallback to active timeline (backward compatibility)
+                guard let jsonString = userDefaults.string(forKey: "widget_active_timeline"),
+                      let data = jsonString.data(using: .utf8) else {
+                    return nil
+                }
+                return try? JSONDecoder().decode(WidgetTimelineData.self, from: data)
             }
-            return try? JSONDecoder().decode(WidgetTimelineData.self, from: data)
         }()
 
         let settingsData: WidgetSettingsData? = {
@@ -152,6 +220,9 @@ struct StoicGridWidgetView: View {
                 .padding(paddingSize)
             }
             .widgetURL(URL(string: "stoiccalendar://home"))
+            .containerBackground(for: .widget) {
+                backgroundColor
+            }
         } else {
             // No active timeline
             ZStack {
@@ -166,6 +237,9 @@ struct StoicGridWidgetView: View {
                         .font(.caption)
                         .foregroundColor(secondaryTextColor)
                 }
+            }
+            .containerBackground(for: .widget) {
+                backgroundColor
             }
         }
     }
@@ -354,13 +428,13 @@ struct GridLayout {
     let gridHeight: CGFloat
 }
 
-/// Calculate optimal grid layout (ported from grid-layout.ts)
+/// Calculate optimal grid layout with optimizations for large timelines
 func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> GridLayout {
     guard totalDays > 0 && width > 0 && height > 0 else {
         return GridLayout(columns: 0, rows: 0, dotSize: 0, spacing: 0, gridWidth: 0, gridHeight: 0)
     }
 
-    // Step 1: Determine optimal columns
+    // Step 1: Determine optimal columns (optimized for large timelines)
     let optimalColumns: Int
 
     if totalDays <= 7 {
@@ -372,36 +446,45 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> Gri
     } else if totalDays <= 100 {
         // Medium grids: 10 columns
         optimalColumns = 10
+    } else if totalDays <= 180 {
+        // Medium-large grids: 15 columns
+        optimalColumns = 15
     } else {
-        // Large grids: 15-20 columns based on aspect ratio
+        // Large grids (365 days): More aggressive columns for better visibility
         let aspectRatio = width / height
         if aspectRatio > 1.5 {
-            optimalColumns = 20
+            // Wide widgets (medium, large): Use more columns
+            optimalColumns = 30
         } else if aspectRatio > 1.0 {
-            optimalColumns = 18
+            optimalColumns = 25
         } else {
-            optimalColumns = 15
+            // Narrow widgets (small): Still use many columns to keep dots visible
+            optimalColumns = 20
         }
     }
 
     // Step 2: Calculate rows
     let rows = Int(ceil(Double(totalDays) / Double(optimalColumns)))
 
-    // Step 3: Calculate maximum dot size
-    let spacingRatio: CGFloat = 0.10 // 10% of dot size
+    // Step 3: Calculate spacing ratio (reduced for large timelines)
+    let spacingRatio: CGFloat = totalDays > 180 ? 0.05 : 0.10 // 5% for large timelines, 10% for small
 
+    // Step 4: Calculate maximum dot size
     let maxDotSizeFromWidth = width / (CGFloat(optimalColumns) + CGFloat(optimalColumns - 1) * spacingRatio)
     let maxDotSizeFromHeight = height / (CGFloat(rows) + CGFloat(rows - 1) * spacingRatio)
 
     var dotSize = min(maxDotSizeFromWidth, maxDotSizeFromHeight)
 
-    // Step 4: Clamp dot size (6-14px)
-    dotSize = max(6, min(14, dotSize))
+    // Step 5: Clamp dot size based on widget size
+    // Smaller minimum for large timelines to improve visibility
+    let minDotSize: CGFloat = totalDays > 180 ? 3 : 5
+    let maxDotSize: CGFloat = totalDays > 180 ? 10 : 14
+    dotSize = max(minDotSize, min(maxDotSize, dotSize))
 
-    // Step 5: Calculate spacing
+    // Step 6: Calculate spacing
     let spacing = dotSize * spacingRatio
 
-    // Step 6: Calculate grid dimensions
+    // Step 7: Calculate grid dimensions
     let gridWidth = CGFloat(optimalColumns) * dotSize + CGFloat(optimalColumns - 1) * spacing
     let gridHeight = CGFloat(rows) * dotSize + CGFloat(rows - 1) * spacing
 
@@ -474,7 +557,7 @@ struct StoicGridWidget: Widget {
     let kind: String = "StoicGridWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: StoicGridProvider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: SelectTimelineIntent.self, provider: StoicGridProvider()) { entry in
             StoicGridWidgetView(entry: entry)
         }
         .configurationDisplayName("Stoic Grid")

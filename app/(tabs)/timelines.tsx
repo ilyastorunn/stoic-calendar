@@ -34,6 +34,10 @@ import {
 import { sortTimelinesWithActiveFirst } from '@/services/timeline-calculator';
 import { isPro, FREE_TIER_LIMITS } from '@/services/revenue-cat-service';
 import {
+  syncActiveTimelineToWidget,
+  syncAllTimelinesToWidget,
+} from '@/services/widget-data-service';
+import {
   Colors,
   FontSizes,
   FontWeights,
@@ -92,6 +96,9 @@ export default function TimelinesScreen() {
       // Then persist to storage
       await setActiveTimeline(timeline.id);
 
+      // Sync active timeline to widget
+      await syncActiveTimelineToWidget();
+
       // Navigate to home tab
       navigation.navigate('home' as never);
     } catch (error) {
@@ -120,6 +127,8 @@ export default function TimelinesScreen() {
             try {
               await deleteTimeline(timeline.id);
               await loadAllTimelines();
+              // Sync updated timeline list to widget
+              await syncAllTimelinesToWidget();
             } catch (error) {
               console.error('Error deleting timeline:', error);
             }
@@ -176,6 +185,9 @@ export default function TimelinesScreen() {
       await saveTimeline(newTimeline);
       await setActiveTimeline(newTimeline.id);
       await loadAllTimelines();
+      // Sync new timeline to widget (both list and active)
+      await syncAllTimelinesToWidget();
+      await syncActiveTimelineToWidget();
     } catch (error) {
       console.error('Error saving timeline:', error);
     }

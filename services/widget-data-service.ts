@@ -23,12 +23,23 @@ const APP_GROUP_ID = 'group.com.stoiccalendar.shared';
  */
 const WIDGET_DATA_KEYS = {
   ACTIVE_TIMELINE: 'widget_active_timeline',
+  ALL_TIMELINES: 'widget_all_timelines',
   SETTINGS: 'widget_settings',
   LAST_UPDATE: 'widget_last_update',
 } as const;
 
 /**
- * Widget-optimized timeline data
+ * Widget timeline metadata (lightweight version for widget configuration)
+ * Used to populate timeline picker in widget configuration
+ */
+export interface WidgetTimelineMetadata {
+  id: string;
+  title: string;
+  type: string;
+}
+
+/**
+ * Widget-optimized timeline data (full stats for display)
  * Serialized to JSON and stored in App Groups
  */
 export interface WidgetTimelineData {
@@ -153,6 +164,54 @@ export async function syncActiveTimelineToWidget(): Promise<void> {
 }
 
 /**
+ * Export all timelines data to App Groups for widget configuration
+ *
+ * This function exports full data for all timelines (with stats) so that
+ * widgets can display any timeline, not just the active one.
+ *
+ * This function should be called:
+ * - On app launch
+ * - When a timeline is created
+ * - When a timeline is updated (title/type changes)
+ * - When a timeline is deleted
+ *
+ * NOTE: Widget sync requires a development build and will not work in Expo Go.
+ */
+export async function syncAllTimelinesToWidget(): Promise<void> {
+  const storage = getExtensionStorage();
+  if (!storage) {
+    return;
+  }
+
+  try {
+    const timelines = await loadTimelines();
+
+    // Create full data array with stats for each timeline
+    const timelineDataArray: WidgetTimelineData[] = timelines.map((t) => {
+      const stats = calculateTimelineStats(t);
+      return {
+        id: t.id,
+        type: t.type,
+        title: t.title,
+        startDate: t.startDate,
+        endDate: t.endDate,
+        daysPassed: stats.daysPassed,
+        daysRemaining: stats.daysRemaining,
+        totalDays: stats.totalDays,
+        progressPercentage: stats.progressPercentage,
+      };
+    });
+
+    // Write to App Groups using ExtensionStorage
+    storage.set(WIDGET_DATA_KEYS.ALL_TIMELINES, JSON.stringify(timelineDataArray));
+
+    console.log(`✅ Widget timelines data synced (${timelineDataArray.length} timelines)`);
+  } catch (error) {
+    console.error('❌ Error syncing all timelines to widget:', error);
+  }
+}
+
+/**
  * Export settings to App Groups for widgets
  *
  * This function should be called:
@@ -217,10 +276,11 @@ export function getWidgetData(): { timeline: string | null; settings: string | n
 }
 
 /**
- * Sync all widget data (timeline + settings)
- * Convenience function for initial app setup
+ * Sync all widget data (active timeline + all timelines + settings)
+ * Convenience function for initial app setup and comprehensive sync
  */
 export async function syncAllWidgetData(): Promise<void> {
   await syncActiveTimelineToWidget();
+  await syncAllTimelinesToWidget();
   await syncSettingsToWidget();
 }
