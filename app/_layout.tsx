@@ -6,20 +6,61 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
-import { useEffect } from 'react';
+import { useColorScheme, Appearance } from 'react-native';
+import { useEffect, useState } from 'react';
 import * as Linking from 'expo-linking';
 import 'react-native-reanimated';
 import { initializeRevenueCat } from '@/services/revenue-cat-service';
 import { syncAllWidgetData } from '@/services/widget-data-service';
+import { getThemeMode } from '@/services/storage';
+import { ThemeMode } from '@/types/timeline';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const systemColorScheme = useColorScheme();
   const router = useRouter();
+
+  // State for user's theme preference
+  const [userThemeMode, setUserThemeMode] = useState<ThemeMode>('dark');
+  const [isThemeLoaded, setIsThemeLoaded] = useState(false);
+
+  // Load user's theme preference from storage
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const themeMode = await getThemeMode();
+        setUserThemeMode(themeMode);
+
+        // Apply theme immediately
+        if (themeMode === 'system') {
+          Appearance.setColorScheme(null);
+        } else {
+          Appearance.setColorScheme(themeMode);
+        }
+
+        setIsThemeLoaded(true);
+      } catch (error) {
+        console.error('Failed to load theme:', error);
+        setIsThemeLoaded(true);
+      }
+    };
+
+    loadTheme();
+  }, []);
+
+  // Listen for appearance changes (from settings screen)
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(async () => {
+      // Reload theme preference when appearance changes
+      const themeMode = await getThemeMode();
+      setUserThemeMode(themeMode);
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // Initialize RevenueCat and widget data sync on app start
   useEffect(() => {
@@ -44,8 +85,18 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, [router]);
 
+  // Determine effective color scheme
+  const effectiveColorScheme = userThemeMode === 'system'
+    ? systemColorScheme
+    : userThemeMode;
+
+  // Don't render until theme is loaded to prevent flash
+  if (!isThemeLoaded) {
+    return null;
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen

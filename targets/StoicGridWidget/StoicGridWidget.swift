@@ -535,7 +535,7 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> Gri
     let rows = Int(ceil(Double(totalDays) / Double(optimalColumns)))
 
     // Step 3: Calculate spacing ratio (reduced for large timelines)
-    let spacingRatio: CGFloat = totalDays > 180 ? 0.05 : 0.10 // 5% for large timelines, 10% for small
+    let spacingRatio: CGFloat = totalDays > 180 ? 0.08 : 0.15 // 8% for large timelines, 15% for small
 
     // Step 4: Calculate maximum dot size
     let maxDotSizeFromWidth = width / (CGFloat(optimalColumns) + CGFloat(optimalColumns - 1) * spacingRatio)

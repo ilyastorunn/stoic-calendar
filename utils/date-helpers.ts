@@ -146,6 +146,7 @@ export function getDaysBetween(startDate: Date | string, endDate: Date | string)
 /**
  * Calculate days passed in a timeline (from startDate to today)
  * Returns 0 if timeline hasn't started yet
+ * Note: Today is counted as "passed" once it starts (at 00:00)
  */
 export function getDaysPassed(startDate: Date | string, endDate: Date | string): number {
   const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
@@ -162,13 +163,14 @@ export function getDaysPassed(startDate: Date | string, endDate: Date | string):
     return getDaysBetween(start, end);
   }
 
-  // Timeline is active, return days from start to today
+  // Timeline is active, return days from start to today (inclusive)
   return getDaysBetween(start, today);
 }
 
 /**
- * Calculate days remaining in a timeline (from today to endDate)
+ * Calculate days remaining in a timeline (from tomorrow to endDate)
  * Returns 0 if timeline has ended
+ * Note: Today is NOT counted in "remaining" since it's already in "passed"
  */
 export function getDaysRemaining(startDate: Date | string, endDate: Date | string): number {
   const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
@@ -185,8 +187,18 @@ export function getDaysRemaining(startDate: Date | string, endDate: Date | strin
     return 0;
   }
 
-  // Timeline is active, return days from today to end
-  return getDaysBetween(today, end);
+  // Timeline is active
+  // Calculate tomorrow (to exclude today from remaining)
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // If today is the last day, return 0
+  if (tomorrow > end) {
+    return 0;
+  }
+
+  // Return days from tomorrow to end (excluding today)
+  return getDaysBetween(tomorrow, end);
 }
 
 /**

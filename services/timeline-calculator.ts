@@ -259,6 +259,126 @@ export function weekTimelineNeedsUpdate(timeline: Timeline): boolean {
   return currentWeekStart.getTime() !== timelineWeekStart.getTime();
 }
 
+/**
+ * Update a "This Month" timeline to the current month
+ * Should be called when the app detects a month change
+ *
+ * @param timeline - Month timeline to update
+ * @returns Updated timeline with new dates
+ */
+export function updateMonthTimeline(timeline: Timeline): Timeline {
+  if (timeline.type !== TimelineType.MONTH) {
+    throw new Error('Can only update MONTH timelines');
+  }
+
+  const config = calculateTimelineFromType(TimelineType.MONTH);
+
+  return {
+    ...timeline,
+    startDate: config.startDate,
+    endDate: config.endDate,
+    title: config.title,
+  };
+}
+
+/**
+ * Check if a month timeline needs to be updated
+ * Returns true if the timeline's month is not the current month
+ *
+ * @param timeline - Month timeline to check
+ * @returns True if update is needed
+ */
+export function monthTimelineNeedsUpdate(timeline: Timeline): boolean {
+  if (timeline.type !== TimelineType.MONTH) {
+    return false;
+  }
+
+  const currentMonthStart = getStartOfCurrentMonth();
+  const timelineMonthStart = new Date(timeline.startDate);
+
+  // Compare month start dates
+  return (
+    currentMonthStart.getFullYear() !== timelineMonthStart.getFullYear() ||
+    currentMonthStart.getMonth() !== timelineMonthStart.getMonth()
+  );
+}
+
+/**
+ * Update a "Current Year" timeline to the current year
+ * Should be called when the app detects a year change
+ *
+ * @param timeline - Year timeline to update
+ * @returns Updated timeline with new dates
+ */
+export function updateYearTimeline(timeline: Timeline): Timeline {
+  if (timeline.type !== TimelineType.YEAR) {
+    throw new Error('Can only update YEAR timelines');
+  }
+
+  const config = calculateTimelineFromType(TimelineType.YEAR);
+
+  return {
+    ...timeline,
+    startDate: config.startDate,
+    endDate: config.endDate,
+    title: config.title,
+  };
+}
+
+/**
+ * Check if a year timeline needs to be updated
+ * Returns true if the timeline's year is not the current year
+ *
+ * @param timeline - Year timeline to check
+ * @returns True if update is needed
+ */
+export function yearTimelineNeedsUpdate(timeline: Timeline): boolean {
+  if (timeline.type !== TimelineType.YEAR) {
+    return false;
+  }
+
+  const currentYear = new Date().getFullYear();
+  const timelineYear = new Date(timeline.startDate).getFullYear();
+
+  // Compare years
+  return currentYear !== timelineYear;
+}
+
+/**
+ * Check if any timeline needs to be updated and return updated version
+ * Automatically detects timeline type and applies appropriate update
+ *
+ * @param timeline - Timeline to check and potentially update
+ * @returns Updated timeline if update was needed, otherwise original timeline
+ */
+export function updateTimelineIfNeeded(timeline: Timeline): { timeline: Timeline; wasUpdated: boolean } {
+  switch (timeline.type) {
+    case TimelineType.WEEK:
+      if (weekTimelineNeedsUpdate(timeline)) {
+        return { timeline: updateWeekTimeline(timeline), wasUpdated: true };
+      }
+      break;
+
+    case TimelineType.MONTH:
+      if (monthTimelineNeedsUpdate(timeline)) {
+        return { timeline: updateMonthTimeline(timeline), wasUpdated: true };
+      }
+      break;
+
+    case TimelineType.YEAR:
+      if (yearTimelineNeedsUpdate(timeline)) {
+        return { timeline: updateYearTimeline(timeline), wasUpdated: true };
+      }
+      break;
+
+    case TimelineType.CUSTOM:
+      // Custom timelines never auto-update
+      break;
+  }
+
+  return { timeline, wasUpdated: false };
+}
+
 // ============================================================================
 // Timeline Validation
 // ============================================================================

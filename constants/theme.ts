@@ -275,7 +275,7 @@ export const Layout = {
   // Grid dot sizing (calculated dynamically, these are reference values)
   minDotSize: 6,
   maxDotSize: 14,
-  dotSpacingRatio: 0.10, // 10% of dot size
+  dotSpacingRatio: 0.15, // 15% of dot size
 };
 
 /**

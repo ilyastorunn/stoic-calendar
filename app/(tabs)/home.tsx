@@ -26,6 +26,7 @@ import {
   getTimelineRemaining,
   getTimelineProgressPercentage,
   createTimeline,
+  updateTimelineIfNeeded,
 } from '@/services/timeline-calculator';
 import {
   Colors,
@@ -46,6 +47,7 @@ export default function HomeScreen() {
   /**
    * Load active timeline
    * Auto-creates a default "Current Year" timeline if none exist
+   * Auto-updates Week/Month/Year timelines if they're outdated
    */
   const loadActiveTimeline = useCallback(async () => {
     try {
@@ -67,7 +69,20 @@ export default function HomeScreen() {
         setActiveTimeline(defaultTimeline);
       } else {
         // Load the active timeline
-        const timeline = await getActiveTimeline();
+        let timeline = await getActiveTimeline();
+
+        if (timeline) {
+          // Check if timeline needs auto-update (Week/Month/Year)
+          const { timeline: updatedTimeline, wasUpdated } = updateTimelineIfNeeded(timeline);
+
+          if (wasUpdated) {
+            // Save the updated timeline
+            await saveTimeline(updatedTimeline);
+            console.log(`Auto-updated ${updatedTimeline.type} timeline: ${updatedTimeline.title}`);
+            timeline = updatedTimeline;
+          }
+        }
+
         setActiveTimeline(timeline);
       }
     } catch (error) {
