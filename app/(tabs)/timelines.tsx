@@ -21,6 +21,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Timeline } from '@/types/timeline';
 import { TimelineCard } from '@/components/timeline-card';
@@ -202,8 +203,8 @@ export default function TimelinesScreen() {
         },
       ]}
     >
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header - FadeIn */}
+      <Animated.View style={styles.header} entering={FadeIn.duration(400)}>
         <View style={styles.headerLeft}>
           <Text
             style={[
@@ -238,7 +239,7 @@ export default function TimelinesScreen() {
         >
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       {/* Timeline List */}
       <ScrollView
@@ -250,14 +251,18 @@ export default function TimelinesScreen() {
           },
         ]}
       >
-        {timelines.map((timeline) => (
-          <TimelineCard
+        {timelines.map((timeline, index) => (
+          <Animated.View
             key={timeline.id}
-            timeline={timeline}
-            onPress={handleTimelinePress}
-            onDelete={handleTimelineDelete}
-            showDelete
-          />
+            entering={FadeInDown.duration(300).delay(Math.min(100 + index * 50, 500))}
+          >
+            <TimelineCard
+              timeline={timeline}
+              onPress={handleTimelinePress}
+              onDelete={handleTimelineDelete}
+              showDelete
+            />
+          </Animated.View>
         ))}
 
         {!loading && timelines.length === 0 && (

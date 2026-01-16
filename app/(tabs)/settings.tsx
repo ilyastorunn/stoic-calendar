@@ -22,6 +22,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { SettingsGroup } from '@/components/settings-group';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
@@ -238,8 +239,8 @@ export default function SettingsScreen() {
         },
       ]}
     >
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header - FadeIn */}
+      <Animated.View style={styles.header} entering={FadeIn.duration(400)}>
         <Text
           style={[
             styles.title,
@@ -250,7 +251,7 @@ export default function SettingsScreen() {
         >
           Settings
         </Text>
-      </View>
+      </Animated.View>
 
       {/* Content */}
       <ScrollView
@@ -262,187 +263,201 @@ export default function SettingsScreen() {
           },
         ]}
       >
-        {/* Appearance */}
-        <SettingsGroup title="Appearance" items={appearanceItems} />
+        {/* Appearance - 100ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(100)}>
+          <SettingsGroup title="Appearance" items={appearanceItems} />
+        </Animated.View>
 
-        {/* Grid Colors */}
-        <SettingsGroup title="Grid Colors" items={[]}>
-          <View style={styles.colorPaletteContainer}>
-            {/* Classic Blue */}
-            <TouchableOpacity
-              style={styles.colorPaletteItem}
-              onPress={() => handleGridColorThemeChange('classic')}
-              activeOpacity={0.6}
-            >
-              <View
-                style={[
-                  styles.colorPreview,
-                  {
-                    backgroundColor: colorScheme === 'dark'
-                      ? GridColorPalettes.classic.dark.dotFilled
-                      : GridColorPalettes.classic.light.dotFilled,
-                  },
-                  currentGridColorTheme === 'classic' && {
-                    borderColor: colors.accent,
-                    borderWidth: 3,
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.colorPaletteLabel,
-                  {
-                    color: colors.textSecondary,
-                  },
-                ]}
+        {/* Grid Colors - 200ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(200)}>
+          <SettingsGroup title="Grid Colors" items={[]}>
+            <View style={styles.colorPaletteContainer}>
+              {/* Classic Blue */}
+              <TouchableOpacity
+                style={styles.colorPaletteItem}
+                onPress={() => handleGridColorThemeChange('classic')}
+                activeOpacity={0.6}
               >
-                {GridColorPalettes.classic.name}
-              </Text>
-            </TouchableOpacity>
+                <View
+                  style={[
+                    styles.colorPreview,
+                    {
+                      backgroundColor: colorScheme === 'dark'
+                        ? GridColorPalettes.classic.dark.dotFilled
+                        : GridColorPalettes.classic.light.dotFilled,
+                    },
+                    currentGridColorTheme === 'classic' && {
+                      borderColor: colors.accent,
+                      borderWidth: 3,
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.colorPaletteLabel,
+                    {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {GridColorPalettes.classic.name}
+                </Text>
+              </TouchableOpacity>
 
-            {/* Forest Green */}
-            <TouchableOpacity
-              style={styles.colorPaletteItem}
-              onPress={() => handleGridColorThemeChange('forest')}
-              activeOpacity={0.6}
-            >
-              <View
-                style={[
-                  styles.colorPreview,
-                  {
-                    backgroundColor: colorScheme === 'dark'
-                      ? GridColorPalettes.forest.dark.dotFilled
-                      : GridColorPalettes.forest.light.dotFilled,
-                  },
-                  currentGridColorTheme === 'forest' && {
-                    borderColor: colors.accent,
-                    borderWidth: 3,
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.colorPaletteLabel,
-                  {
-                    color: colors.textSecondary,
-                  },
-                ]}
+              {/* Forest Green */}
+              <TouchableOpacity
+                style={styles.colorPaletteItem}
+                onPress={() => handleGridColorThemeChange('forest')}
+                activeOpacity={0.6}
               >
-                {GridColorPalettes.forest.name}
-              </Text>
-            </TouchableOpacity>
+                <View
+                  style={[
+                    styles.colorPreview,
+                    {
+                      backgroundColor: colorScheme === 'dark'
+                        ? GridColorPalettes.forest.dark.dotFilled
+                        : GridColorPalettes.forest.light.dotFilled,
+                    },
+                    currentGridColorTheme === 'forest' && {
+                      borderColor: colors.accent,
+                      borderWidth: 3,
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.colorPaletteLabel,
+                    {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {GridColorPalettes.forest.name}
+                </Text>
+              </TouchableOpacity>
 
-            {/* Sunset Orange */}
-            <TouchableOpacity
-              style={styles.colorPaletteItem}
-              onPress={() => handleGridColorThemeChange('sunset')}
-              activeOpacity={0.6}
-            >
-              <View
-                style={[
-                  styles.colorPreview,
-                  {
-                    backgroundColor: colorScheme === 'dark'
-                      ? GridColorPalettes.sunset.dark.dotFilled
-                      : GridColorPalettes.sunset.light.dotFilled,
-                  },
-                  currentGridColorTheme === 'sunset' && {
-                    borderColor: colors.accent,
-                    borderWidth: 3,
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.colorPaletteLabel,
-                  {
-                    color: colors.textSecondary,
-                  },
-                ]}
+              {/* Sunset Orange */}
+              <TouchableOpacity
+                style={styles.colorPaletteItem}
+                onPress={() => handleGridColorThemeChange('sunset')}
+                activeOpacity={0.6}
               >
-                {GridColorPalettes.sunset.name}
-              </Text>
-            </TouchableOpacity>
+                <View
+                  style={[
+                    styles.colorPreview,
+                    {
+                      backgroundColor: colorScheme === 'dark'
+                        ? GridColorPalettes.sunset.dark.dotFilled
+                        : GridColorPalettes.sunset.light.dotFilled,
+                    },
+                    currentGridColorTheme === 'sunset' && {
+                      borderColor: colors.accent,
+                      borderWidth: 3,
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.colorPaletteLabel,
+                    {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {GridColorPalettes.sunset.name}
+                </Text>
+              </TouchableOpacity>
 
-            {/* Monochrome */}
-            <TouchableOpacity
-              style={styles.colorPaletteItem}
-              onPress={() => handleGridColorThemeChange('monochrome')}
-              activeOpacity={0.6}
-            >
-              <View
-                style={[
-                  styles.colorPreview,
-                  {
-                    backgroundColor: colorScheme === 'dark'
-                      ? GridColorPalettes.monochrome.dark.dotFilled
-                      : GridColorPalettes.monochrome.light.dotFilled,
-                  },
-                  currentGridColorTheme === 'monochrome' && {
-                    borderColor: colors.accent,
-                    borderWidth: 3,
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  styles.colorPaletteLabel,
-                  {
-                    color: colors.textSecondary,
-                  },
-                ]}
+              {/* Monochrome */}
+              <TouchableOpacity
+                style={styles.colorPaletteItem}
+                onPress={() => handleGridColorThemeChange('monochrome')}
+                activeOpacity={0.6}
               >
-                {GridColorPalettes.monochrome.name}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </SettingsGroup>
+                <View
+                  style={[
+                    styles.colorPreview,
+                    {
+                      backgroundColor: colorScheme === 'dark'
+                        ? GridColorPalettes.monochrome.dark.dotFilled
+                        : GridColorPalettes.monochrome.light.dotFilled,
+                    },
+                    currentGridColorTheme === 'monochrome' && {
+                      borderColor: colors.accent,
+                      borderWidth: 3,
+                    },
+                  ]}
+                />
+                <Text
+                  style={[
+                    styles.colorPaletteLabel,
+                    {
+                      color: colors.textSecondary,
+                    },
+                  ]}
+                >
+                  {GridColorPalettes.monochrome.name}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </SettingsGroup>
+        </Animated.View>
 
-        {/* Premium */}
-        {isLoadingSubscription ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={colors.accent} />
-          </View>
-        ) : (
-          <SettingsGroup title="Subscription" items={premiumItems} />
+        {/* Premium - 300ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(300)}>
+          {isLoadingSubscription ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.accent} />
+            </View>
+          ) : (
+            <SettingsGroup title="Subscription" items={premiumItems} />
+          )}
+        </Animated.View>
+
+        {/* About - 400ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(400)}>
+          <SettingsGroup title="About" items={aboutItems} />
+        </Animated.View>
+
+        {/* Debug (development only) - 500ms delay */}
+        {__DEV__ && (
+          <Animated.View entering={FadeInDown.duration(300).delay(500)}>
+            <SettingsGroup title="Debug" items={debugItems} />
+          </Animated.View>
         )}
 
-        {/* About */}
-        <SettingsGroup title="About" items={aboutItems} />
+        {/* Philosophy - 600ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(600)}>
+          <SettingsGroup title="Philosophy" items={[]}>
+            <View style={styles.philosophyContainer}>
+              <Text
+                style={[
+                  styles.philosophyQuote,
+                  {
+                    color: colors.textSecondary,
+                    fontStyle: 'italic',
+                  },
+                ]}
+              >
+                &ldquo;Time is presented neutrally, calmly, and honestly.&rdquo;
+              </Text>
 
-        {/* Debug (development only) */}
-        {__DEV__ && <SettingsGroup title="Debug" items={debugItems} />}
+              <View style={styles.philosophyDivider} />
 
-        {/* Philosophy */}
-        <SettingsGroup title="Philosophy" items={[]}>
-          <View style={styles.philosophyContainer}>
-            <Text
-              style={[
-                styles.philosophyQuote,
-                {
-                  color: colors.textSecondary,
-                  fontStyle: 'italic',
-                },
-              ]}
-            >
-              &ldquo;Time is presented neutrally, calmly, and honestly.&rdquo;
-            </Text>
-
-            <View style={styles.philosophyDivider} />
-
-            <Text
-              style={[
-                styles.philosophyBody,
-                {
-                  color: colors.textSecondary,
-                },
-              ]}
-            >
-              Stoic Calendar exists to make time visible, not actionable. No urgency, no
-              productivity pressure, no gamification.
-            </Text>
-          </View>
-        </SettingsGroup>
+              <Text
+                style={[
+                  styles.philosophyBody,
+                  {
+                    color: colors.textSecondary,
+                  },
+                ]}
+              >
+                Stoic Calendar exists to make time visible, not actionable. No urgency, no
+                productivity pressure, no gamification.
+              </Text>
+            </View>
+          </SettingsGroup>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );

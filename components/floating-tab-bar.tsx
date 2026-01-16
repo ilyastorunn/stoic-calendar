@@ -22,6 +22,7 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import {
   Colors,
   Spacing,
@@ -31,26 +32,23 @@ import {
 } from '@/constants/theme';
 
 /**
- * Tab Icon Component
- * Simple icon using Unicode symbols for now (can be replaced with custom icons)
+ * Animated Tab Icon Component
+ * Simple icon with scale and opacity animations
  */
 function TabIcon({ name, focused, color }: { name: string; focused: boolean; color: string }) {
-  const icons: Record<string, string> = {
-    home: '▦', // Grid symbol
-    timelines: '☰', // Horizontal lines
-    settings: '⚙', // Gear
-  };
+  // Animated style for scale and opacity
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: withTiming(focused ? 1 : 0.92, { duration: 200 }) },
+      ],
+      opacity: withTiming(focused ? 1 : 0.6, { duration: 200 }),
+    };
+  }, [focused]);
 
   return (
-    <View style={styles.iconContainer}>
-      <View
-        style={[
-          styles.icon,
-          {
-            opacity: focused ? 1 : 0.6,
-          },
-        ]}
-      >
+    <Animated.View style={[styles.iconContainer, animatedStyle]}>
+      <View style={styles.icon}>
         <View style={styles.iconText}>
           <View style={{ width: 24, height: 24, justifyContent: 'center', alignItems: 'center' }}>
             {name === 'home' && (
@@ -109,7 +107,7 @@ function TabIcon({ name, focused, color }: { name: string; focused: boolean; col
           </View>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

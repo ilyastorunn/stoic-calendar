@@ -11,6 +11,13 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, StyleSheet, useColorScheme } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
 import { Timeline, GridColorTheme } from '@/types/timeline';
 import { calculateGridLayout, generateDotPositions, calculateGridCenterOffset } from '@/utils/grid-layout';
 import { getTimelineDaysPassed, getTimelineTotalDays } from '@/services/timeline-calculator';
@@ -36,6 +43,86 @@ export interface StoicGridProps {
    */
   mini?: boolean;
 }
+
+/**
+ * Animated Dot Component
+ * Individual dot with wave animation (opacity + scale)
+ */
+interface AnimatedDotProps {
+  index: number;
+  totalDots: number;
+  x: number;
+  y: number;
+  offsetX: number;
+  offsetY: number;
+  dotSize: number;
+  isFilled: boolean;
+  fillColor: string;
+  emptyColor: string;
+  animate: boolean;
+}
+
+const AnimatedDot = React.memo(function AnimatedDot({
+  index,
+  totalDots,
+  x,
+  y,
+  offsetX,
+  offsetY,
+  dotSize,
+  isFilled,
+  fillColor,
+  emptyColor,
+  animate,
+}: AnimatedDotProps) {
+  // Shared value for animation progress (0 to 1)
+  const progress = useSharedValue(animate ? 0 : 1);
+
+  // Trigger animation on mount
+  useEffect(() => {
+    if (animate) {
+      // Calculate wave delay based on dot position
+      // Max 600ms total delay across all dots
+      const maxDelay = Math.min(totalDots * 1.5, 600);
+      const delay = (index / totalDots) * maxDelay;
+
+      progress.value = withDelay(
+        delay,
+        withTiming(1, {
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+        })
+      );
+    }
+  }, [animate, index, totalDots, progress]);
+
+  // Animated style for opacity and scale
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: progress.value,
+      transform: [
+        { scale: 0.6 + progress.value * 0.4 }, // Scale from 0.6 to 1.0
+      ],
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: offsetX + x,
+          top: offsetY + y,
+          width: dotSize,
+          height: dotSize,
+          borderRadius: dotSize / 2,
+          backgroundColor: isFilled ? fillColor : emptyColor,
+        },
+        animate && animatedStyle,
+      ]}
+    />
+  );
+});
 
 /**
  * Stoic Grid Component
@@ -125,7 +212,7 @@ export function StoicGrid({ timeline, animated = false, mini = false }: StoicGri
   }, [gridColorTheme, colorScheme]);
 
   /**
-   * Render dots
+   * Render dots with optional wave animation
    */
   const renderDots = () => {
     if (!gridLayout || dotPositions.length === 0) return null;
@@ -134,20 +221,19 @@ export function StoicGrid({ timeline, animated = false, mini = false }: StoicGri
       const isFilled = dot.index < daysPassed;
 
       return (
-        <View
+        <AnimatedDot
           key={dot.index}
-          style={[
-            styles.dot,
-            {
-              position: 'absolute',
-              left: centerOffset.offsetX + dot.x,
-              top: centerOffset.offsetY + dot.y,
-              width: gridLayout.dotSize,
-              height: gridLayout.dotSize,
-              borderRadius: gridLayout.dotSize / 2,
-              backgroundColor: isFilled ? gridColors.dotFilled : gridColors.dotEmpty,
-            },
-          ]}
+          index={dot.index}
+          totalDots={totalDays}
+          x={dot.x}
+          y={dot.y}
+          offsetX={centerOffset.offsetX}
+          offsetY={centerOffset.offsetY}
+          dotSize={gridLayout.dotSize}
+          isFilled={isFilled}
+          fillColor={gridColors.dotFilled}
+          emptyColor={gridColors.dotEmpty}
+          animate={animated}
         />
       );
     });
@@ -166,8 +252,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'relative',
-  },
-  dot: {
-    // Dot styles are applied inline for dynamic sizing
   },
 });

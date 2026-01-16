@@ -18,6 +18,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
 import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
@@ -167,8 +168,8 @@ export default function HomeScreen() {
       ]}
     >
       <View style={styles.contentContainer}>
-        {/* Header */}
-        <View style={styles.header}>
+        {/* Header - FadeIn first */}
+        <Animated.View style={styles.header} entering={FadeIn.duration(400)}>
           <Text
             style={[
               styles.title,
@@ -190,15 +191,15 @@ export default function HomeScreen() {
           >
             {progress}
           </Text>
-        </View>
+        </Animated.View>
 
-        {/* Grid Container */}
-        <View style={styles.gridContainer}>
+        {/* Grid Container - FadeIn with 200ms delay */}
+        <Animated.View style={styles.gridContainer} entering={FadeIn.duration(600).delay(200)}>
           <StoicGrid timeline={activeTimeline} animated />
-        </View>
+        </Animated.View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
+        {/* Footer - FadeIn with 400ms delay */}
+        <Animated.View style={styles.footer} entering={FadeIn.duration(400).delay(400)}>
           <Text
             style={[
               styles.remaining,
@@ -219,7 +220,7 @@ export default function HomeScreen() {
           >
             {percentage}% passed
           </Text>
-        </View>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
