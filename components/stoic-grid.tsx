@@ -10,12 +10,13 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { View, StyleSheet, useColorScheme } from 'react-native';
+import { View, StyleSheet, useColorScheme, Pressable } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withSequence,
   Easing,
 } from 'react-native-reanimated';
 import { Timeline, GridColorTheme } from '@/types/timeline';
@@ -42,6 +43,12 @@ export interface StoicGridProps {
    * @default false
    */
   mini?: boolean;
+
+  /**
+   * Called when a dot is pressed
+   * Receives the dot index (0-based) and the tap position
+   */
+  onDotPress?: (dotIndex: number, position: { x: number; y: number }) => void;
 }
 
 /**
@@ -60,6 +67,7 @@ interface AnimatedDotProps {
   fillColor: string;
   emptyColor: string;
   animate: boolean;
+  onPress?: (index: number, position: { x: number; y: number }) => void;
 }
 
 const AnimatedDot = React.memo(function AnimatedDot({
@@ -74,9 +82,13 @@ const AnimatedDot = React.memo(function AnimatedDot({
   fillColor,
   emptyColor,
   animate,
+  onPress,
 }: AnimatedDotProps) {
   // Shared value for animation progress (0 to 1)
   const progress = useSharedValue(animate ? 0 : 1);
+
+  // Shared value for tap animation
+  const tapScale = useSharedValue(1);
 
   // Trigger animation on mount
   useEffect(() => {
@@ -98,36 +110,78 @@ const AnimatedDot = React.memo(function AnimatedDot({
 
   // Animated style for opacity and scale
   const animatedStyle = useAnimatedStyle(() => {
+    const baseScale = 0.6 + progress.value * 0.4;
     return {
       opacity: progress.value,
       transform: [
-        { scale: 0.6 + progress.value * 0.4 }, // Scale from 0.6 to 1.0
+        { scale: baseScale * tapScale.value }, // Combine mount animation with tap animation
       ],
     };
   });
 
+  // If no onPress handler, render non-interactive dot
+  if (!onPress) {
+    return (
+      <Animated.View
+        style={[
+          {
+            position: 'absolute',
+            left: offsetX + x,
+            top: offsetY + y,
+            width: dotSize,
+            height: dotSize,
+            borderRadius: dotSize / 2,
+            backgroundColor: isFilled ? fillColor : emptyColor,
+          },
+          animate && animatedStyle,
+        ]}
+      />
+    );
+  }
+
   return (
-    <Animated.View
-      style={[
-        {
-          position: 'absolute',
-          left: offsetX + x,
-          top: offsetY + y,
-          width: dotSize,
-          height: dotSize,
-          borderRadius: dotSize / 2,
-          backgroundColor: isFilled ? fillColor : emptyColor,
-        },
-        animate && animatedStyle,
-      ]}
-    />
+    <Pressable
+      onPress={(event) => {
+        if (onPress) {
+          // Use pageX/pageY for absolute screen coordinates
+          const { pageX, pageY } = event.nativeEvent;
+
+          // Subtle tap feedback: scale down then back up
+          tapScale.value = withSequence(
+            withTiming(0.85, { duration: 100, easing: Easing.out(Easing.quad) }),
+            withTiming(1, { duration: 200, easing: Easing.out(Easing.cubic) })
+          );
+
+          onPress(index, { x: pageX, y: pageY });
+        }
+      }}
+      style={{
+        position: 'absolute',
+        left: offsetX + x,
+        top: offsetY + y,
+        width: dotSize,
+        height: dotSize,
+      }}
+    >
+      <Animated.View
+        style={[
+          {
+            width: dotSize,
+            height: dotSize,
+            borderRadius: dotSize / 2,
+            backgroundColor: isFilled ? fillColor : emptyColor,
+          },
+          animate && animatedStyle,
+        ]}
+      />
+    </Pressable>
   );
 });
 
 /**
  * Stoic Grid Component
  */
-export function StoicGrid({ timeline, animated = false, mini = false }: StoicGridProps) {
+export function StoicGrid({ timeline, animated = false, mini = false, onDotPress }: StoicGridProps) {
   const colorScheme = useColorScheme();
 
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
@@ -234,6 +288,7 @@ export function StoicGrid({ timeline, animated = false, mini = false }: StoicGri
           fillColor={gridColors.dotFilled}
           emptyColor={gridColors.dotEmpty}
           animate={animated}
+          onPress={onDotPress}
         />
       );
     });

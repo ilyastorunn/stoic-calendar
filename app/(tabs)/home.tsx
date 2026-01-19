@@ -21,6 +21,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
+import { DateDisplayOverlay } from '@/components/date-display-overlay';
 import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
 import {
   getTimelineProgress,
@@ -29,6 +30,7 @@ import {
   createTimeline,
   updateTimelineIfNeeded,
 } from '@/services/timeline-calculator';
+import { getDateFromDotIndex } from '@/utils/date-helpers';
 import {
   Colors,
   Fonts,
@@ -44,6 +46,8 @@ export default function HomeScreen() {
 
   const [activeTimeline, setActiveTimeline] = useState<Timeline | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [tapPosition, setTapPosition] = useState<{ x: number; y: number } | null>(null);
 
   /**
    * Load active timeline
@@ -101,6 +105,28 @@ export default function HomeScreen() {
       loadActiveTimeline();
     }, [loadActiveTimeline])
   );
+
+  /**
+   * Handle dot press - calculate and show date
+   */
+  const handleDotPress = useCallback(
+    (dotIndex: number, position: { x: number; y: number }) => {
+      if (!activeTimeline) return;
+
+      const date = getDateFromDotIndex(activeTimeline.startDate, dotIndex);
+      setSelectedDate(date);
+      setTapPosition(position);
+    },
+    [activeTimeline]
+  );
+
+  /**
+   * Handle date display dismiss
+   */
+  const handleDateDismiss = useCallback(() => {
+    setSelectedDate(null);
+    setTapPosition(null);
+  }, []);
 
   /**
    * Render onboarding message when no active timeline
@@ -195,7 +221,7 @@ export default function HomeScreen() {
 
         {/* Grid Container - FadeIn with 200ms delay */}
         <Animated.View style={styles.gridContainer} entering={FadeIn.duration(600).delay(200)}>
-          <StoicGrid timeline={activeTimeline} animated />
+          <StoicGrid timeline={activeTimeline} animated onDotPress={handleDotPress} />
         </Animated.View>
 
         {/* Footer - FadeIn with 400ms delay */}
@@ -222,6 +248,9 @@ export default function HomeScreen() {
           </Text>
         </Animated.View>
       </View>
+
+      {/* Date Display Overlay */}
+      <DateDisplayOverlay date={selectedDate} position={tapPosition} onDismiss={handleDateDismiss} />
     </SafeAreaView>
   );
 }

@@ -300,3 +300,21 @@ export function formatShortDate(date: Date | string): string {
     day: 'numeric',
   });
 }
+
+/**
+ * Add days to a date
+ * Returns a new Date object
+ */
+export function addDays(date: Date | string, days: number): Date {
+  const d = typeof date === 'string' ? new Date(date) : new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+/**
+ * Get date from timeline start and dot index
+ * Dot index is 0-based (0 = first day of timeline)
+ */
+export function getDateFromDotIndex(startDate: Date | string, dotIndex: number): Date {
+  return addDays(startDate, dotIndex);
+}
