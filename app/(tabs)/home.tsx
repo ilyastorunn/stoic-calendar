@@ -174,7 +174,7 @@ export default function HomeScreen() {
             style={[
               styles.title,
               {
-                fontFamily: Fonts?.serif || 'Georgia',
+                fontFamily: Fonts.handwriting,
                 color: colors.textPrimary,
               },
             ]}

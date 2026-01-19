@@ -14,6 +14,13 @@ import { initializeRevenueCat } from '@/services/revenue-cat-service';
 import { syncAllWidgetData } from '@/services/widget-data-service';
 import { getThemeMode } from '@/services/storage';
 import { ThemeMode } from '@/types/timeline';
+import { useFonts } from 'expo-font';
+import {
+  CormorantGaramond_300Light,
+  CormorantGaramond_400Regular,
+  CormorantGaramond_500Medium,
+  CormorantGaramond_600SemiBold,
+} from '@expo-google-fonts/cormorant-garamond';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -22,6 +29,14 @@ export const unstable_settings = {
 export default function RootLayout() {
   const systemColorScheme = useColorScheme();
   const router = useRouter();
+
+  // Load custom fonts
+  const [fontsLoaded] = useFonts({
+    'CormorantGaramond-Light': CormorantGaramond_300Light,
+    'CormorantGaramond-Regular': CormorantGaramond_400Regular,
+    'CormorantGaramond-Medium': CormorantGaramond_500Medium,
+    'CormorantGaramond-SemiBold': CormorantGaramond_600SemiBold,
+  });
 
   // State for user's theme preference
   const [userThemeMode, setUserThemeMode] = useState<ThemeMode>('dark');
@@ -90,8 +105,8 @@ export default function RootLayout() {
     ? systemColorScheme
     : userThemeMode;
 
-  // Don't render until theme is loaded to prevent flash
-  if (!isThemeLoaded) {
+  // Don't render until theme and fonts are loaded to prevent flash
+  if (!isThemeLoaded || !fontsLoaded) {
     return null;
   }
 

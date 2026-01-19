@@ -138,33 +138,34 @@ export const GridColorPalettes = {
  * Typography System
  * SF Pro for body text, Serif (New York/Georgia) for timeline titles only
  */
-export const Fonts = Platform.select({
-  ios: {
-    // SF Pro (default system font)
-    sans: 'System',
+export const Fonts = {
+  // SF Pro (default system font)
+  sans: 'System',
 
-    // New York (iOS serif)
-    serif: 'ui-serif',
+  // New York (iOS serif)
+  serif: Platform.select({
+    ios: 'ui-serif',
+    default: 'Georgia',
+    web: "'New York', Georgia, 'Times New Roman', serif",
+  }),
 
-    // Rounded (for future use)
-    rounded: 'ui-rounded',
+  // Cormorant Garamond (elegant serif for timeline titles)
+  handwriting: 'CormorantGaramond-Regular',
 
-    // Monospace (for future use)
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'System',
-    serif: 'Georgia',
-    rounded: 'System',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, sans-serif",
-    serif: "'New York', Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  },
-});
+  // Rounded (for future use)
+  rounded: Platform.select({
+    ios: 'ui-rounded',
+    default: 'System',
+    web: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', sans-serif",
+  }),
+
+  // Monospace (for future use)
+  mono: Platform.select({
+    ios: 'ui-monospace',
+    default: 'monospace',
+    web: "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  }),
+};
 
 /**
  * Font Sizes

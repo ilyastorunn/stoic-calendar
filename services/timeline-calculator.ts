@@ -89,7 +89,7 @@ export function calculateTimelineFromType(
       const endDate = getEndOfMonth(year, month);
 
       const monthName = startDate.toLocaleDateString('en-US', { month: 'long' });
-      const title = `${monthName} ${year}`;
+      const title = monthName;
 
       return {
         startDate: toISOString(startDate),
