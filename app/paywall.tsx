@@ -178,22 +178,38 @@ export default function PaywallScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Close Button */}
-      <Animated.View entering={FadeIn.duration(300).delay(100)}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={handleClose}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={[styles.closeIcon, { color: colors.textSecondary }]}>✕</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header with Title and Close Button */}
+        <View style={styles.header}>
+          <Animated.View style={styles.headerTitle} entering={FadeIn.duration(300).delay(100)}>
+            <Text
+              style={[
+                styles.premiumTitle,
+                {
+                  color: colors.textPrimary,
+                  fontFamily: Fonts.handwriting,
+                },
+              ]}
+            >
+              Stoic Calendar Pro
+            </Text>
+          </Animated.View>
+
+          <Animated.View entering={FadeIn.duration(300).delay(100)} style={styles.closeButtonWrapper}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text style={[styles.closeIcon, { color: colors.textSecondary }]}>✕</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+
         {/* Feature Carousel (~50% of screen) */}
         <Animated.View style={styles.carouselSection} entering={FadeInDown.duration(300).delay(200)}>
           <FeatureCarousel features={FEATURES} />
@@ -201,19 +217,8 @@ export default function PaywallScreen() {
 
         {/* Subscription Section */}
         <View style={styles.subscriptionSection}>
-          {/* Premium Title */}
-          <Animated.View style={styles.titleContainer} entering={FadeInDown.duration(300).delay(400)}>
-            <Text
-              style={[
-                styles.premiumTitle,
-                {
-                  color: colors.textPrimary,
-                  fontFamily: Fonts.serif,
-                },
-              ]}
-            >
-              Stoic Calendar Pro
-            </Text>
+          {/* Value Prop */}
+          <Animated.View style={styles.valuePropContainer} entering={FadeInDown.duration(300).delay(400)}>
             <Text
               style={[
                 styles.valueProp,
@@ -296,25 +301,45 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
   },
 
-  // Close Button
-  closeButton: {
+  // Header
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: Spacing.md,
+    paddingHorizontal: Layout.screenPadding,
+    paddingBottom: Spacing.md,
+    position: 'relative',
+  },
+  headerTitle: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  closeButtonWrapper: {
     position: 'absolute',
-    top: 20,
-    right: 20,
+    right: Layout.screenPadding,
+    top: Spacing.md,
+  },
+  closeButton: {
     width: 44,
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
   },
   closeIcon: {
     fontSize: 24,
     fontWeight: FontWeights.regular,
   },
 
+  // Title
+  premiumTitle: {
+    fontSize: 32,
+    fontWeight: FontWeights.semibold,
+  },
+
   // Carousel Section
   carouselSection: {
-    marginTop: Spacing.xl,
+    marginTop: Spacing.md,
     minHeight: 340,
   },
 
@@ -324,15 +349,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
 
-  // Title
-  titleContainer: {
+  // Value Prop
+  valuePropContainer: {
     alignItems: 'center',
     marginBottom: Spacing.lg,
-  },
-  premiumTitle: {
-    fontSize: FontSizes.title2,
-    fontWeight: FontWeights.semibold,
-    marginBottom: Spacing.xs,
   },
   valueProp: {
     fontSize: FontSizes.subheadline,

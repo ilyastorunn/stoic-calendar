@@ -43,10 +43,11 @@ export const FeatureCarousel: React.FC<FeatureCarouselProps> = ({ features }) =>
         scrollEventThrottle={16}
         decelerationRate="fast"
         snapToInterval={SCREEN_WIDTH}
-        snapToAlignment="center"
+        snapToAlignment="start"
         contentContainerStyle={styles.contentContainer}
         renderItem={({ item }) => <FeatureSlide type={item} />}
         keyExtractor={(item) => item}
+        bounces={false}
       />
 
       <PaginationDots total={features.length} activeIndex={activeIndex} />

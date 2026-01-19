@@ -65,16 +65,6 @@ export const PlanOption: React.FC<PlanOptionProps> = ({
     };
   });
 
-  const checkmarkStyle = useAnimatedStyle(() => {
-    const opacity = withTiming(isSelected ? 1 : 0, { duration: 150 });
-    const scale = withTiming(isSelected ? 1 : 0.8, { duration: 150 });
-
-    return {
-      opacity,
-      transform: [{ scale }],
-    };
-  });
-
   return (
     <Animated.View style={animatedStyle}>
       <TouchableOpacity activeOpacity={0.9} onPress={handlePress}>
@@ -92,24 +82,16 @@ export const PlanOption: React.FC<PlanOptionProps> = ({
               {label}
             </Text>
 
-            <View style={styles.rightContent}>
-              <Text
-                style={[
-                  styles.price,
-                  {
-                    color: colors.textPrimary,
-                  },
-                ]}
-              >
-                {price}
-              </Text>
-
-              <Animated.View style={[styles.checkmarkContainer, checkmarkStyle]}>
-                <View style={[styles.checkmark, { backgroundColor: colors.accent }]}>
-                  <Text style={styles.checkmarkIcon}>✓</Text>
-                </View>
-              </Animated.View>
-            </View>
+            <Text
+              style={[
+                styles.price,
+                {
+                  color: colors.textPrimary,
+                },
+              ]}
+            >
+              {price}
+            </Text>
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -133,28 +115,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: FontSizes.body,
   },
-  rightContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
   price: {
     fontSize: FontSizes.body,
-  },
-  checkmarkContainer: {
-    width: 24,
-    height: 24,
-  },
-  checkmark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmarkIcon: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: FontWeights.bold,
   },
 });

@@ -118,8 +118,7 @@ export default function RootLayout() {
           name="paywall"
           options={{
             presentation: 'modal',
-            title: 'Upgrade to Pro',
-            headerShown: true,
+            headerShown: false,
           }}
         />
         <Stack.Screen

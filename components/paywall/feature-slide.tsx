@@ -8,7 +8,7 @@ import { View, Text, StyleSheet, Dimensions, useColorScheme } from 'react-native
 import { Colors, Fonts, FontSizes, FontWeights, Spacing, BorderRadius } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SLIDE_WIDTH = SCREEN_WIDTH - Spacing.lg * 2;
+const SLIDE_WIDTH = SCREEN_WIDTH;
 
 export type FeatureType = 'widgets' | 'customization' | 'unlimited';
 
