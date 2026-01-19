@@ -47,6 +47,11 @@ export interface TimelineCardProps {
   onPress?: (timeline: Timeline) => void;
 
   /**
+   * Called when edit button is pressed
+   */
+  onEdit?: (timeline: Timeline) => void;
+
+  /**
    * Called when delete button is pressed
    */
   onDelete?: (timeline: Timeline) => void;
@@ -64,6 +69,7 @@ export interface TimelineCardProps {
 export function TimelineCard({
   timeline,
   onPress,
+  onEdit,
   onDelete,
   showDelete = false,
 }: TimelineCardProps) {
@@ -72,6 +78,7 @@ export function TimelineCard({
 
   const description = getTimelineDescription(timeline);
   const progress = getTimelineProgress(timeline);
+  const isCustomTimeline = timeline.type === 'custom';
 
   return (
     <View style={styles.cardWrapper}>
@@ -93,7 +100,7 @@ export function TimelineCard({
             style={[
               styles.title,
               {
-                fontFamily: Fonts?.serif || 'Georgia',
+                fontFamily: Fonts.serif,
                 color: colors.textPrimary,
               },
             ]}
@@ -122,6 +129,29 @@ export function TimelineCard({
           >
             {progress}
           </Text>
+
+          {/* Edit Button - Only for Custom Timelines */}
+          {isCustomTimeline && onEdit && (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                onEdit(timeline);
+              }}
+              activeOpacity={0.5}
+            >
+              <Text
+                style={[
+                  styles.editButtonText,
+                  {
+                    color: colors.accent,
+                  },
+                ]}
+              >
+                Edit
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Right Content - Mini Grid */}
@@ -129,11 +159,15 @@ export function TimelineCard({
           <StoicGrid timeline={timeline} mini />
         </View>
 
-        {/* Delete Button */}
+        {/* Delete Button - Positioned at top-right corner */}
         {showDelete && (
           <TouchableOpacity
             style={styles.deleteButton}
-            onPress={() => onDelete?.(timeline)}
+            onPress={(e) => {
+              e.stopPropagation();
+              onDelete?.(timeline);
+            }}
+            activeOpacity={0.5}
           >
             <Text
               style={[
@@ -143,7 +177,7 @@ export function TimelineCard({
                 },
               ]}
             >
-              🗑
+              ×
             </Text>
           </TouchableOpacity>
         )}
@@ -187,18 +221,31 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     marginLeft: Spacing.md,
+    marginRight: Spacing.xl + Spacing.xs, // Space for delete button (28px + padding)
     overflow: 'hidden',
     borderRadius: BorderRadius.small,
   },
   deleteButton: {
-    width: 32,
-    height: 32,
+    position: 'absolute',
+    top: Spacing.xs,
+    right: Spacing.xs,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: Spacing.sm,
-    opacity: 0.6,
+    opacity: 0.4,
   },
   deleteText: {
-    fontSize: 18,
+    fontSize: 32,
+    lineHeight: 32,
+    fontWeight: FontWeights.regular,
+  },
+  editButton: {
+    marginTop: Spacing.sm,
+    alignSelf: 'flex-start',
+  },
+  editButtonText: {
+    fontSize: FontSizes.subheadline,
+    fontWeight: FontWeights.medium,
   },
 });

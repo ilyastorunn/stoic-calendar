@@ -101,17 +101,16 @@ export function TimelineFormModal({
         setCustomEndDate(futureDate);
       }
 
-      // Animate in
+      // Animate in - subtle, linear animation (Stoic principle: no spring/bounce)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 250,
+          duration: 300,
           useNativeDriver: true,
         }),
-        Animated.spring(scaleAnim, {
+        Animated.timing(scaleAnim, {
           toValue: 1,
-          friction: 8,
-          tension: 40,
+          duration: 300,
           useNativeDriver: true,
         }),
       ]).start();
@@ -129,35 +128,46 @@ export function TimelineFormModal({
     try {
       let newTimeline: Timeline;
 
-      if (selectedType === TimelineType.CUSTOM) {
-        // Custom timeline with custom dates
-        newTimeline = createTimeline(TimelineType.CUSTOM, {
-          startDate: customStartDate,
-          endDate: customEndDate,
-          title: customTitle || 'Custom Timeline',
-          isActive: true,
-        });
-      } else if (selectedType === TimelineType.YEAR) {
-        // Year timeline
-        newTimeline = createTimeline(TimelineType.YEAR, {
-          isActive: true,
-        });
-      } else if (selectedType === TimelineType.MONTH) {
-        // Month timeline
-        newTimeline = createTimeline(TimelineType.MONTH, {
-          isActive: true,
-        });
+      if (timeline) {
+        // Edit mode - preserve timeline ID and isActive status
+        newTimeline = {
+          ...timeline,
+          title: customTitle || timeline.title,
+          startDate: customStartDate.toISOString(),
+          endDate: customEndDate.toISOString(),
+        };
       } else {
-        // Week timeline
-        newTimeline = createTimeline(TimelineType.WEEK, {
-          isActive: true,
-        });
+        // Create mode
+        if (selectedType === TimelineType.CUSTOM) {
+          // Custom timeline with custom dates
+          newTimeline = createTimeline(TimelineType.CUSTOM, {
+            startDate: customStartDate,
+            endDate: customEndDate,
+            title: customTitle || 'Custom Timeline',
+            isActive: true,
+          });
+        } else if (selectedType === TimelineType.YEAR) {
+          // Year timeline
+          newTimeline = createTimeline(TimelineType.YEAR, {
+            isActive: true,
+          });
+        } else if (selectedType === TimelineType.MONTH) {
+          // Month timeline
+          newTimeline = createTimeline(TimelineType.MONTH, {
+            isActive: true,
+          });
+        } else {
+          // Week timeline
+          newTimeline = createTimeline(TimelineType.WEEK, {
+            isActive: true,
+          });
+        }
       }
 
       onSave(newTimeline);
       onClose();
     } catch (error) {
-      console.error('Error creating timeline:', error);
+      console.error('Error saving timeline:', error);
     }
   };
 
@@ -193,10 +203,14 @@ export function TimelineFormModal({
                 {
                   backgroundColor: isSelected
                     ? colors.accent
-                    : colors.secondaryBackground,
+                    : 'transparent',
+                  borderColor: isSelected
+                    ? colors.accent
+                    : colors.separator,
                 },
               ]}
               onPress={() => setSelectedType(type)}
+              activeOpacity={0.7}
             >
               <Text
                 style={[
@@ -219,7 +233,8 @@ export function TimelineFormModal({
    * Render custom timeline fields
    */
   const renderCustomFields = () => {
-    if (selectedType !== TimelineType.CUSTOM) return null;
+    // Show custom fields for custom type or in edit mode
+    if (!timeline && selectedType !== TimelineType.CUSTOM) return null;
 
     return (
       <View style={styles.customFieldsContainer}>
@@ -362,10 +377,10 @@ export function TimelineFormModal({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        {/* Blurred Background */}
+        {/* Blurred Background - subtle blur for minimal distraction */}
         <BlurView
-          intensity={50}
-          tint="dark"
+          intensity={30}
+          tint={colorScheme === 'dark' ? 'dark' : 'light'}
           style={StyleSheet.absoluteFill}
         >
           <TouchableOpacity
@@ -389,7 +404,7 @@ export function TimelineFormModal({
             style={[
               styles.card,
               {
-                backgroundColor: colors.secondaryBackground,
+                backgroundColor: colorScheme === 'dark' ? colors.secondaryBackground : colors.background,
               },
             ]}
           >
@@ -416,7 +431,7 @@ export function TimelineFormModal({
                   },
                 ]}
               >
-                New Timeline
+                {timeline ? 'Edit Timeline' : 'New Timeline'}
               </Text>
 
               <TouchableOpacity onPress={handleSave}>
@@ -435,19 +450,22 @@ export function TimelineFormModal({
 
             {/* Content */}
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-              <View style={styles.section}>
-                <Text
-                  style={[
-                    styles.sectionTitle,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
-                  TYPE
-                </Text>
-                {renderTypePicker()}
-              </View>
+              {/* Only show type picker in create mode */}
+              {!timeline && (
+                <View style={styles.section}>
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      {
+                        color: colors.textSecondary,
+                      },
+                    ]}
+                  >
+                    TYPE
+                  </Text>
+                  {renderTypePicker()}
+                </View>
+              )}
 
               {renderCustomFields()}
             </ScrollView>
@@ -473,13 +491,13 @@ const styles = StyleSheet.create({
     maxHeight: SCREEN_HEIGHT * 0.75,
   },
   card: {
-    borderRadius: 24,
+    borderRadius: BorderRadius.large,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
   header: {
     flexDirection: 'row',
@@ -520,9 +538,11 @@ const styles = StyleSheet.create({
   },
   typeButton: {
     flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.medium,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.small,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   typeButtonText: {
     fontSize: FontSizes.body,
@@ -542,12 +562,16 @@ const styles = StyleSheet.create({
   },
   textInput: {
     padding: Spacing.md,
-    borderRadius: BorderRadius.medium,
+    borderRadius: BorderRadius.small,
     fontSize: FontSizes.body,
+    borderWidth: 1,
+    borderColor: 'rgba(128, 128, 128, 0.2)',
   },
   dateButton: {
     padding: Spacing.md,
-    borderRadius: BorderRadius.medium,
+    borderRadius: BorderRadius.small,
+    borderWidth: 1,
+    borderColor: 'rgba(128, 128, 128, 0.2)',
   },
   dateButtonText: {
     fontSize: FontSizes.body,

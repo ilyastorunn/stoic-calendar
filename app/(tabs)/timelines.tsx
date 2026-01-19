@@ -54,6 +54,7 @@ export default function TimelinesScreen() {
 
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingTimeline, setEditingTimeline] = useState<Timeline | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   /**
@@ -107,6 +108,13 @@ export default function TimelinesScreen() {
       // Reload on error to sync state
       await loadAllTimelines();
     }
+  };
+
+  /**
+   * Handle timeline edit
+   */
+  const handleTimelineEdit = (timeline: Timeline) => {
+    setEditingTimeline(timeline);
   };
 
   /**
@@ -259,6 +267,7 @@ export default function TimelinesScreen() {
             <TimelineCard
               timeline={timeline}
               onPress={handleTimelinePress}
+              onEdit={handleTimelineEdit}
               onDelete={handleTimelineDelete}
               showDelete
             />
@@ -295,6 +304,14 @@ export default function TimelinesScreen() {
       <TimelineFormModal
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        onSave={handleTimelineSave}
+      />
+
+      {/* Edit Modal */}
+      <TimelineFormModal
+        visible={!!editingTimeline}
+        timeline={editingTimeline}
+        onClose={() => setEditingTimeline(undefined)}
         onSave={handleTimelineSave}
       />
     </SafeAreaView>
