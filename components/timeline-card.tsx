@@ -52,6 +52,11 @@ export interface TimelineCardProps {
   onEdit?: (timeline: Timeline) => void;
 
   /**
+   * Called when share button is pressed
+   */
+  onShare?: (timeline: Timeline) => void;
+
+  /**
    * Called when delete button is pressed
    */
   onDelete?: (timeline: Timeline) => void;
@@ -70,6 +75,7 @@ export function TimelineCard({
   timeline,
   onPress,
   onEdit,
+  onShare,
   onDelete,
   showDelete = false,
 }: TimelineCardProps) {
@@ -130,28 +136,66 @@ export function TimelineCard({
             {progress}
           </Text>
 
-          {/* Edit Button - Only for Custom Timelines */}
-          {isCustomTimeline && onEdit && (
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={(e) => {
-                e.stopPropagation();
-                onEdit(timeline);
-              }}
-              activeOpacity={0.5}
-            >
+          {/* Action Buttons Row */}
+          <View style={styles.actionRow}>
+            {/* Share Button - Available for all timelines */}
+            {onShare && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onShare(timeline);
+                }}
+                activeOpacity={0.5}
+              >
+                <Text
+                  style={[
+                    styles.actionButtonText,
+                    {
+                      color: colors.accent,
+                    },
+                  ]}
+                >
+                  Share
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Separator - Only show between Share and Edit */}
+            {onShare && isCustomTimeline && onEdit && (
               <Text
                 style={[
-                  styles.editButtonText,
+                  styles.actionSeparator,
                   {
-                    color: colors.accent,
+                    color: colors.textTertiary,
                   },
                 ]}
               >
-                Edit
+                {' • '}
               </Text>
-            </TouchableOpacity>
-          )}
+            )}
+
+            {/* Edit Button - Only for Custom Timelines */}
+            {isCustomTimeline && onEdit && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onEdit(timeline);
+                }}
+                activeOpacity={0.5}
+              >
+                <Text
+                  style={[
+                    styles.actionButtonText,
+                    {
+                      color: colors.accent,
+                    },
+                  ]}
+                >
+                  Edit
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Right Content - Mini Grid */}
@@ -240,12 +284,17 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     fontWeight: FontWeights.regular,
   },
-  editButton: {
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: Spacing.sm,
-    alignSelf: 'flex-start',
   },
-  editButtonText: {
+  actionButtonText: {
     fontSize: FontSizes.subheadline,
     fontWeight: FontWeights.medium,
+  },
+  actionSeparator: {
+    fontSize: FontSizes.subheadline,
+    fontWeight: FontWeights.regular,
   },
 });

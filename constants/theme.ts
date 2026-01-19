@@ -304,3 +304,33 @@ export const Haptics = {
   buttonPress: 'light' as const,
   deleteAction: 'medium' as const,
 };
+
+/**
+ * Export Layout Constants
+ * Configuration for timeline image export
+ */
+export const ExportLayout = {
+  // Canvas dimensions (9:16 portrait for social media)
+  canvasWidth: 1080,
+  canvasHeight: 1920,
+
+  // Export scale (2x for high resolution)
+  scale: 2,
+
+  // Grid takes 70% of canvas height
+  gridHeightRatio: 0.70,
+
+  // Canvas padding
+  padding: 60,
+
+  // Spacing between grid and metadata
+  metadataSpacing: 40,
+
+  // Font sizes for export
+  fonts: {
+    title: 48,
+    dateRange: 32,
+    progress: 28,
+    branding: 24,
+  },
+};

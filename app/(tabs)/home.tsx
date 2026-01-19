@@ -16,13 +16,18 @@ import {
   StyleSheet,
   useColorScheme,
   SafeAreaView,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Timeline, TimelineType } from '@/types/timeline';
+import { Timeline, TimelineType, GridColorTheme } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
 import { DateDisplayOverlay } from '@/components/date-display-overlay';
-import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
+import { ExportCanvas } from '@/components/export-canvas';
+import { ShareIcon } from '@/components/share-icon';
+import { useTimelineExport } from '@/hooks/use-timeline-export';
+import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage, getGridColorTheme } from '@/services/storage';
 import {
   getTimelineProgress,
   getTimelineRemaining,
@@ -48,6 +53,10 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [tapPosition, setTapPosition] = useState<{ x: number; y: number } | null>(null);
+  const [gridColorTheme, setGridColorTheme] = useState<GridColorTheme>('classic');
+
+  // Export hook
+  const { exportAndShare, isExporting, exportCanvasRef } = useTimelineExport();
 
   /**
    * Load active timeline
@@ -105,6 +114,30 @@ export default function HomeScreen() {
       loadActiveTimeline();
     }, [loadActiveTimeline])
   );
+
+  /**
+   * Load grid color theme
+   */
+  useEffect(() => {
+    const loadColorTheme = async () => {
+      try {
+        const theme = await getGridColorTheme();
+        setGridColorTheme(theme);
+      } catch (error) {
+        console.error('Error loading grid color theme:', error);
+      }
+    };
+
+    loadColorTheme();
+  }, []);
+
+  /**
+   * Handle share button press
+   */
+  const handleShare = useCallback(async () => {
+    if (!activeTimeline) return;
+    await exportAndShare(activeTimeline);
+  }, [activeTimeline, exportAndShare]);
 
   /**
    * Handle dot press - calculate and show date
@@ -196,6 +229,20 @@ export default function HomeScreen() {
       <View style={styles.contentContainer}>
         {/* Header - FadeIn first */}
         <Animated.View style={styles.header} entering={FadeIn.duration(400)}>
+          {/* Share Button - Absolute positioned top-right */}
+          <TouchableOpacity
+            style={styles.shareButton}
+            onPress={handleShare}
+            disabled={isExporting}
+            activeOpacity={0.6}
+          >
+            {isExporting ? (
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+            ) : (
+              <ShareIcon size={22} color={colors.textSecondary} />
+            )}
+          </TouchableOpacity>
+
           <Text
             style={[
               styles.title,
@@ -251,6 +298,16 @@ export default function HomeScreen() {
 
       {/* Date Display Overlay */}
       <DateDisplayOverlay date={selectedDate} position={tapPosition} onDismiss={handleDateDismiss} />
+
+      {/* Hidden Export Canvas - for image generation */}
+      {activeTimeline && (
+        <ExportCanvas
+          ref={exportCanvasRef}
+          timeline={activeTimeline}
+          gridColorTheme={gridColorTheme}
+          ready={true}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -268,6 +325,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.lg,
+    position: 'relative',
+  },
+  shareButton: {
+    position: 'absolute',
+    top: Spacing.xl,
+    right: 0,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 18,
   },
   title: {
     fontSize: 48,

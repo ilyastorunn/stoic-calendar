@@ -49,6 +49,19 @@ export interface StoicGridProps {
    * Receives the dot index (0-based) and the tap position
    */
   onDotPress?: (dotIndex: number, position: { x: number; y: number }) => void;
+
+  /**
+   * Export mode - disables animations and interactions
+   * Used when rendering for image export
+   * @default false
+   */
+  exportMode?: boolean;
+
+  /**
+   * Grid color theme to use (only for export mode)
+   * If provided, overrides loading from storage
+   */
+  exportColorTheme?: GridColorTheme;
 }
 
 /**
@@ -181,16 +194,29 @@ const AnimatedDot = React.memo(function AnimatedDot({
 /**
  * Stoic Grid Component
  */
-export function StoicGrid({ timeline, animated = false, mini = false, onDotPress }: StoicGridProps) {
+export function StoicGrid({
+  timeline,
+  animated = false,
+  mini = false,
+  onDotPress,
+  exportMode = false,
+  exportColorTheme,
+}: StoicGridProps) {
   const colorScheme = useColorScheme();
 
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
-  const [gridColorTheme, setGridColorTheme] = useState<GridColorTheme>('classic');
+  const [gridColorTheme, setGridColorTheme] = useState<GridColorTheme>(exportColorTheme || 'classic');
 
   /**
-   * Load grid color theme
+   * Load grid color theme (skip if in export mode with provided theme)
    */
   useEffect(() => {
+    // In export mode with explicit theme, skip loading from storage
+    if (exportMode && exportColorTheme) {
+      setGridColorTheme(exportColorTheme);
+      return;
+    }
+
     const loadColorTheme = async () => {
       try {
         const theme = await getGridColorTheme();
@@ -201,7 +227,7 @@ export function StoicGrid({ timeline, animated = false, mini = false, onDotPress
     };
 
     loadColorTheme();
-  }, []);
+  }, [exportMode, exportColorTheme]);
 
   /**
    * Calculate timeline stats
@@ -287,8 +313,8 @@ export function StoicGrid({ timeline, animated = false, mini = false, onDotPress
           isFilled={isFilled}
           fillColor={gridColors.dotFilled}
           emptyColor={gridColors.dotEmpty}
-          animate={animated}
-          onPress={onDotPress}
+          animate={animated && !exportMode} // Disable animation in export mode
+          onPress={exportMode ? undefined : onDotPress} // Disable tap in export mode
         />
       );
     });

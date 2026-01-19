@@ -9,7 +9,7 @@
  * - Create modal
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,14 +23,17 @@ import {
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { Timeline } from '@/types/timeline';
+import { Timeline, GridColorTheme } from '@/types/timeline';
 import { TimelineCard } from '@/components/timeline-card';
 import { TimelineFormModal } from '@/components/timeline-form-modal';
+import { ExportCanvas } from '@/components/export-canvas';
+import { useTimelineExport } from '@/hooks/use-timeline-export';
 import {
   loadTimelines,
   saveTimeline,
   deleteTimeline,
   setActiveTimeline,
+  getGridColorTheme,
 } from '@/services/storage';
 import { sortTimelinesWithActiveFirst } from '@/services/timeline-calculator';
 import { isPro, FREE_TIER_LIMITS } from '@/services/revenue-cat-service';
@@ -56,6 +59,11 @@ export default function TimelinesScreen() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTimeline, setEditingTimeline] = useState<Timeline | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [gridColorTheme, setGridColorTheme] = useState<GridColorTheme>('classic');
+  const [sharingTimeline, setSharingTimeline] = useState<Timeline | null>(null);
+
+  // Export hook
+  const { exportAndShare, isExporting, exportCanvasRef } = useTimelineExport();
 
   /**
    * Load timelines from storage
@@ -81,6 +89,22 @@ export default function TimelinesScreen() {
       loadAllTimelines();
     }, [loadAllTimelines])
   );
+
+  /**
+   * Load grid color theme
+   */
+  useEffect(() => {
+    const loadColorTheme = async () => {
+      try {
+        const theme = await getGridColorTheme();
+        setGridColorTheme(theme);
+      } catch (error) {
+        console.error('Error loading grid color theme:', error);
+      }
+    };
+
+    loadColorTheme();
+  }, []);
 
   /**
    * Handle timeline press (set as active and navigate to Home)
@@ -116,6 +140,26 @@ export default function TimelinesScreen() {
   const handleTimelineEdit = (timeline: Timeline) => {
     setEditingTimeline(timeline);
   };
+
+  /**
+   * Handle timeline share
+   */
+  const handleTimelineShare = useCallback(
+    async (timeline: Timeline) => {
+      // Set the timeline to be shared (this will render the ExportCanvas)
+      setSharingTimeline(timeline);
+
+      // Wait a bit for canvas to render
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Trigger export
+      await exportAndShare(timeline);
+
+      // Clear sharing timeline
+      setSharingTimeline(null);
+    },
+    [exportAndShare]
+  );
 
   /**
    * Handle timeline delete
@@ -268,6 +312,7 @@ export default function TimelinesScreen() {
               timeline={timeline}
               onPress={handleTimelinePress}
               onEdit={handleTimelineEdit}
+              onShare={handleTimelineShare}
               onDelete={handleTimelineDelete}
               showDelete
             />
@@ -314,6 +359,16 @@ export default function TimelinesScreen() {
         onClose={() => setEditingTimeline(undefined)}
         onSave={handleTimelineSave}
       />
+
+      {/* Hidden Export Canvas - for image generation */}
+      {sharingTimeline && (
+        <ExportCanvas
+          ref={exportCanvasRef}
+          timeline={sharingTimeline}
+          gridColorTheme={gridColorTheme}
+          ready={true}
+        />
+      )}
     </SafeAreaView>
   );
 }
