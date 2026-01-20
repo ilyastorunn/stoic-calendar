@@ -171,11 +171,6 @@ export default function PaywallScreen() {
     Linking.openURL('https://stoiccalendar.com/privacy');
   };
 
-  const getPricePerPeriod = (pkg: PurchasesPackage | null, period: string) => {
-    if (!pkg) return '...';
-    return `${pkg.product.priceString}/${period}`;
-  };
-
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -234,20 +229,32 @@ export default function PaywallScreen() {
           {/* Plan Options */}
           <Animated.View style={styles.plansContainer} entering={FadeInDown.duration(300).delay(500)}>
             <PlanOption
-              label="Yearly"
-              price={getPricePerPeriod(yearlyPackage, 'year')}
-              isSelected={selectedPlan === 'yearly'}
-              onPress={() => setSelectedPlan('yearly')}
+              label="Monthly"
+              price={monthlyPackage?.product.priceString || '...'}
+              period="Billed monthly"
+              isSelected={selectedPlan === 'monthly'}
+              onPress={() => setSelectedPlan('monthly')}
+              showCancelAnytime={true}
             />
 
             <View style={styles.planSpacer} />
 
             <PlanOption
-              label="Monthly"
-              price={getPricePerPeriod(monthlyPackage, 'month')}
-              isSelected={selectedPlan === 'monthly'}
-              onPress={() => setSelectedPlan('monthly')}
+              label="Yearly"
+              price={yearlyPackage?.product.priceString || '...'}
+              period="Billed yearly"
+              isSelected={selectedPlan === 'yearly'}
+              onPress={() => setSelectedPlan('yearly')}
+              showTrial={true}
+              showCancelAnytime={true}
             />
+          </Animated.View>
+
+          {/* Shared "Cancel anytime" Microcopy */}
+          <Animated.View style={styles.cancelAnytimeContainer} entering={FadeInDown.duration(300).delay(550)}>
+            <Text style={[styles.cancelAnytimeText, { color: colors.textTertiary }]}>
+              Cancel anytime
+            </Text>
           </Animated.View>
 
           {/* CTA Button */}
@@ -361,10 +368,22 @@ const styles = StyleSheet.create({
 
   // Plans
   plansContainer: {
-    marginBottom: Spacing.lg,
+    flexDirection: 'row',
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
   planSpacer: {
-    height: Spacing.sm,
+    width: Spacing.sm,
+  },
+
+  // Cancel Anytime Microcopy
+  cancelAnytimeContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  cancelAnytimeText: {
+    fontSize: FontSizes.caption1, // 12px
+    fontWeight: FontWeights.regular,
   },
 
   // CTA
