@@ -20,12 +20,13 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { Gear, CaretRight } from 'phosphor-react-native';
+import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { Gear, CaretDown } from 'phosphor-react-native';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
 import { DateDisplayOverlay } from '@/components/date-display-overlay';
-import { TimelineSheet } from '@/components/timeline-sheet';
+import { TimelineDropdown } from '@/components/timeline-dropdown';
+import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
 import {
   getTimelineProgress,
@@ -33,6 +34,7 @@ import {
   getTimelineProgressPercentage,
   createTimeline,
   updateTimelineIfNeeded,
+  sortTimelinesWithActiveFirst,
 } from '@/services/timeline-calculator';
 import { syncActiveTimelineToWidget } from '@/services/widget-data-service';
 import { getDateFromDotIndex } from '@/utils/date-helpers';
@@ -54,7 +56,40 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [tapPosition, setTapPosition] = useState<{ x: number; y: number } | null>(null);
-  const [showTimelineSheet, setShowTimelineSheet] = useState(false);
+  const [showTimelineDropdown, setShowTimelineDropdown] = useState(false);
+  const [showManagementModal, setShowManagementModal] = useState(false);
+  const [timelines, setTimelines] = useState<Timeline[]>([]);
+  const [titlePosition, setTitlePosition] = useState({ x: 0, y: 0 });
+
+  // Icon rotation animation
+  const iconRotation = useSharedValue(0);
+
+  /**
+   * Load all timelines for dropdown
+   */
+  const loadAllTimelines = useCallback(async () => {
+    try {
+      const allTimelines = await loadTimelines();
+      const sorted = sortTimelinesWithActiveFirst(allTimelines);
+      setTimelines(sorted);
+    } catch (error) {
+      console.error('Error loading timelines:', error);
+    }
+  }, []);
+
+  /**
+   * Animate icon rotation based on dropdown visibility
+   */
+  useEffect(() => {
+    iconRotation.value = withTiming(showTimelineDropdown ? 180 : 0, { duration: 200 });
+  }, [showTimelineDropdown, iconRotation]);
+
+  /**
+   * Load all timelines when screen loads
+   */
+  useEffect(() => {
+    loadAllTimelines();
+  }, [loadAllTimelines]);
 
   /**
    * Load active timeline
@@ -136,31 +171,37 @@ export default function HomeScreen() {
   }, []);
 
   /**
-   * Handle timeline selection from TimelineSheet
+   * Handle timeline selection from TimelineDropdown
    */
   const handleTimelineSelect = useCallback(
     async (timeline: Timeline) => {
       try {
-        // Immediately update local state
+        // Close dropdown immediately
+        setShowTimelineDropdown(false);
+
+        // Immediate UI update
         setActiveTimeline(timeline);
 
-        // Persist to storage
+        // Background persistence
         await setActiveTimelineInStorage(timeline.id);
-
-        // Sync to widget
         await syncActiveTimelineToWidget();
 
-        // Close sheet
-        setShowTimelineSheet(false);
-
-        // Optional: reload timeline to ensure consistency
+        // Reload to ensure consistency
         await loadActiveTimeline();
+        await loadAllTimelines();
       } catch (error) {
         console.error('Error setting active timeline:', error);
       }
     },
-    [loadActiveTimeline]
+    [loadActiveTimeline, loadAllTimelines]
   );
+
+  // Animated style for icon rotation (must be before early returns)
+  const animatedIconStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${iconRotation.value}deg` }],
+    };
+  });
 
   /**
    * Render onboarding message when no active timeline
@@ -239,10 +280,15 @@ export default function HomeScreen() {
             <Gear size={24} color={colors.textSecondary} weight="regular" />
           </TouchableOpacity>
 
-          {/* Timeline Title with Chevron */}
+          {/* Timeline Title with Dropdown Icon */}
           <TouchableOpacity
             style={styles.titleButton}
-            onPress={() => setShowTimelineSheet(true)}
+            onPress={() => setShowTimelineDropdown(!showTimelineDropdown)}
+            onLayout={(e) => {
+              e.currentTarget.measure((x, y, width, height, pageX, pageY) => {
+                setTitlePosition({ x: pageX, y: pageY + height });
+              });
+            }}
             activeOpacity={0.6}
           >
             <Text
@@ -256,7 +302,9 @@ export default function HomeScreen() {
             >
               {activeTimeline.title}
             </Text>
-            <CaretRight size={32} color={colors.textSecondary} weight="regular" />
+            <Animated.View style={animatedIconStyle}>
+              <CaretDown size={24} color={colors.textSecondary} weight="regular" />
+            </Animated.View>
           </TouchableOpacity>
 
           {/* Progress Text */}
@@ -305,12 +353,25 @@ export default function HomeScreen() {
       {/* Date Display Overlay */}
       <DateDisplayOverlay date={selectedDate} position={tapPosition} onDismiss={handleDateDismiss} />
 
-      {/* Timeline Sheet */}
-      <TimelineSheet
-        visible={showTimelineSheet}
-        onClose={() => setShowTimelineSheet(false)}
-        onTimelineSelect={handleTimelineSelect}
-        activeTimelineId={activeTimeline?.id}
+      {/* Timeline Dropdown */}
+      <TimelineDropdown
+        visible={showTimelineDropdown}
+        timelines={timelines}
+        activeTimelineId={activeTimeline?.id || ''}
+        anchorPosition={titlePosition}
+        onSelect={handleTimelineSelect}
+        onManage={() => {
+          setShowTimelineDropdown(false);
+          setShowManagementModal(true);
+        }}
+        onClose={() => setShowTimelineDropdown(false)}
+      />
+
+      {/* Timeline Management Modal */}
+      <TimelineManagementModal
+        visible={showManagementModal}
+        onClose={() => setShowManagementModal(false)}
+        onRefresh={loadActiveTimeline}
       />
     </SafeAreaView>
   );

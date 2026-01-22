@@ -1,12 +1,14 @@
 /**
- * Timeline Sheet Component
- * Bottom sheet modal for timeline selection and management
+ * Timeline Management Modal Component
+ *
+ * Full-screen modal for comprehensive timeline management.
+ * Opened from the "Manage Timelines..." option in TimelineDropdown.
  *
  * Features:
- * - Lists all timelines sorted by active first
- * - Timeline selection (set active)
- * - Timeline creation (opens TimelineFormModal)
- * - Timeline editing and deletion
+ * - List of all timelines with TimelineCard previews
+ * - Create new timeline button
+ * - Edit custom timelines
+ * - Delete timelines
  * - Premium tier limit enforcement
  */
 
@@ -19,9 +21,8 @@ import {
   TouchableOpacity,
   ScrollView,
   useColorScheme,
-  Animated,
-  Dimensions,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -50,47 +51,34 @@ import {
   BorderRadius,
 } from '@/constants/theme';
 
-export interface TimelineSheetProps {
+export interface TimelineManagementModalProps {
   /**
-   * Whether the sheet is visible
+   * Whether the modal is visible
    */
   visible: boolean;
 
   /**
-   * Called when the sheet is closed
+   * Called when the modal is closed
    */
   onClose: () => void;
 
   /**
-   * Called when a timeline is selected
+   * Called after any timeline change to refresh the home screen
    */
-  onTimelineSelect: (timeline: Timeline) => void;
-
-  /**
-   * Currently active timeline ID
-   */
-  activeTimelineId?: string;
+  onRefresh: () => void;
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.5; // 50% of screen height
-
 /**
- * Timeline Sheet Component
+ * Timeline Management Modal Component
  */
-export function TimelineSheet({
+export function TimelineManagementModal({
   visible,
   onClose,
-  onTimelineSelect,
-  activeTimelineId,
-}: TimelineSheetProps) {
+  onRefresh,
+}: TimelineManagementModalProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
-
-  // Animation state
-  const [slideAnim] = useState(new Animated.Value(SHEET_HEIGHT));
-  const [fadeAnim] = useState(new Animated.Value(0));
 
   // Data state
   const [timelines, setTimelines] = useState<Timeline[]>([]);
@@ -117,48 +105,13 @@ export function TimelineSheet({
   }, []);
 
   /**
-   * Load timelines when sheet becomes visible
+   * Load timelines when modal becomes visible
    */
   useEffect(() => {
     if (visible) {
       loadAllTimelines();
     }
   }, [visible, loadAllTimelines]);
-
-  /**
-   * Animate sheet open/close
-   */
-  useEffect(() => {
-    if (visible) {
-      // Slide up from bottom
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      // Slide down to bottom
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: SHEET_HEIGHT,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible, slideAnim, fadeAnim]);
 
   /**
    * Handle timeline press (set as active)
@@ -182,8 +135,11 @@ export function TimelineSheet({
       // Sync active timeline to widget
       await syncActiveTimelineToWidget();
 
-      // Notify parent (home screen will update and close the sheet)
-      onTimelineSelect(timeline);
+      // Notify parent to refresh home screen
+      onRefresh();
+
+      // Close modal after selection
+      onClose();
     } catch (error) {
       console.error('Error setting active timeline:', error);
       // Reload on error to sync state
@@ -214,7 +170,7 @@ export function TimelineSheet({
               {
                 text: 'Upgrade to Pro',
                 onPress: () => {
-                  onClose(); // Close sheet
+                  onClose(); // Close modal
                   router.push('/paywall'); // Open paywall
                 },
               },
@@ -250,8 +206,8 @@ export function TimelineSheet({
       setShowCreateModal(false);
       setEditingTimeline(undefined);
 
-      // Notify parent with new timeline
-      onTimelineSelect(newTimeline);
+      // Notify parent to refresh
+      onRefresh();
     } catch (error) {
       console.error('Error saving timeline:', error);
     }
@@ -285,6 +241,8 @@ export function TimelineSheet({
               await loadAllTimelines();
               // Sync updated timeline list to widget
               await syncAllTimelinesToWidget();
+              // Refresh home screen
+              onRefresh();
             } catch (error) {
               console.error('Error deleting timeline:', error);
             }
@@ -294,68 +252,27 @@ export function TimelineSheet({
     );
   };
 
-  if (!visible) return null;
+  const styles = createStyles(colors);
 
   return (
     <Modal
       visible={visible}
-      animationType="none"
-      transparent
+      animationType="slide"
+      presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        {/* Blurred Background */}
-        <BlurView
-          intensity={30}
-          tint={colorScheme === 'dark' ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={onClose}
-          />
-        </BlurView>
-
-        {/* Animated Sheet Container */}
-        <Animated.View
-          style={[
-            styles.sheetContainer,
-            {
-              transform: [{ translateY: slideAnim }],
-              opacity: fadeAnim,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.sheet,
-              {
-                backgroundColor: colors.background,
-              },
-            ]}
-          >
+      <BlurView
+        intensity={100}
+        tint={colorScheme === 'dark' ? 'dark' : 'light'}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.content}>
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerLeft}>
-                <Text
-                  style={[
-                    styles.title,
-                    {
-                      color: colors.textPrimary,
-                    },
-                  ]}
-                >
-                  Timelines
-                </Text>
-                <Text
-                  style={[
-                    styles.subtitle,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
+                <Text style={styles.title}>Timeline Management</Text>
+                <Text style={styles.subtitle}>
                   {timelines.length} timeline{timelines.length !== 1 ? 's' : ''}
                 </Text>
               </View>
@@ -388,24 +305,8 @@ export function TimelineSheet({
 
               {!loading && timelines.length === 0 && (
                 <View style={styles.emptyState}>
-                  <Text
-                    style={[
-                      styles.emptyText,
-                      {
-                        color: colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    No timelines yet
-                  </Text>
-                  <Text
-                    style={[
-                      styles.emptySubtext,
-                      {
-                        color: colors.textTertiary,
-                      },
-                    ]}
-                  >
+                  <Text style={styles.emptyText}>No timelines yet</Text>
+                  <Text style={styles.emptySubtext}>
                     Tap + to create your first timeline
                   </Text>
                 </View>
@@ -413,32 +314,17 @@ export function TimelineSheet({
 
               {/* Create Button */}
               <TouchableOpacity
-                style={[
-                  styles.createButton,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.separator,
-                  },
-                ]}
+                style={styles.createButton}
                 onPress={handleAddButtonPress}
                 activeOpacity={0.6}
               >
                 <Plus size={24} color={colors.accent} weight="regular" />
-                <Text
-                  style={[
-                    styles.createButtonText,
-                    {
-                      color: colors.accent,
-                    },
-                  ]}
-                >
-                  Create Timeline
-                </Text>
+                <Text style={styles.createButtonText}>Create Timeline</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </Animated.View>
-      </View>
+        </SafeAreaView>
+      </BlurView>
 
       {/* Create Modal */}
       <TimelineFormModal
@@ -458,91 +344,91 @@ export function TimelineSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    height: SHEET_HEIGHT,
-    maxHeight: SCREEN_HEIGHT * 0.75,
-  },
-  sheet: {
-    flex: 1,
-    borderTopLeftRadius: BorderRadius.xlarge,
-    borderTopRightRadius: BorderRadius.xlarge,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(142, 142, 147, 0.2)',
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  title: {
-    fontSize: FontSizes.title2,
-    fontWeight: FontWeights.bold,
-    marginBottom: Spacing.xs,
-  },
-  subtitle: {
-    fontSize: FontSizes.subheadline,
-    fontWeight: FontWeights.regular,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: Spacing.sm,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-  },
-  emptyState: {
-    paddingVertical: Spacing.xxl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: FontSizes.title3,
-    fontWeight: FontWeights.medium,
-    marginBottom: Spacing.sm,
-  },
-  emptySubtext: {
-    fontSize: FontSizes.subheadline,
-    fontWeight: FontWeights.regular,
-    textAlign: 'center',
-  },
-  createButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.large,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    marginTop: Spacing.md,
-  },
-  createButtonText: {
-    fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
-    marginLeft: Spacing.sm,
-  },
-});
+function createStyles(colors: typeof Colors.dark) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+    },
+    content: {
+      flex: 1,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.separator,
+    },
+    headerLeft: {
+      flex: 1,
+    },
+    title: {
+      fontSize: FontSizes.title2,
+      fontWeight: FontWeights.bold,
+      color: colors.textPrimary,
+      marginBottom: Spacing.xs,
+    },
+    subtitle: {
+      fontSize: FontSizes.subheadline,
+      fontWeight: FontWeights.regular,
+      color: colors.textSecondary,
+    },
+    closeButton: {
+      width: 44,
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: Spacing.sm,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+    },
+    emptyState: {
+      paddingVertical: Spacing.xxl,
+      alignItems: 'center',
+    },
+    emptyText: {
+      fontSize: FontSizes.title3,
+      fontWeight: FontWeights.medium,
+      color: colors.textSecondary,
+      marginBottom: Spacing.sm,
+    },
+    emptySubtext: {
+      fontSize: FontSizes.subheadline,
+      fontWeight: FontWeights.regular,
+      color: colors.textTertiary,
+      textAlign: 'center',
+    },
+    createButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.lg,
+      borderRadius: BorderRadius.large,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: colors.separator,
+      backgroundColor: colors.cardBackground,
+      marginTop: Spacing.md,
+    },
+    createButtonText: {
+      fontSize: FontSizes.body,
+      fontWeight: FontWeights.medium,
+      color: colors.accent,
+      marginLeft: Spacing.sm,
+    },
+  });
+}
