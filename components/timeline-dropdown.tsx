@@ -1,14 +1,14 @@
 /**
  * Timeline Dropdown Component
  *
- * Lightweight inline dropdown for quick timeline switching.
+ * Pure timeline switcher with lightweight creation.
  * Appears directly below the title on the home screen.
  *
  * Design:
  * - Simple list of timeline names (no previews or cards)
- * - Active timeline indicated by bold font + checkmark
- * - "Manage Timelines..." button at bottom
- * - Fade in/out animation (no slide, no scale)
+ * - Active timeline indicated by medium font weight + subtle checkmark
+ * - "+ Add Timeline" button at bottom for direct creation
+ * - Fade + subtle scale animation (0.98 → 1.0)
  * - No blur, no shadows - flat design
  */
 
@@ -43,7 +43,7 @@ interface TimelineDropdownProps {
   activeTimelineId: string;
   anchorPosition: { x: number; y: number };
   onSelect: (timeline: Timeline) => void;
-  onManage: () => void;
+  onAddTimeline: () => void;
   onClose: () => void;
 }
 
@@ -53,29 +53,41 @@ export function TimelineDropdown({
   activeTimelineId,
   anchorPosition,
   onSelect,
-  onManage,
+  onAddTimeline,
   onClose,
 }: TimelineDropdownProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.98)).current;
 
-  // Fade in/out animation
+  // Fade + scale animation
   useEffect(() => {
     if (visible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: Animations.fast,
-        useNativeDriver: true,
-      }).start();
+      // Parallel fade + scale on open
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: Animations.fast,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: Animations.fast,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
+      // Fade out only (faster)
       Animated.timing(fadeAnim, {
         toValue: 0,
-        duration: Animations.fast,
+        duration: Animations.fast * 0.75,
         useNativeDriver: true,
       }).start();
+      // Reset scale for next open
+      scaleAnim.setValue(0.98);
     }
-  }, [visible, fadeAnim]);
+  }, [visible, fadeAnim, scaleAnim]);
 
   const styles = createStyles(colors);
 
@@ -85,6 +97,7 @@ export function TimelineDropdown({
     top: anchorPosition.y + 8, // 8px below title
     left: (SCREEN_WIDTH - DROPDOWN_WIDTH) / 2, // Centered
     opacity: fadeAnim,
+    transform: [{ scale: scaleAnim }],
   };
 
   return (
@@ -132,11 +145,11 @@ export function TimelineDropdown({
               <View style={styles.separator} />
 
               <TouchableOpacity
-                style={styles.manageButton}
-                onPress={onManage}
+                style={styles.addButton}
+                onPress={onAddTimeline}
                 activeOpacity={0.6}
               >
-                <Text style={styles.manageText}>Manage Timelines...</Text>
+                <Text style={styles.addText}>+ Add Timeline</Text>
               </TouchableOpacity>
             </ScrollView>
           </TouchableOpacity>
@@ -187,7 +200,7 @@ function createStyles(colors: typeof Colors.dark) {
     },
     checkmark: {
       fontSize: FontSizes.body,
-      color: colors.textPrimary,
+      color: colors.textSecondary,
       marginLeft: Spacing.sm,
     },
     separator: {
@@ -196,14 +209,14 @@ function createStyles(colors: typeof Colors.dark) {
       marginHorizontal: 20,
       marginVertical: Spacing.xs,
     },
-    manageButton: {
+    addButton: {
       paddingVertical: Spacing.md,
       paddingHorizontal: 20,
       minHeight: 44,
       paddingBottom: Spacing.sm,
     },
-    manageText: {
-      fontSize: FontSizes.body,
+    addText: {
+      fontSize: FontSizes.callout,
       fontWeight: FontWeights.regular,
       color: colors.textSecondary,
     },

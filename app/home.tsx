@@ -17,6 +17,7 @@ import {
   useColorScheme,
   SafeAreaView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -26,7 +27,7 @@ import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
 import { DateDisplayOverlay } from '@/components/date-display-overlay';
 import { TimelineDropdown } from '@/components/timeline-dropdown';
-import { TimelineManagementModal } from '@/components/timeline-management-modal';
+import { TimelineFormModal } from '@/components/timeline-form-modal';
 import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
 import {
   getTimelineProgress,
@@ -36,7 +37,8 @@ import {
   updateTimelineIfNeeded,
   sortTimelinesWithActiveFirst,
 } from '@/services/timeline-calculator';
-import { syncActiveTimelineToWidget } from '@/services/widget-data-service';
+import { syncActiveTimelineToWidget, syncAllTimelinesToWidget } from '@/services/widget-data-service';
+import { isPro, FREE_TIER_LIMITS } from '@/services/revenue-cat-service';
 import { getDateFromDotIndex } from '@/utils/date-helpers';
 import {
   Colors,
@@ -57,7 +59,7 @@ export default function HomeScreen() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [tapPosition, setTapPosition] = useState<{ x: number; y: number } | null>(null);
   const [showTimelineDropdown, setShowTimelineDropdown] = useState(false);
-  const [showManagementModal, setShowManagementModal] = useState(false);
+  const [showTimelineFormModal, setShowTimelineFormModal] = useState(false);
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [titlePosition, setTitlePosition] = useState({ x: 0, y: 0 });
 
@@ -195,6 +197,76 @@ export default function HomeScreen() {
     },
     [loadActiveTimeline, loadAllTimelines]
   );
+
+  /**
+   * Handle adding a new timeline with premium checks
+   */
+  const handleAddTimeline = useCallback(async () => {
+    try {
+      // Check premium status
+      const hasPro = await isPro();
+
+      if (!hasPro && timelines.length >= FREE_TIER_LIMITS.MAX_TIMELINES) {
+        // Show paywall alert
+        Alert.alert(
+          'Timeline Limit Reached',
+          `Free users can create up to ${FREE_TIER_LIMITS.MAX_TIMELINES} timelines. Upgrade to Pro for unlimited timelines.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Upgrade to Pro',
+              onPress: () => {
+                setShowTimelineDropdown(false);
+                router.push('/paywall');
+              }
+            }
+          ]
+        );
+        return;
+      }
+
+      // Close dropdown and show form
+      setShowTimelineDropdown(false);
+      setShowTimelineFormModal(true);
+    } catch (error) {
+      console.error('Error checking timeline limits:', error);
+      // Fail open - allow creation
+      setShowTimelineDropdown(false);
+      setShowTimelineFormModal(true);
+    }
+  }, [timelines.length, router]);
+
+  /**
+   * Handle timeline save with widget sync
+   */
+  const handleTimelineSave = useCallback(async (newTimeline: Timeline) => {
+    try {
+      // Save to storage
+      await saveTimeline(newTimeline);
+
+      // Set as active
+      await setActiveTimelineInStorage(newTimeline.id);
+
+      // Sync to widgets
+      await syncAllTimelinesToWidget();
+      await syncActiveTimelineToWidget();
+
+      // Close form
+      setShowTimelineFormModal(false);
+
+      // Reload data
+      await loadActiveTimeline();
+      await loadAllTimelines();
+    } catch (error) {
+      console.error('Error saving timeline:', error);
+      Alert.alert(
+        'Error',
+        'Could not create timeline. Please try again.',
+        [{ text: 'OK' }]
+      );
+      // Keep modal open for retry
+    }
+  }, [loadActiveTimeline, loadAllTimelines]);
 
   // Animated style for icon rotation (must be before early returns)
   const animatedIconStyle = useAnimatedStyle(() => {
@@ -360,18 +432,15 @@ export default function HomeScreen() {
         activeTimelineId={activeTimeline?.id || ''}
         anchorPosition={titlePosition}
         onSelect={handleTimelineSelect}
-        onManage={() => {
-          setShowTimelineDropdown(false);
-          setShowManagementModal(true);
-        }}
+        onAddTimeline={handleAddTimeline}
         onClose={() => setShowTimelineDropdown(false)}
       />
 
-      {/* Timeline Management Modal */}
-      <TimelineManagementModal
-        visible={showManagementModal}
-        onClose={() => setShowManagementModal(false)}
-        onRefresh={loadActiveTimeline}
+      {/* Timeline Form Modal */}
+      <TimelineFormModal
+        visible={showTimelineFormModal}
+        onClose={() => setShowTimelineFormModal(false)}
+        onSave={handleTimelineSave}
       />
     </SafeAreaView>
   );
