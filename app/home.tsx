@@ -16,12 +16,16 @@ import {
   StyleSheet,
   useColorScheme,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { Gear, CaretRight } from 'phosphor-react-native';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
 import { DateDisplayOverlay } from '@/components/date-display-overlay';
+import { TimelineSheet } from '@/components/timeline-sheet';
 import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
 import {
   getTimelineProgress,
@@ -30,6 +34,7 @@ import {
   createTimeline,
   updateTimelineIfNeeded,
 } from '@/services/timeline-calculator';
+import { syncActiveTimelineToWidget } from '@/services/widget-data-service';
 import { getDateFromDotIndex } from '@/utils/date-helpers';
 import {
   Colors,
@@ -43,11 +48,13 @@ import {
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const router = useRouter();
 
   const [activeTimeline, setActiveTimeline] = useState<Timeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [tapPosition, setTapPosition] = useState<{ x: number; y: number } | null>(null);
+  const [showTimelineSheet, setShowTimelineSheet] = useState(false);
 
   /**
    * Load active timeline
@@ -129,6 +136,33 @@ export default function HomeScreen() {
   }, []);
 
   /**
+   * Handle timeline selection from TimelineSheet
+   */
+  const handleTimelineSelect = useCallback(
+    async (timeline: Timeline) => {
+      try {
+        // Immediately update local state
+        setActiveTimeline(timeline);
+
+        // Persist to storage
+        await setActiveTimelineInStorage(timeline.id);
+
+        // Sync to widget
+        await syncActiveTimelineToWidget();
+
+        // Close sheet
+        setShowTimelineSheet(false);
+
+        // Optional: reload timeline to ensure consistency
+        await loadActiveTimeline();
+      } catch (error) {
+        console.error('Error setting active timeline:', error);
+      }
+    },
+    [loadActiveTimeline]
+  );
+
+  /**
    * Render onboarding message when no active timeline
    */
   if (!loading && !activeTimeline) {
@@ -196,17 +230,36 @@ export default function HomeScreen() {
       <View style={styles.contentContainer}>
         {/* Header - FadeIn first */}
         <Animated.View style={styles.header} entering={FadeIn.duration(400)}>
-          <Text
-            style={[
-              styles.title,
-              {
-                fontFamily: Fonts.handwriting,
-                color: colors.textPrimary,
-              },
-            ]}
+          {/* Settings Icon - Top Right */}
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => router.push('/settings')}
+            activeOpacity={0.6}
           >
-            {activeTimeline.title}
-          </Text>
+            <Gear size={24} color={colors.textSecondary} weight="regular" />
+          </TouchableOpacity>
+
+          {/* Timeline Title with Chevron */}
+          <TouchableOpacity
+            style={styles.titleButton}
+            onPress={() => setShowTimelineSheet(true)}
+            activeOpacity={0.6}
+          >
+            <Text
+              style={[
+                styles.title,
+                {
+                  fontFamily: Fonts.handwriting,
+                  color: colors.textPrimary,
+                },
+              ]}
+            >
+              {activeTimeline.title}
+            </Text>
+            <CaretRight size={32} color={colors.textSecondary} weight="regular" />
+          </TouchableOpacity>
+
+          {/* Progress Text */}
           <Text
             style={[
               styles.progress,
@@ -251,6 +304,14 @@ export default function HomeScreen() {
 
       {/* Date Display Overlay */}
       <DateDisplayOverlay date={selectedDate} position={tapPosition} onDismiss={handleDateDismiss} />
+
+      {/* Timeline Sheet */}
+      <TimelineSheet
+        visible={showTimelineSheet}
+        onClose={() => setShowTimelineSheet(false)}
+        onTimelineSelect={handleTimelineSelect}
+        activeTimelineId={activeTimeline?.id}
+      />
     </SafeAreaView>
   );
 }
@@ -262,17 +323,35 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: Layout.screenPadding,
-    paddingBottom: Layout.tabBarHeight + Layout.tabBarBottomMargin + Spacing.md,
+    paddingBottom: Spacing.md,
   },
   header: {
     alignItems: 'center',
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.lg,
+    position: 'relative',
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: Spacing.xl,
+    right: 0,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   title: {
     fontSize: 48,
     fontWeight: FontWeights.semibold,
-    marginBottom: Spacing.sm,
   },
   progress: {
     fontSize: FontSizes.body,

@@ -259,7 +259,7 @@ export default function SettingsScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingBottom: Layout.tabBarHeight + Layout.tabBarBottomMargin + Spacing.md,
+            paddingBottom: Spacing.md,
           },
         ]}
       >

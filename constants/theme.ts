@@ -265,10 +265,10 @@ export const Layout = {
   // Screen padding
   screenPadding: 20,
 
-  // Tab bar dimensions
-  tabBarHeight: 64,
-  tabBarBottomMargin: 16,
-  tabBarSideMargin: 16,
+  // REMOVED - Tab bar no longer used
+  // tabBarHeight: 64,
+  // tabBarBottomMargin: 16,
+  // tabBarSideMargin: 16,
 
   // Card spacing
   cardGap: 12,

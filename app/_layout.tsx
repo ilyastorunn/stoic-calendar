@@ -22,10 +22,6 @@ import {
   CormorantGaramond_600SemiBold,
 } from '@expo-google-fonts/cormorant-garamond';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 export default function RootLayout() {
   const systemColorScheme = useColorScheme();
   const router = useRouter();
@@ -93,7 +89,7 @@ export default function RootLayout() {
   useEffect(() => {
     const subscription = Linking.addEventListener('url', ({ url }) => {
       if (url === 'stoiccalendar://home') {
-        router.push('/(tabs)/home');
+        router.push('/home');
       }
     });
 
@@ -113,7 +109,16 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={effectiveColorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="home" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="settings"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'Settings',
+          }}
+        />
         <Stack.Screen
           name="paywall"
           options={{
