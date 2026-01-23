@@ -25,6 +25,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { SettingsGroup } from '@/components/settings-group';
+import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
 import { ThemeMode, GridColorTheme } from '@/types/timeline';
 import { isPro } from '@/services/revenue-cat-service';
@@ -47,6 +48,7 @@ export default function SettingsScreen() {
   const [currentGridColorTheme, setCurrentGridColorTheme] = useState<GridColorTheme>('classic');
   const [hasPro, setHasPro] = useState<boolean>(false);
   const [isLoadingSubscription, setIsLoadingSubscription] = useState<boolean>(true);
+  const [showTimelineManagement, setShowTimelineManagement] = useState<boolean>(false);
 
   /**
    * Load current theme setting
@@ -151,6 +153,16 @@ export default function SettingsScreen() {
       );
     }
   };
+
+  /**
+   * Timeline management settings
+   */
+  const timelineItems = [
+    {
+      label: 'Manage Timelines',
+      onPress: () => setShowTimelineManagement(true),
+    },
+  ];
 
   /**
    * Appearance settings
@@ -263,13 +275,18 @@ export default function SettingsScreen() {
           },
         ]}
       >
-        {/* Appearance - 100ms delay */}
+        {/* Timelines - 100ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(100)}>
+          <SettingsGroup title="Timelines" items={timelineItems} />
+        </Animated.View>
+
+        {/* Appearance - 200ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(200)}>
           <SettingsGroup title="Appearance" items={appearanceItems} />
         </Animated.View>
 
-        {/* Grid Colors - 200ms delay */}
-        <Animated.View entering={FadeInDown.duration(300).delay(200)}>
+        {/* Grid Colors - 300ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(300)}>
           <SettingsGroup title="Grid Colors" items={[]}>
             <View style={styles.colorPaletteContainer}>
               {/* Classic Blue */}
@@ -403,8 +420,8 @@ export default function SettingsScreen() {
           </SettingsGroup>
         </Animated.View>
 
-        {/* Premium - 300ms delay */}
-        <Animated.View entering={FadeInDown.duration(300).delay(300)}>
+        {/* Premium - 400ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(400)}>
           {isLoadingSubscription ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={colors.accent} />
@@ -414,20 +431,20 @@ export default function SettingsScreen() {
           )}
         </Animated.View>
 
-        {/* About - 400ms delay */}
-        <Animated.View entering={FadeInDown.duration(300).delay(400)}>
+        {/* About - 500ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(500)}>
           <SettingsGroup title="About" items={aboutItems} />
         </Animated.View>
 
-        {/* Debug (development only) - 500ms delay */}
+        {/* Debug (development only) - 600ms delay */}
         {__DEV__ && (
-          <Animated.View entering={FadeInDown.duration(300).delay(500)}>
+          <Animated.View entering={FadeInDown.duration(300).delay(600)}>
             <SettingsGroup title="Debug" items={debugItems} />
           </Animated.View>
         )}
 
-        {/* Philosophy - 600ms delay */}
-        <Animated.View entering={FadeInDown.duration(300).delay(600)}>
+        {/* Philosophy - 700ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(700)}>
           <SettingsGroup title="Philosophy" items={[]}>
             <View style={styles.philosophyContainer}>
               <Text
@@ -459,6 +476,12 @@ export default function SettingsScreen() {
           </SettingsGroup>
         </Animated.View>
       </ScrollView>
+
+      {/* Timeline Management Modal */}
+      <TimelineManagementModal
+        visible={showTimelineManagement}
+        onClose={() => setShowTimelineManagement(false)}
+      />
     </SafeAreaView>
   );
 }

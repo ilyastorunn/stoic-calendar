@@ -266,9 +266,10 @@ export async function logoutUser(): Promise<CustomerInfo> {
 
 /**
  * Feature limits for free tier
+ * TEMPORARY: Increased MAX_TIMELINES to 10 for testing drawer functionality
  */
 export const FREE_TIER_LIMITS = {
-  MAX_TIMELINES: 3,
+  MAX_TIMELINES: 10, // Temporarily increased from 3 for testing
   MAX_CUSTOM_TIMELINES: 1,
   WIDGET_SIZES: ['small', 'medium'], // Pro unlocks 'large'
 } as const;

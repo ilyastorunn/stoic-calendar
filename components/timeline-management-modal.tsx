@@ -63,9 +63,9 @@ export interface TimelineManagementModalProps {
   onClose: () => void;
 
   /**
-   * Called after any timeline change to refresh the home screen
+   * Called after any timeline change to refresh the home screen (optional)
    */
-  onRefresh: () => void;
+  onRefresh?: () => void;
 }
 
 /**
@@ -136,7 +136,7 @@ export function TimelineManagementModal({
       await syncActiveTimelineToWidget();
 
       // Notify parent to refresh home screen
-      onRefresh();
+      onRefresh?.();
 
       // Close modal after selection
       onClose();
@@ -207,7 +207,7 @@ export function TimelineManagementModal({
       setEditingTimeline(undefined);
 
       // Notify parent to refresh
-      onRefresh();
+      onRefresh?.();
     } catch (error) {
       console.error('Error saving timeline:', error);
     }
@@ -242,7 +242,7 @@ export function TimelineManagementModal({
               // Sync updated timeline list to widget
               await syncAllTimelinesToWidget();
               // Refresh home screen
-              onRefresh();
+              onRefresh?.();
             } catch (error) {
               console.error('Error deleting timeline:', error);
             }
