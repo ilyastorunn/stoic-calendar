@@ -24,6 +24,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { List, Moon, Sun, Monitor, Info, Crown, Bug } from 'phosphor-react-native';
 import { SettingsGroup } from '@/components/settings-group';
 import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
@@ -161,6 +162,8 @@ export default function SettingsScreen() {
     {
       label: 'Manage Timelines',
       onPress: () => setShowTimelineManagement(true),
+      icon: <List size={20} color={colors.accent} weight="regular" />,
+      showChevron: true,
     },
   ];
 
@@ -172,16 +175,19 @@ export default function SettingsScreen() {
       label: 'System',
       selected: currentTheme === 'system',
       onPress: () => handleThemeChange('system'),
+      icon: <Monitor size={20} color={colors.accent} weight="regular" />,
     },
     {
       label: 'Light',
       selected: currentTheme === 'light',
       onPress: () => handleThemeChange('light'),
+      icon: <Sun size={20} color={colors.accent} weight="regular" />,
     },
     {
       label: 'Dark',
       selected: currentTheme === 'dark',
       onPress: () => handleThemeChange('dark'),
+      icon: <Moon size={20} color={colors.accent} weight="regular" />,
     },
   ];
 
@@ -196,10 +202,13 @@ export default function SettingsScreen() {
           label: 'Subscription Status',
           value: 'Pro',
           pressable: false,
+          icon: <Info size={20} color={colors.accent} weight="regular" />,
         },
         {
           label: 'Manage Subscription',
           onPress: () => router.push('/customer-center'),
+          icon: <Crown size={20} color="#FFD700" weight="fill" />,
+          showChevron: true,
         },
       ]
     : [
@@ -207,10 +216,14 @@ export default function SettingsScreen() {
           label: 'Subscription Status',
           value: 'Free',
           pressable: false,
+          icon: <Info size={20} color={colors.accent} weight="regular" />,
         },
         {
           label: 'Upgrade to Pro',
           onPress: () => router.push('/paywall'),
+          icon: <Crown size={20} color="#FFD700" weight="fill" />,
+          showChevron: true,
+          variant: 'upgrade' as const,
         },
       ];
 
@@ -222,11 +235,13 @@ export default function SettingsScreen() {
       label: 'Version',
       value: '1.0.0',
       pressable: false,
+      icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
     {
       label: 'Build',
       value: 'MVP',
       pressable: false,
+      icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
   ];
 
@@ -238,6 +253,7 @@ export default function SettingsScreen() {
         {
           label: 'Debug Widget Sync',
           onPress: handleDebugWidgetSync,
+          icon: <Bug size={20} color={colors.accent} weight="regular" />,
         },
       ]
     : [];
@@ -452,7 +468,6 @@ export default function SettingsScreen() {
                   styles.philosophyQuote,
                   {
                     color: colors.textSecondary,
-                    fontStyle: 'italic',
                   },
                 ]}
               >
@@ -530,10 +545,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   philosophyContainer: {
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
   },
   philosophyQuote: {
     fontSize: FontSizes.body,
+    fontStyle: 'italic',
     lineHeight: 24,
     textAlign: 'center',
     marginBottom: Spacing.md,

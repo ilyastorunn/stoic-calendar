@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from 'react-native';
+import { CaretRight } from 'phosphor-react-native';
 import {
   Colors,
   FontSizes,
@@ -51,6 +52,21 @@ export interface SettingsGroupItem {
    * @default true if onPress is provided
    */
   pressable?: boolean;
+
+  /**
+   * Icon component (left side)
+   */
+  icon?: React.ReactNode;
+
+  /**
+   * Show chevron on the right (for navigable items)
+   */
+  showChevron?: boolean;
+
+  /**
+   * Special styling variant
+   */
+  variant?: 'default' | 'upgrade';
 }
 
 export interface SettingsGroupProps {
@@ -166,6 +182,7 @@ function SettingsGroupItemView({
   colors: any;
 }) {
   const isPressable = item.pressable ?? !!item.onPress;
+  const variant = item.variant ?? 'default';
 
   const content = (
     <View
@@ -175,19 +192,25 @@ function SettingsGroupItemView({
           borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
           borderBottomColor: colors.separator,
         },
+        variant === 'upgrade' && styles.itemUpgrade,
       ]}
     >
-      <Text
-        style={[
-          styles.itemLabel,
-          {
-            color: colors.textPrimary,
-          },
-        ]}
-      >
-        {item.label}
-      </Text>
+      {/* Left side: Icon + Label */}
+      <View style={styles.itemLeft}>
+        {item.icon && <View style={styles.itemIcon}>{item.icon}</View>}
+        <Text
+          style={[
+            styles.itemLabel,
+            {
+              color: colors.textPrimary,
+            },
+          ]}
+        >
+          {item.label}
+        </Text>
+      </View>
 
+      {/* Right side: Value + Checkmark + Chevron */}
       <View style={styles.itemRight}>
         {item.value && (
           <Text
@@ -214,6 +237,10 @@ function SettingsGroupItemView({
             ✓
           </Text>
         )}
+
+        {item.showChevron && (
+          <CaretRight size={16} color={colors.textTertiary} weight="bold" />
+        )}
       </View>
     </View>
   );
@@ -236,6 +263,8 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontSize: FontSizes.footnote,
     fontWeight: FontWeights.regular,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.md,
   },
@@ -251,6 +280,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     minHeight: 44,
   },
+  itemUpgrade: {
+    backgroundColor: 'rgba(0, 122, 255, 0.05)',
+  },
+  itemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  itemIcon: {
+    marginRight: Spacing.sm + 4, // 12px gap
+  },
   itemLabel: {
     fontSize: FontSizes.body,
     fontWeight: FontWeights.regular,
@@ -258,11 +298,11 @@ const styles = StyleSheet.create({
   itemRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.xs,
   },
   itemValue: {
     fontSize: FontSizes.body,
     fontWeight: FontWeights.regular,
-    marginRight: Spacing.sm,
   },
   checkmark: {
     fontSize: FontSizes.title2,
