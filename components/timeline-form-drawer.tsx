@@ -69,7 +69,7 @@ export function TimelineFormDrawer({
   const colors = Colors[colorScheme ?? 'dark'];
 
   // Animation state
-  const [slideAnim] = useState(new Animated.Value(500));
+  const [scaleAnim] = useState(new Animated.Value(0.98));
   const [fadeAnim] = useState(new Animated.Value(0));
 
   // Form state
@@ -104,31 +104,27 @@ export function TimelineFormDrawer({
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 250,
+          duration: 200,
           useNativeDriver: true,
         }),
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 300,
+        Animated.timing(scaleAnim, {
+          toValue: 1.0,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
     } else {
       // Animate out
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: 500,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }).start(() => {
+        // Reset scale instantly after fade completes
+        scaleAnim.setValue(0.98);
+      });
     }
-  }, [visible, timeline, fadeAnim, slideAnim]);
+  }, [visible, timeline, fadeAnim, scaleAnim]);
 
   /**
    * Handle save
@@ -211,21 +207,24 @@ export function TimelineFormDrawer({
                 styles.typeButton,
                 {
                   backgroundColor: isSelected
-                    ? colors.accent
+                    ? colors.secondaryBackground
                     : 'transparent',
-                  borderColor: isSelected
-                    ? 'transparent'
-                    : colors.separator,
+                  borderColor: colors.separator,
                 },
               ]}
               onPress={() => setSelectedType(type)}
-              activeOpacity={0.7}
+              activeOpacity={0.6}
             >
               <Text
                 style={[
                   styles.typeButtonText,
                   {
-                    color: isSelected ? '#FFFFFF' : colors.textPrimary,
+                    color: isSelected
+                      ? colors.textPrimary
+                      : colors.textSecondary,
+                    fontWeight: isSelected
+                      ? FontWeights.medium
+                      : FontWeights.regular,
                   },
                 ]}
               >
@@ -265,6 +264,7 @@ export function TimelineFormDrawer({
               {
                 backgroundColor: colors.secondaryBackground,
                 color: colors.textPrimary,
+                borderColor: colors.separator,
               },
             ]}
             value={customTitle}
@@ -291,6 +291,7 @@ export function TimelineFormDrawer({
               styles.dateButton,
               {
                 backgroundColor: colors.secondaryBackground,
+                borderColor: colors.separator,
               },
             ]}
             onPress={() => setShowStartPicker(true)}
@@ -329,6 +330,7 @@ export function TimelineFormDrawer({
               styles.dateButton,
               {
                 backgroundColor: colors.secondaryBackground,
+                borderColor: colors.separator,
               },
             ]}
             onPress={() => setShowEndPicker(true)}
@@ -402,7 +404,8 @@ export function TimelineFormDrawer({
         style={[
           styles.drawerContainer,
           {
-            transform: [{ translateY: slideAnim }],
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
           },
         ]}
       >
@@ -486,7 +489,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   drawerContainer: {
     position: 'absolute',
@@ -495,13 +498,8 @@ const styles = StyleSheet.create({
     right: 0,
   },
   drawer: {
-    borderTopLeftRadius: BorderRadius.xlarge,
-    borderTopRightRadius: BorderRadius.xlarge,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    borderTopLeftRadius: BorderRadius.medium,
+    borderTopRightRadius: BorderRadius.medium,
     maxHeight: SCREEN_HEIGHT * 0.75,
   },
   header: {
@@ -509,7 +507,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
   headerButton: {
@@ -521,41 +519,40 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FontSizes.headline,
-    fontWeight: FontWeights.semibold,
+    fontWeight: FontWeights.medium,
   },
   saveButton: {
     fontSize: FontSizes.body,
-    fontWeight: FontWeights.semibold,
+    fontWeight: FontWeights.medium,
     textAlign: 'right',
   },
   content: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.lg,
   },
   section: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     fontSize: FontSizes.footnote,
     fontWeight: FontWeights.regular,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
-    letterSpacing: 0.5,
   },
   typePickerContainer: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
   },
   typeButton: {
     flex: 1,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.medium,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   typeButtonText: {
     fontSize: FontSizes.body,
-    fontWeight: FontWeights.medium,
+    fontWeight: FontWeights.regular,
   },
   customFieldsContainer: {
     marginTop: Spacing.md,
@@ -568,20 +565,17 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.regular,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
-    letterSpacing: 0.5,
   },
   textInput: {
     padding: Spacing.md,
     borderRadius: BorderRadius.small,
     fontSize: FontSizes.body,
-    borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.1)',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   dateButton: {
     padding: Spacing.md,
     borderRadius: BorderRadius.small,
-    borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.1)',
+    borderWidth: StyleSheet.hairlineWidth,
   },
   dateButtonText: {
     fontSize: FontSizes.body,
