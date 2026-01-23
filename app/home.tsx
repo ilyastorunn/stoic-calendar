@@ -27,7 +27,7 @@ import { Timeline, TimelineType } from '@/types/timeline';
 import { StoicGrid } from '@/components/stoic-grid';
 import { DateDisplayOverlay } from '@/components/date-display-overlay';
 import { TimelineDropdown } from '@/components/timeline-dropdown';
-import { TimelineFormModal } from '@/components/timeline-form-modal';
+import { TimelineFormDrawer } from '@/components/timeline-form-drawer';
 import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
 import {
   getTimelineProgress,
@@ -436,8 +436,8 @@ export default function HomeScreen() {
         onClose={() => setShowTimelineDropdown(false)}
       />
 
-      {/* Timeline Form Modal */}
-      <TimelineFormModal
+      {/* Timeline Form Drawer */}
+      <TimelineFormDrawer
         visible={showTimelineFormModal}
         onClose={() => setShowTimelineFormModal(false)}
         onSave={handleTimelineSave}

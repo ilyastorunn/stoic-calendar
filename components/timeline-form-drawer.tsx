@@ -1,12 +1,12 @@
 /**
- * Timeline Form Modal Component
- * Modal for creating and editing timelines
+ * Timeline Form Drawer Component
+ * Bottom-anchored drawer for creating and editing timelines
  *
  * Features:
  * - Timeline type picker (Year, Month, Week, Custom)
- * - Date pickers for Custom timelines
- * - Title input (auto-generated or custom)
- * - Save/Cancel actions
+ * - Progressive disclosure of date inputs
+ * - Bottom-anchored with fixed height
+ * - Dimmed background with tap-to-dismiss
  */
 
 import React, { useState, useEffect } from 'react';
@@ -17,13 +17,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  ScrollView,
   useColorScheme,
   Platform,
   Animated,
   Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { createTimeline } from '@/services/timeline-calculator';
@@ -35,9 +34,9 @@ import {
   BorderRadius,
 } from '@/constants/theme';
 
-export interface TimelineFormModalProps {
+export interface TimelineFormDrawerProps {
   /**
-   * Whether the modal is visible
+   * Whether the drawer is visible
    */
   visible: boolean;
 
@@ -47,7 +46,7 @@ export interface TimelineFormModalProps {
   timeline?: Timeline;
 
   /**
-   * Called when the modal is closed
+   * Called when the drawer is closed
    */
   onClose: () => void;
 
@@ -58,19 +57,19 @@ export interface TimelineFormModalProps {
 }
 
 /**
- * Timeline Form Modal Component
+ * Timeline Form Drawer Component
  */
-export function TimelineFormModal({
+export function TimelineFormDrawer({
   visible,
   timeline,
   onClose,
   onSave,
-}: TimelineFormModalProps) {
+}: TimelineFormDrawerProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
 
   // Animation state
-  const [scaleAnim] = useState(new Animated.Value(0.9));
+  const [slideAnim] = useState(new Animated.Value(500));
   const [fadeAnim] = useState(new Animated.Value(0));
 
   // Form state
@@ -81,7 +80,7 @@ export function TimelineFormModal({
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  // Reset form and animate when modal opens
+  // Reset form and animate when drawer opens
   useEffect(() => {
     if (visible) {
       // Reset form
@@ -101,25 +100,35 @@ export function TimelineFormModal({
         setCustomEndDate(futureDate);
       }
 
-      // Animate in - subtle, linear animation (Stoic principle: no spring/bounce)
+      // Animate in
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 300,
+          duration: 250,
           useNativeDriver: true,
         }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
+        Animated.timing(slideAnim, {
+          toValue: 0,
           duration: 300,
           useNativeDriver: true,
         }),
       ]).start();
     } else {
-      // Reset animation values
-      scaleAnim.setValue(0.9);
-      fadeAnim.setValue(0);
+      // Animate out
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 500,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
-  }, [visible, timeline, fadeAnim, scaleAnim]);
+  }, [visible, timeline, fadeAnim, slideAnim]);
 
   /**
    * Handle save
@@ -205,7 +214,7 @@ export function TimelineFormModal({
                     ? colors.accent
                     : 'transparent',
                   borderColor: isSelected
-                    ? colors.accent
+                    ? 'transparent'
                     : colors.separator,
                 },
               ]}
@@ -376,136 +385,135 @@ export function TimelineFormModal({
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        {/* Blurred Background - subtle blur for minimal distraction */}
-        <BlurView
-          intensity={30}
-          tint={colorScheme === 'dark' ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        >
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={onClose}
-          />
-        </BlurView>
-
-        {/* Animated Card Container */}
+      {/* Dimmed Background */}
+      <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View
           style={[
-            styles.cardContainer,
+            styles.overlay,
             {
               opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }],
+            },
+          ]}
+        />
+      </TouchableWithoutFeedback>
+
+      {/* Drawer Container */}
+      <Animated.View
+        style={[
+          styles.drawerContainer,
+          {
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.drawer,
+            {
+              backgroundColor: colors.secondaryBackground,
             },
           ]}
         >
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colorScheme === 'dark' ? colors.secondaryBackground : colors.background,
-              },
-            ]}
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <TouchableOpacity onPress={onClose}>
-                <Text
-                  style={[
-                    styles.cancelButton,
-                    {
-                      color: colors.accent,
-                    },
-                  ]}
-                >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.headerButton}>
               <Text
                 style={[
-                  styles.headerTitle,
+                  styles.cancelButton,
                   {
-                    color: colors.textPrimary,
+                    color: colors.accent,
                   },
                 ]}
               >
-                {timeline ? 'Edit Timeline' : 'New Timeline'}
+                Cancel
               </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleSave}>
+            <Text
+              style={[
+                styles.headerTitle,
+                {
+                  color: colors.textPrimary,
+                },
+              ]}
+            >
+              {timeline ? 'Edit Timeline' : 'New Timeline'}
+            </Text>
+
+            <TouchableOpacity onPress={handleSave} style={styles.headerButton}>
+              <Text
+                style={[
+                  styles.saveButton,
+                  {
+                    color: colors.accent,
+                  },
+                ]}
+              >
+                Save
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View style={styles.content}>
+            {/* Only show type picker in create mode */}
+            {!timeline && (
+              <View style={styles.section}>
                 <Text
                   style={[
-                    styles.saveButton,
+                    styles.sectionTitle,
                     {
-                      color: colors.accent,
+                      color: colors.textSecondary,
                     },
                   ]}
                 >
-                  Save
+                  TYPE
                 </Text>
-              </TouchableOpacity>
-            </View>
+                {renderTypePicker()}
+              </View>
+            )}
 
-            {/* Content */}
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-              {/* Only show type picker in create mode */}
-              {!timeline && (
-                <View style={styles.section}>
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      {
-                        color: colors.textSecondary,
-                      },
-                    ]}
-                  >
-                    TYPE
-                  </Text>
-                  {renderTypePicker()}
-                </View>
-              )}
-
-              {renderCustomFields()}
-            </ScrollView>
+            {renderCustomFields()}
           </View>
-        </Animated.View>
-      </View>
+        </View>
+      </Animated.View>
     </Modal>
   );
 }
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
-  cardContainer: {
-    width: SCREEN_WIDTH * 0.9,
-    maxWidth: 500,
-    maxHeight: SCREEN_HEIGHT * 0.75,
+  drawerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
-  card: {
-    borderRadius: BorderRadius.large,
-    overflow: 'hidden',
+  drawer: {
+    borderTopLeftRadius: BorderRadius.xlarge,
+    borderTopRightRadius: BorderRadius.xlarge,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
-    elevation: 6,
+    elevation: 8,
+    maxHeight: SCREEN_HEIGHT * 0.75,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.xl,
     paddingBottom: Spacing.md,
+  },
+  headerButton: {
+    minWidth: 60,
   },
   cancelButton: {
     fontSize: FontSizes.body,
@@ -518,19 +526,21 @@ const styles = StyleSheet.create({
   saveButton: {
     fontSize: FontSizes.body,
     fontWeight: FontWeights.semibold,
+    textAlign: 'right',
   },
   content: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
   section: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   sectionTitle: {
     fontSize: FontSizes.footnote,
     fontWeight: FontWeights.regular,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
+    letterSpacing: 0.5,
   },
   typePickerContainer: {
     flexDirection: 'row',
@@ -539,17 +549,16 @@ const styles = StyleSheet.create({
   typeButton: {
     flex: 1,
     paddingVertical: Spacing.sm + 2,
-    borderRadius: BorderRadius.small,
+    borderRadius: BorderRadius.medium,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'transparent',
   },
   typeButtonText: {
     fontSize: FontSizes.body,
     fontWeight: FontWeights.medium,
   },
   customFieldsContainer: {
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
   fieldContainer: {
     marginBottom: Spacing.md,
@@ -559,19 +568,20 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.regular,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
+    letterSpacing: 0.5,
   },
   textInput: {
     padding: Spacing.md,
     borderRadius: BorderRadius.small,
     fontSize: FontSizes.body,
     borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.2)',
+    borderColor: 'rgba(128, 128, 128, 0.1)',
   },
   dateButton: {
     padding: Spacing.md,
     borderRadius: BorderRadius.small,
     borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.2)',
+    borderColor: 'rgba(128, 128, 128, 0.1)',
   },
   dateButtonText: {
     fontSize: FontSizes.body,

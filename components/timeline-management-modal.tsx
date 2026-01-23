@@ -30,7 +30,7 @@ import { useRouter } from 'expo-router';
 import { X, Plus } from 'phosphor-react-native';
 import { Timeline } from '@/types/timeline';
 import { TimelineCard } from './timeline-card';
-import { TimelineFormModal } from './timeline-form-modal';
+import { TimelineFormDrawer } from './timeline-form-drawer';
 import {
   loadTimelines,
   saveTimeline,
@@ -326,15 +326,15 @@ export function TimelineManagementModal({
         </SafeAreaView>
       </BlurView>
 
-      {/* Create Modal */}
-      <TimelineFormModal
+      {/* Create Drawer */}
+      <TimelineFormDrawer
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSave={handleTimelineSave}
       />
 
-      {/* Edit Modal */}
-      <TimelineFormModal
+      {/* Edit Drawer */}
+      <TimelineFormDrawer
         visible={!!editingTimeline}
         timeline={editingTimeline}
         onClose={() => setEditingTimeline(undefined)}
