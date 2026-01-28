@@ -57,53 +57,50 @@ struct StoicCircularWidgetView: View {
                     }
                     .padding(12)
                 } else {
-                    // Medium widget: Full layout with title, ring, days, and footer
-                    VStack(spacing: 8) {
-                        // Timeline title
+                    // Medium widget: Horizontal layout (Title left, Ring center, Stats right)
+                    HStack(alignment: .center, spacing: 0) {
+                        // Left: Title (larger, more prominent)
                         Text(timeline.title)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(secondaryColor)
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(primaryColor)
                             .lineLimit(1)
 
-                        // Circular progress ring
-                        ZStack {
-                            // Empty track
-                            Circle()
-                                .stroke(emptyColor, lineWidth: 8)
+                        Spacer()
 
-                            // Progress arc
-                            Circle()
-                                .trim(from: 0, to: CGFloat(timeline.progressPercentage) / 100.0)
-                                .stroke(
-                                    filledColor,
-                                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                                )
-                                .rotationEffect(.degrees(-90))
+                        // Ring + Stats grouped together (more centered)
+                        HStack(spacing: 16) {
+                            // Circular progress ring
+                            ZStack {
+                                // Empty track
+                                Circle()
+                                    .stroke(emptyColor, lineWidth: 8)
 
-                            // Center content
-                            VStack(spacing: 2) {
+                                // Progress arc
+                                Circle()
+                                    .trim(from: 0, to: CGFloat(timeline.progressPercentage) / 100.0)
+                                    .stroke(
+                                        filledColor,
+                                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                                    )
+                                    .rotationEffect(.degrees(-90))
+                            }
+                            .frame(width: 70, height: 70)
+
+                            // Stats (percentage + days)
+                            VStack(alignment: .leading, spacing: 4) {
                                 Text("\(timeline.progressPercentage)%")
-                                    .font(.system(size: 24, weight: .semibold))
+                                    .font(.system(size: 22, weight: .bold))
                                     .foregroundColor(primaryColor)
 
-                                if timeline.daysRemaining > 0 {
-                                    Text("\(timeline.daysRemaining)d")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(secondaryColor)
-                                } else {
-                                    Text("done")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(secondaryColor)
-                                }
+                                Text("\(timeline.daysPassed) of \(timeline.totalDays)")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(secondaryColor)
+
+                                Text("days")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(secondaryColor)
                             }
                         }
-                        .frame(height: 100)
-                        .padding(.horizontal, 4)
-
-                        // Footer stats
-                        Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
-                            .font(.system(size: 11))
-                            .foregroundColor(secondaryColor)
                     }
                     .padding(16)
                 }

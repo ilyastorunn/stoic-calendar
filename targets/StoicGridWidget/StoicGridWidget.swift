@@ -201,32 +201,68 @@ struct StoicGridWidgetView: View {
                 ZStack {
                     backgroundColor
 
-                    VStack(spacing: 8) {
-                        // Title
-                        Text(timeline.title)
-                            .font(.system(size: titleFontSize, weight: .semibold))
-                            .foregroundColor(textColor)
-                            .lineLimit(1)
+                    if family == .systemMedium {
+                        // Medium widget: Horizontal layout (Title left, Grid+Stats right)
+                        HStack(alignment: .center, spacing: 0) {
+                            // Left: Title (optically centered vertically to grid)
+                            Text(timeline.title)
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundColor(textColor)
+                                .lineLimit(1)
+                                .alignmentGuide(VerticalAlignment.center) { d in
+                                    d[VerticalAlignment.center] + 5  // Slight upward shift to align with grid center
+                                }
 
-                        // Grid
-                        GeometryReader { geometry in
-                            StoicGridView(
-                                daysPassed: timeline.daysPassed,
-                                totalDays: timeline.totalDays,
-                                colorTheme: entry.settings?.gridColorTheme ?? "classic",
-                                effectiveColorScheme: effectiveColorScheme,
-                                containerSize: geometry.size
-                            )
-                        }
+                            Spacer()
 
-                        // Progress text
-                        if family != .systemSmall {
-                            Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
-                                .font(.system(size: captionFontSize))
-                                .foregroundColor(secondaryTextColor)
+                            // Right: Grid + Stats (centered alignment)
+                            VStack(alignment: .center, spacing: 6) {
+                                GeometryReader { geometry in
+                                    StoicGridView(
+                                        daysPassed: timeline.daysPassed,
+                                        totalDays: timeline.totalDays,
+                                        colorTheme: entry.settings?.gridColorTheme ?? "classic",
+                                        effectiveColorScheme: effectiveColorScheme,
+                                        containerSize: geometry.size
+                                    )
+                                }
+                                .frame(width: 120, height: 80)
+
+                                Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(secondaryTextColor)
+                            }
                         }
+                        .padding(paddingSize)
+                    } else {
+                        // Small and Large widgets: Vertical layout
+                        VStack(spacing: 8) {
+                            // Title
+                            Text(timeline.title)
+                                .font(.system(size: titleFontSize, weight: .semibold))
+                                .foregroundColor(textColor)
+                                .lineLimit(1)
+
+                            // Grid
+                            GeometryReader { geometry in
+                                StoicGridView(
+                                    daysPassed: timeline.daysPassed,
+                                    totalDays: timeline.totalDays,
+                                    colorTheme: entry.settings?.gridColorTheme ?? "classic",
+                                    effectiveColorScheme: effectiveColorScheme,
+                                    containerSize: geometry.size
+                                )
+                            }
+
+                            // Progress text
+                            if family != .systemSmall {
+                                Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
+                                    .font(.system(size: captionFontSize))
+                                    .foregroundColor(secondaryTextColor)
+                            }
+                        }
+                        .padding(paddingSize)
                     }
-                    .padding(paddingSize)
                 }
                 .widgetURL(URL(string: "stoiccalendar://home"))
                 .containerBackground(for: .widget) {
