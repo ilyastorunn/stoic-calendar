@@ -223,10 +223,11 @@ struct StoicGridWidgetView: View {
                                         totalDays: timeline.totalDays,
                                         colorTheme: entry.settings?.gridColorTheme ?? "classic",
                                         effectiveColorScheme: effectiveColorScheme,
-                                        containerSize: geometry.size
+                                        containerSize: geometry.size,
+                                        widgetFamily: family
                                     )
                                 }
-                                .frame(width: 120, height: 80)
+                                .frame(width: 160, height: 100)
 
                                 Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
                                     .font(.system(size: 11))
@@ -250,7 +251,8 @@ struct StoicGridWidgetView: View {
                                     totalDays: timeline.totalDays,
                                     colorTheme: entry.settings?.gridColorTheme ?? "classic",
                                     effectiveColorScheme: effectiveColorScheme,
-                                    containerSize: geometry.size
+                                    containerSize: geometry.size,
+                                    widgetFamily: family
                                 )
                             }
 
@@ -526,13 +528,15 @@ struct StoicGridView: View {
     let colorTheme: String
     let effectiveColorScheme: ColorScheme
     let containerSize: CGSize
+    let widgetFamily: WidgetFamily
 
     var body: some View {
         Canvas { context, size in
             let layout = calculateGridLayout(
                 totalDays: totalDays,
                 width: size.width,
-                height: size.height
+                height: size.height,
+                widgetFamily: widgetFamily
             )
 
             // Center the grid
@@ -580,7 +584,7 @@ struct GridLayout {
 }
 
 /// Calculate optimal grid layout with optimizations for large timelines
-func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> GridLayout {
+func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widgetFamily: WidgetFamily = .systemSmall) -> GridLayout {
     guard totalDays > 0 && width > 0 && height > 0 else {
         return GridLayout(columns: 0, rows: 0, dotSize: 0, spacingHorizontal: 0, spacingVertical: 0, gridWidth: 0, gridHeight: 0)
     }
@@ -625,10 +629,21 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat) -> Gri
 
     var dotSize = min(maxDotSizeFromWidth, maxDotSizeFromHeight)
 
-    // Step 5: Clamp dot size based on widget size
-    // Smaller minimum for large timelines to improve visibility
-    let minDotSize: CGFloat = totalDays > 180 ? 3 : 5
-    let maxDotSize: CGFloat = totalDays > 180 ? 10 : 14
+    // Step 5: Clamp dot size based on widget family and timeline size
+    let (minDotSize, maxDotSize): (CGFloat, CGFloat) = {
+        switch widgetFamily {
+        case .systemLarge:
+            if totalDays <= 50 { return (8, 28) }      // Month: big dots
+            else if totalDays <= 100 { return (6, 20) } // Custom
+            else { return (4, 12) }                     // Year
+        case .systemMedium:
+            if totalDays <= 50 { return (5, 16) }
+            else if totalDays <= 100 { return (4, 12) }
+            else { return (3.5, 8) }                    // Year: slightly bigger min
+        default:
+            return totalDays > 180 ? (3, 10) : (5, 14)  // Small: unchanged
+        }
+    }()
     dotSize = max(minDotSize, min(maxDotSize, dotSize))
 
     // Step 6: Calculate asymmetric spacing
