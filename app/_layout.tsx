@@ -90,6 +90,8 @@ export default function RootLayout() {
     const subscription = Linking.addEventListener('url', ({ url }) => {
       if (url === 'stoiccalendar://home') {
         router.push('/home');
+      } else if (url === 'stoiccalendar://paywall') {
+        router.push('/paywall');
       }
     });
 

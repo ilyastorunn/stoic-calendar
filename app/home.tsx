@@ -28,7 +28,8 @@ import { StoicGrid } from '@/components/stoic-grid';
 import { DateDisplayOverlay } from '@/components/date-display-overlay';
 import { TimelineDropdown } from '@/components/timeline-dropdown';
 import { TimelineFormDrawer } from '@/components/timeline-form-drawer';
-import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage } from '@/services/storage';
+import { TimelineManagementModal } from '@/components/timeline-management-modal';
+import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage, deleteTimeline } from '@/services/storage';
 import {
   getTimelineProgress,
   getTimelineRemaining,
@@ -60,6 +61,8 @@ export default function HomeScreen() {
   const [tapPosition, setTapPosition] = useState<{ x: number; y: number } | null>(null);
   const [showTimelineDropdown, setShowTimelineDropdown] = useState(false);
   const [showTimelineFormModal, setShowTimelineFormModal] = useState(false);
+  const [showManagementModal, setShowManagementModal] = useState(false);
+  const [editingTimeline, setEditingTimeline] = useState<Timeline | undefined>(undefined);
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [titlePosition, setTitlePosition] = useState({ x: 0, y: 0 });
 
@@ -119,6 +122,12 @@ export default function HomeScreen() {
       } else {
         // Load the active timeline
         let timeline = await getActiveTimeline();
+
+        // If no active timeline but timelines exist, set the first one as active
+        if (!timeline && allTimelines.length > 0) {
+          await setActiveTimelineInStorage(allTimelines[0].id);
+          timeline = allTimelines[0];
+        }
 
         if (timeline) {
           // Check if timeline needs auto-update (Week/Month/Year)
@@ -244,8 +253,10 @@ export default function HomeScreen() {
       // Save to storage
       await saveTimeline(newTimeline);
 
-      // Set as active
-      await setActiveTimelineInStorage(newTimeline.id);
+      // Set as active (only if creating new timeline, not editing)
+      if (!editingTimeline) {
+        await setActiveTimelineInStorage(newTimeline.id);
+      }
 
       // Sync to widgets
       await syncAllTimelinesToWidget();
@@ -253,6 +264,7 @@ export default function HomeScreen() {
 
       // Close form
       setShowTimelineFormModal(false);
+      setEditingTimeline(undefined);
 
       // Reload data
       await loadActiveTimeline();
@@ -261,11 +273,66 @@ export default function HomeScreen() {
       console.error('Error saving timeline:', error);
       Alert.alert(
         'Error',
-        'Could not create timeline. Please try again.',
+        'Could not save timeline. Please try again.',
         [{ text: 'OK' }]
       );
       // Keep modal open for retry
     }
+  }, [loadActiveTimeline, loadAllTimelines, editingTimeline]);
+
+  /**
+   * Handle opening timeline management modal
+   */
+  const handleManageTimelines = useCallback(() => {
+    setShowTimelineDropdown(false);
+    setShowManagementModal(true);
+  }, []);
+
+  /**
+   * Handle timeline edit from context menu
+   */
+  const handleTimelineEdit = useCallback((timeline: Timeline) => {
+    setShowTimelineDropdown(false);
+    setEditingTimeline(timeline);
+    setShowTimelineFormModal(true);
+  }, []);
+
+  /**
+   * Handle timeline delete from context menu
+   */
+  const handleTimelineDelete = useCallback(async (timeline: Timeline) => {
+    Alert.alert(
+      'Delete Timeline',
+      `Are you sure you want to delete "${timeline.title}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Close dropdown
+              setShowTimelineDropdown(false);
+
+              // Delete timeline
+              await deleteTimeline(timeline.id);
+
+              // Reload data - loadActiveTimeline will handle setting a new active timeline
+              // or creating a default 2026 timeline if none exist
+              await loadActiveTimeline();
+              await loadAllTimelines();
+
+              // Sync widgets
+              await syncAllTimelinesToWidget();
+              await syncActiveTimelineToWidget();
+            } catch (error) {
+              console.error('Error deleting timeline:', error);
+              Alert.alert('Error', 'Could not delete timeline. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   }, [loadActiveTimeline, loadAllTimelines]);
 
   // Animated style for icon rotation (must be before early returns)
@@ -433,14 +500,31 @@ export default function HomeScreen() {
         anchorPosition={titlePosition}
         onSelect={handleTimelineSelect}
         onAddTimeline={handleAddTimeline}
+        onManage={handleManageTimelines}
+        onEdit={handleTimelineEdit}
+        onDelete={handleTimelineDelete}
         onClose={() => setShowTimelineDropdown(false)}
       />
 
       {/* Timeline Form Drawer */}
       <TimelineFormDrawer
         visible={showTimelineFormModal}
-        onClose={() => setShowTimelineFormModal(false)}
+        timeline={editingTimeline}
+        onClose={() => {
+          setShowTimelineFormModal(false);
+          setEditingTimeline(undefined);
+        }}
         onSave={handleTimelineSave}
+      />
+
+      {/* Timeline Management Modal */}
+      <TimelineManagementModal
+        visible={showManagementModal}
+        onClose={() => setShowManagementModal(false)}
+        onRefresh={async () => {
+          await loadActiveTimeline();
+          await loadAllTimelines();
+        }}
       />
     </SafeAreaView>
   );
@@ -463,7 +547,7 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     position: 'absolute',
-    top: Spacing.xl,
+    top: Spacing.sm,
     right: 0,
     width: 44,
     height: 44,

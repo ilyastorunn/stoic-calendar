@@ -159,23 +159,9 @@ export function TimelineManagementModal({
       if (!hasPro) {
         // Check if user has reached timeline limit
         if (timelines.length >= FREE_TIER_LIMITS.MAX_TIMELINES) {
-          Alert.alert(
-            'Timeline Limit Reached',
-            `Free users can create up to ${FREE_TIER_LIMITS.MAX_TIMELINES} timelines. Upgrade to Pro for unlimited timelines.`,
-            [
-              {
-                text: 'Cancel',
-                style: 'cancel',
-              },
-              {
-                text: 'Upgrade to Pro',
-                onPress: () => {
-                  onClose(); // Close modal
-                  router.push('/paywall'); // Open paywall
-                },
-              },
-            ]
-          );
+          // Directly open paywall without showing alert
+          onClose(); // Close modal
+          router.push('/paywall'); // Open paywall
           return;
         }
       }
@@ -299,7 +285,7 @@ export function TimelineManagementModal({
                   onPress={handleTimelinePress}
                   onEdit={handleTimelineEdit}
                   onDelete={handleTimelineDelete}
-                  showDelete
+                  showDelete={timelines.length > 1}
                 />
               ))}
 

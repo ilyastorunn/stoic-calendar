@@ -138,6 +138,14 @@ export async function purchasePackage(
       Object.keys(customerInfo.entitlements.active)
     );
 
+    // Sync Pro status to widgets after successful purchase
+    try {
+      const { syncProStatusToWidget } = await import('@/services/widget-data-service');
+      await syncProStatusToWidget();
+    } catch (widgetError) {
+      console.warn('Failed to sync Pro status to widgets:', widgetError);
+    }
+
     return { customerInfo, userCancelled: false };
   } catch (error: any) {
     if (error.userCancelled) {
@@ -162,6 +170,15 @@ export async function restorePurchases(): Promise<CustomerInfo> {
       'Active entitlements:',
       Object.keys(customerInfo.entitlements.active)
     );
+
+    // Sync Pro status to widgets after successful restore
+    try {
+      const { syncProStatusToWidget } = await import('@/services/widget-data-service');
+      await syncProStatusToWidget();
+    } catch (widgetError) {
+      console.warn('Failed to sync Pro status to widgets:', widgetError);
+    }
+
     return customerInfo;
   } catch (error) {
     console.error('Error restoring purchases:', error);
@@ -266,10 +283,9 @@ export async function logoutUser(): Promise<CustomerInfo> {
 
 /**
  * Feature limits for free tier
- * TEMPORARY: Increased MAX_TIMELINES to 10 for testing drawer functionality
  */
 export const FREE_TIER_LIMITS = {
-  MAX_TIMELINES: 10, // Temporarily increased from 3 for testing
+  MAX_TIMELINES: 3,
   MAX_CUSTOM_TIMELINES: 1,
   WIDGET_SIZES: ['small', 'medium'], // Pro unlocks 'large'
 } as const;

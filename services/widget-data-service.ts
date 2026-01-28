@@ -26,6 +26,7 @@ const WIDGET_DATA_KEYS = {
   ALL_TIMELINES: 'widget_all_timelines',
   SETTINGS: 'widget_settings',
   LAST_UPDATE: 'widget_last_update',
+  IS_PRO: 'widget_is_pro',
 } as const;
 
 /**
@@ -276,11 +277,50 @@ export function getWidgetData(): { timeline: string | null; settings: string | n
 }
 
 /**
- * Sync all widget data (active timeline + all timelines + settings)
+ * Export Pro status to App Groups for widgets
+ *
+ * This function should be called:
+ * - On app launch
+ * - After successful purchase
+ * - After successful restore
+ *
+ * NOTE: Widget sync requires a development build and will not work in Expo Go.
+ */
+export async function syncProStatusToWidget(): Promise<void> {
+  const storage = getExtensionStorage();
+  if (!storage) {
+    return;
+  }
+
+  try {
+    // Lazy import to avoid circular dependency
+    const { isPro } = await import('@/services/revenue-cat-service');
+    const hasPro = await isPro();
+
+    // Write as string "true" or "false"
+    storage.set(WIDGET_DATA_KEYS.IS_PRO, hasPro ? 'true' : 'false');
+
+    // Reload widgets so pro-gated widgets update immediately
+    try {
+      const { ExtensionStorage } = require('@bacons/apple-targets');
+      ExtensionStorage.reloadWidget();
+    } catch {
+      // Ignore if reload not available
+    }
+
+    console.log('✅ Widget Pro status synced:', hasPro);
+  } catch (error) {
+    console.error('❌ Error syncing Pro status to widget:', error);
+  }
+}
+
+/**
+ * Sync all widget data (active timeline + all timelines + settings + pro status)
  * Convenience function for initial app setup and comprehensive sync
  */
 export async function syncAllWidgetData(): Promise<void> {
   await syncActiveTimelineToWidget();
   await syncAllTimelinesToWidget();
   await syncSettingsToWidget();
+  await syncProStatusToWidget();
 }

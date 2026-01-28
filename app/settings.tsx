@@ -24,7 +24,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { List, Moon, Sun, Monitor, Info, Crown, Bug } from 'phosphor-react-native';
+import { List, Moon, Sun, Monitor, Info, Crown, Bug, Check } from 'phosphor-react-native';
 import { SettingsGroup } from '@/components/settings-group';
 import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
@@ -36,6 +36,7 @@ import {
   FontWeights,
   Spacing,
   Layout,
+  BorderRadius,
   GridColorPalettes,
 } from '@/constants/theme';
 import { debugWidgetSync } from '@/scripts/debug-widget-sync';
@@ -168,25 +169,22 @@ export default function SettingsScreen() {
   ];
 
   /**
-   * Appearance settings
+   * Appearance settings (rendered as horizontal buttons)
    */
-  const appearanceItems = [
+  const appearanceThemes = [
     {
+      mode: 'system' as ThemeMode,
       label: 'System',
-      selected: currentTheme === 'system',
-      onPress: () => handleThemeChange('system'),
       icon: <Monitor size={20} color={colors.accent} weight="regular" />,
     },
     {
+      mode: 'light' as ThemeMode,
       label: 'Light',
-      selected: currentTheme === 'light',
-      onPress: () => handleThemeChange('light'),
       icon: <Sun size={20} color={colors.accent} weight="regular" />,
     },
     {
+      mode: 'dark' as ThemeMode,
       label: 'Dark',
-      selected: currentTheme === 'dark',
-      onPress: () => handleThemeChange('dark'),
       icon: <Moon size={20} color={colors.accent} weight="regular" />,
     },
   ];
@@ -267,26 +265,13 @@ export default function SettingsScreen() {
         },
       ]}
     >
-      {/* Header - FadeIn */}
-      <Animated.View style={styles.header} entering={FadeIn.duration(400)}>
-        <Text
-          style={[
-            styles.title,
-            {
-              color: colors.textPrimary,
-            },
-          ]}
-        >
-          Settings
-        </Text>
-      </Animated.View>
-
       {/* Content */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
           {
+            paddingTop: Spacing.lg,
             paddingBottom: Spacing.md,
           },
         ]}
@@ -298,7 +283,39 @@ export default function SettingsScreen() {
 
         {/* Appearance - 200ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(200)}>
-          <SettingsGroup title="Appearance" items={appearanceItems} />
+          <SettingsGroup title="Appearance" items={[]}>
+            <View style={styles.appearanceContainer}>
+              {appearanceThemes.map((theme) => (
+                <TouchableOpacity
+                  key={theme.mode}
+                  style={[
+                    styles.appearanceItem,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: currentTheme === theme.mode ? colors.accent : colors.separator,
+                    },
+                  ]}
+                  onPress={() => handleThemeChange(theme.mode)}
+                  activeOpacity={0.6}
+                >
+                  {theme.icon}
+                  <Text
+                    style={[
+                      styles.appearanceLabel,
+                      {
+                        color: colors.textPrimary,
+                      },
+                    ]}
+                  >
+                    {theme.label}
+                  </Text>
+                  {currentTheme === theme.mode && (
+                    <Check size={20} color={colors.accent} weight="bold" />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </SettingsGroup>
         </Animated.View>
 
         {/* Grid Colors - 300ms delay */}
@@ -311,20 +328,23 @@ export default function SettingsScreen() {
                 onPress={() => handleGridColorThemeChange('classic')}
                 activeOpacity={0.6}
               >
-                <View
-                  style={[
-                    styles.colorPreview,
-                    {
-                      backgroundColor: colorScheme === 'dark'
-                        ? GridColorPalettes.classic.dark.dotFilled
-                        : GridColorPalettes.classic.light.dotFilled,
-                    },
-                    currentGridColorTheme === 'classic' && {
-                      borderColor: colors.accent,
-                      borderWidth: 3,
-                    },
-                  ]}
-                />
+                <View style={styles.colorPreviewWrapper}>
+                  <View
+                    style={[
+                      styles.colorPreview,
+                      {
+                        backgroundColor: colorScheme === 'dark'
+                          ? GridColorPalettes.classic.dark.dotFilled
+                          : GridColorPalettes.classic.light.dotFilled,
+                      },
+                    ]}
+                  />
+                  {currentGridColorTheme === 'classic' && (
+                    <View style={styles.colorCheckIcon}>
+                      <Check size={24} color="white" weight="bold" />
+                    </View>
+                  )}
+                </View>
                 <Text
                   style={[
                     styles.colorPaletteLabel,
@@ -343,20 +363,23 @@ export default function SettingsScreen() {
                 onPress={() => handleGridColorThemeChange('forest')}
                 activeOpacity={0.6}
               >
-                <View
-                  style={[
-                    styles.colorPreview,
-                    {
-                      backgroundColor: colorScheme === 'dark'
-                        ? GridColorPalettes.forest.dark.dotFilled
-                        : GridColorPalettes.forest.light.dotFilled,
-                    },
-                    currentGridColorTheme === 'forest' && {
-                      borderColor: colors.accent,
-                      borderWidth: 3,
-                    },
-                  ]}
-                />
+                <View style={styles.colorPreviewWrapper}>
+                  <View
+                    style={[
+                      styles.colorPreview,
+                      {
+                        backgroundColor: colorScheme === 'dark'
+                          ? GridColorPalettes.forest.dark.dotFilled
+                          : GridColorPalettes.forest.light.dotFilled,
+                      },
+                    ]}
+                  />
+                  {currentGridColorTheme === 'forest' && (
+                    <View style={styles.colorCheckIcon}>
+                      <Check size={24} color="white" weight="bold" />
+                    </View>
+                  )}
+                </View>
                 <Text
                   style={[
                     styles.colorPaletteLabel,
@@ -375,20 +398,23 @@ export default function SettingsScreen() {
                 onPress={() => handleGridColorThemeChange('sunset')}
                 activeOpacity={0.6}
               >
-                <View
-                  style={[
-                    styles.colorPreview,
-                    {
-                      backgroundColor: colorScheme === 'dark'
-                        ? GridColorPalettes.sunset.dark.dotFilled
-                        : GridColorPalettes.sunset.light.dotFilled,
-                    },
-                    currentGridColorTheme === 'sunset' && {
-                      borderColor: colors.accent,
-                      borderWidth: 3,
-                    },
-                  ]}
-                />
+                <View style={styles.colorPreviewWrapper}>
+                  <View
+                    style={[
+                      styles.colorPreview,
+                      {
+                        backgroundColor: colorScheme === 'dark'
+                          ? GridColorPalettes.sunset.dark.dotFilled
+                          : GridColorPalettes.sunset.light.dotFilled,
+                      },
+                    ]}
+                  />
+                  {currentGridColorTheme === 'sunset' && (
+                    <View style={styles.colorCheckIcon}>
+                      <Check size={24} color="white" weight="bold" />
+                    </View>
+                  )}
+                </View>
                 <Text
                   style={[
                     styles.colorPaletteLabel,
@@ -407,20 +433,23 @@ export default function SettingsScreen() {
                 onPress={() => handleGridColorThemeChange('monochrome')}
                 activeOpacity={0.6}
               >
-                <View
-                  style={[
-                    styles.colorPreview,
-                    {
-                      backgroundColor: colorScheme === 'dark'
-                        ? GridColorPalettes.monochrome.dark.dotFilled
-                        : GridColorPalettes.monochrome.light.dotFilled,
-                    },
-                    currentGridColorTheme === 'monochrome' && {
-                      borderColor: colors.accent,
-                      borderWidth: 3,
-                    },
-                  ]}
-                />
+                <View style={styles.colorPreviewWrapper}>
+                  <View
+                    style={[
+                      styles.colorPreview,
+                      {
+                        backgroundColor: colorScheme === 'dark'
+                          ? GridColorPalettes.monochrome.dark.dotFilled
+                          : GridColorPalettes.monochrome.light.dotFilled,
+                      },
+                    ]}
+                  />
+                  {currentGridColorTheme === 'monochrome' && (
+                    <View style={styles.colorCheckIcon}>
+                      <Check size={24} color="white" weight="bold" />
+                    </View>
+                  )}
+                </View>
                 <Text
                   style={[
                     styles.colorPaletteLabel,
@@ -447,20 +476,15 @@ export default function SettingsScreen() {
           )}
         </Animated.View>
 
-        {/* About - 500ms delay */}
-        <Animated.View entering={FadeInDown.duration(300).delay(500)}>
-          <SettingsGroup title="About" items={aboutItems} />
-        </Animated.View>
-
-        {/* Debug (development only) - 600ms delay */}
+        {/* Debug (development only) - 500ms delay */}
         {__DEV__ && (
-          <Animated.View entering={FadeInDown.duration(300).delay(600)}>
+          <Animated.View entering={FadeInDown.duration(300).delay(500)}>
             <SettingsGroup title="Debug" items={debugItems} />
           </Animated.View>
         )}
 
-        {/* Philosophy - 700ms delay */}
-        <Animated.View entering={FadeInDown.duration(300).delay(700)}>
+        {/* Philosophy - 600ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(600)}>
           <SettingsGroup title="Philosophy" items={[]}>
             <View style={styles.philosophyContainer}>
               <Text
@@ -490,6 +514,11 @@ export default function SettingsScreen() {
             </View>
           </SettingsGroup>
         </Animated.View>
+
+        {/* About - 700ms delay */}
+        <Animated.View entering={FadeInDown.duration(300).delay(700)}>
+          <SettingsGroup title="About" items={aboutItems} />
+        </Animated.View>
       </ScrollView>
 
       {/* Timeline Management Modal */}
@@ -505,15 +534,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    paddingHorizontal: Layout.screenPadding,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  title: {
-    fontSize: FontSizes.largeTitle,
-    fontWeight: FontWeights.bold,
-  },
   scrollView: {
     flex: 1,
   },
@@ -523,6 +543,25 @@ const styles = StyleSheet.create({
   loadingContainer: {
     paddingVertical: Spacing.lg,
     alignItems: 'center',
+  },
+  appearanceContainer: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.sm,
+  },
+  appearanceItem: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.medium,
+    borderWidth: 2,
+    gap: Spacing.xs,
+  },
+  appearanceLabel: {
+    fontSize: FontSizes.caption1,
+    fontWeight: FontWeights.medium,
   },
   colorPaletteContainer: {
     flexDirection: 'row',
@@ -534,11 +573,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
   },
+  colorPreviewWrapper: {
+    position: 'relative',
+    marginBottom: Spacing.xs,
+  },
   colorPreview: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    marginBottom: Spacing.xs,
+  },
+  colorCheckIcon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   colorPaletteLabel: {
     fontSize: FontSizes.caption1,

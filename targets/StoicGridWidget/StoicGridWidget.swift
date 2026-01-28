@@ -89,6 +89,7 @@ struct StoicGridEntry: TimelineEntry {
     let date: Date
     let timeline: WidgetTimelineData?
     let settings: WidgetSettingsData?
+    let isPro: Bool
 }
 
 // MARK: - Timeline Provider
@@ -116,7 +117,8 @@ struct StoicGridProvider: AppIntentTimelineProvider {
             settings: WidgetSettingsData(
                 gridColorTheme: "classic",
                 themeMode: "dark"
-            )
+            ),
+            isPro: false
         )
     }
 
@@ -143,7 +145,7 @@ struct StoicGridProvider: AppIntentTimelineProvider {
     /// Otherwise, fallback to active timeline (backward compatibility)
     private func loadTimelineData(for configuration: SelectTimelineIntent) -> StoicGridEntry {
         guard let userDefaults = UserDefaults(suiteName: appGroupId) else {
-            return StoicGridEntry(date: Date(), timeline: nil, settings: nil)
+            return StoicGridEntry(date: Date(), timeline: nil, settings: nil, isPro: false)
         }
 
         // Load timeline data based on configuration
@@ -175,7 +177,10 @@ struct StoicGridProvider: AppIntentTimelineProvider {
             return try? JSONDecoder().decode(WidgetSettingsData.self, from: data)
         }()
 
-        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData)
+        // Load Pro status
+        let isPro = ProGating.loadProStatus()
+
+        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData, isPro: isPro)
     }
 }
 
@@ -189,39 +194,44 @@ struct StoicGridWidgetView: View {
 
     var body: some View {
         if let timeline = entry.timeline {
-            ZStack {
-                backgroundColor
+            // Check if this widget configuration requires Pro
+            if !entry.isPro && ProGating.gridRequiresPro(timelineType: timeline.type, family: family) {
+                ProUpgradePlaceholderView()
+            } else {
+                ZStack {
+                    backgroundColor
 
-                VStack(spacing: 8) {
-                    // Title
-                    Text(timeline.title)
-                        .font(.system(size: titleFontSize, weight: .semibold))
-                        .foregroundColor(textColor)
-                        .lineLimit(1)
+                    VStack(spacing: 8) {
+                        // Title
+                        Text(timeline.title)
+                            .font(.system(size: titleFontSize, weight: .semibold))
+                            .foregroundColor(textColor)
+                            .lineLimit(1)
 
-                    // Grid
-                    GeometryReader { geometry in
-                        StoicGridView(
-                            daysPassed: timeline.daysPassed,
-                            totalDays: timeline.totalDays,
-                            colorTheme: entry.settings?.gridColorTheme ?? "classic",
-                            effectiveColorScheme: effectiveColorScheme,
-                            containerSize: geometry.size
-                        )
+                        // Grid
+                        GeometryReader { geometry in
+                            StoicGridView(
+                                daysPassed: timeline.daysPassed,
+                                totalDays: timeline.totalDays,
+                                colorTheme: entry.settings?.gridColorTheme ?? "classic",
+                                effectiveColorScheme: effectiveColorScheme,
+                                containerSize: geometry.size
+                            )
+                        }
+
+                        // Progress text
+                        if family != .systemSmall {
+                            Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
+                                .font(.system(size: captionFontSize))
+                                .foregroundColor(secondaryTextColor)
+                        }
                     }
-
-                    // Progress text
-                    if family != .systemSmall {
-                        Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
-                            .font(.system(size: captionFontSize))
-                            .foregroundColor(secondaryTextColor)
-                    }
+                    .padding(paddingSize)
                 }
-                .padding(paddingSize)
-            }
-            .widgetURL(URL(string: "stoiccalendar://home"))
-            .containerBackground(for: .widget) {
-                backgroundColor
+                .widgetURL(URL(string: "stoiccalendar://home"))
+                .containerBackground(for: .widget) {
+                    backgroundColor
+                }
             }
         } else {
             // No active timeline
@@ -317,7 +327,8 @@ struct StoicLockScreenProvider: TimelineProvider {
             settings: WidgetSettingsData(
                 gridColorTheme: "classic",
                 themeMode: "dark"
-            )
+            ),
+            isPro: false
         )
     }
 
@@ -338,7 +349,7 @@ struct StoicLockScreenProvider: TimelineProvider {
     /// Load active timeline data from App Groups (lock screen widgets don't have configuration)
     private func loadActiveTimelineData() -> StoicGridEntry {
         guard let userDefaults = UserDefaults(suiteName: appGroupId) else {
-            return StoicGridEntry(date: Date(), timeline: nil, settings: nil)
+            return StoicGridEntry(date: Date(), timeline: nil, settings: nil, isPro: false)
         }
 
         let timelineData: WidgetTimelineData? = {
@@ -357,7 +368,10 @@ struct StoicLockScreenProvider: TimelineProvider {
             return try? JSONDecoder().decode(WidgetSettingsData.self, from: data)
         }()
 
-        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData)
+        // Load Pro status
+        let isPro = ProGating.loadProStatus()
+
+        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData, isPro: isPro)
     }
 }
 
@@ -386,29 +400,61 @@ struct StoicLockScreenWidgetView: View {
                 .widgetURL(URL(string: "stoiccalendar://home"))
 
             case .accessoryRectangular:
-                // Rectangular widget: Title + progress bar
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(timeline.title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .lineLimit(1)
+                // Rectangular widget: Enhanced for Pro with percentage + days left
+                if entry.isPro {
+                    // Pro: Enhanced rectangular with percentage + days left + progress bar
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(timeline.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .lineLimit(1)
 
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.white.opacity(0.3))
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.white)
-                                .frame(width: geo.size.width * CGFloat(timeline.progressPercentage) / 100.0)
+                        HStack(spacing: 4) {
+                            Text("\(timeline.progressPercentage)%")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                            Text("\(timeline.daysRemaining)d left")
+                                .font(.caption2)
+                                .foregroundColor(.white.opacity(0.7))
                         }
-                    }
-                    .frame(height: 6)
 
-                    Text("\(timeline.daysPassed)/\(timeline.totalDays) days")
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.8))
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.white.opacity(0.3))
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.white)
+                                    .frame(width: geo.size.width * CGFloat(timeline.progressPercentage) / 100.0)
+                            }
+                        }
+                        .frame(height: 4)
+                    }
+                    .widgetURL(URL(string: "stoiccalendar://home"))
+                } else {
+                    // Free: Basic rectangular with title + progress bar + stats
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(timeline.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color.white.opacity(0.3))
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color.white)
+                                    .frame(width: geo.size.width * CGFloat(timeline.progressPercentage) / 100.0)
+                            }
+                        }
+                        .frame(height: 6)
+
+                        Text("\(timeline.daysPassed)/\(timeline.totalDays) days")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .widgetURL(URL(string: "stoiccalendar://home"))
                 }
-                .widgetURL(URL(string: "stoiccalendar://home"))
 
             case .accessoryInline:
                 // Inline widget: Text only
@@ -658,5 +704,106 @@ struct StoicWidgetBundle: WidgetBundle {
     var body: some Widget {
         StoicGridWidget()
         StoicLockScreenWidget()
+        StoicTextWidget()
+        StoicPercentageFillWidget()
+        StoicCircularWidget()
     }
+}
+
+// MARK: - Previews
+
+#Preview("Lock Screen Circular", as: .accessoryCircular) {
+    StoicLockScreenWidget()
+} timeline: {
+    StoicGridEntry(
+        date: Date(),
+        timeline: WidgetTimelineData(
+            id: "preview",
+            type: "year",
+            title: "2026",
+            startDate: "2026-01-01T00:00:00.000Z",
+            endDate: "2026-12-31T23:59:59.999Z",
+            daysPassed: 28,
+            daysRemaining: 337,
+            totalDays: 365,
+            progressPercentage: 8
+        ),
+        settings: WidgetSettingsData(
+            gridColorTheme: "classic",
+            themeMode: "dark"
+        ),
+        isPro: true
+    )
+}
+
+#Preview("Lock Screen Rectangular (Pro)", as: .accessoryRectangular) {
+    StoicLockScreenWidget()
+} timeline: {
+    StoicGridEntry(
+        date: Date(),
+        timeline: WidgetTimelineData(
+            id: "preview",
+            type: "year",
+            title: "2026",
+            startDate: "2026-01-01T00:00:00.000Z",
+            endDate: "2026-12-31T23:59:59.999Z",
+            daysPassed: 28,
+            daysRemaining: 337,
+            totalDays: 365,
+            progressPercentage: 8
+        ),
+        settings: WidgetSettingsData(
+            gridColorTheme: "classic",
+            themeMode: "dark"
+        ),
+        isPro: true
+    )
+}
+
+#Preview("Lock Screen Rectangular (Free)", as: .accessoryRectangular) {
+    StoicLockScreenWidget()
+} timeline: {
+    StoicGridEntry(
+        date: Date(),
+        timeline: WidgetTimelineData(
+            id: "preview",
+            type: "year",
+            title: "2026",
+            startDate: "2026-01-01T00:00:00.000Z",
+            endDate: "2026-12-31T23:59:59.999Z",
+            daysPassed: 28,
+            daysRemaining: 337,
+            totalDays: 365,
+            progressPercentage: 8
+        ),
+        settings: WidgetSettingsData(
+            gridColorTheme: "classic",
+            themeMode: "dark"
+        ),
+        isPro: false
+    )
+}
+
+#Preview("Lock Screen Inline", as: .accessoryInline) {
+    StoicLockScreenWidget()
+} timeline: {
+    StoicGridEntry(
+        date: Date(),
+        timeline: WidgetTimelineData(
+            id: "preview",
+            type: "year",
+            title: "2026",
+            startDate: "2026-01-01T00:00:00.000Z",
+            endDate: "2026-12-31T23:59:59.999Z",
+            daysPassed: 28,
+            daysRemaining: 337,
+            totalDays: 365,
+            progressPercentage: 8
+        ),
+        settings: WidgetSettingsData(
+            gridColorTheme: "classic",
+            themeMode: "dark"
+        ),
+        isPro: true
+    )
 }
