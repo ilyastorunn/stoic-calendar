@@ -205,7 +205,7 @@ export default function PaywallScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Feature Carousel (~50% of screen) */}
+        {/* Feature Carousel */}
         <Animated.View style={styles.carouselSection} entering={FadeInDown.duration(300).delay(200)}>
           <FeatureCarousel features={FEATURES} />
         </Animated.View>
@@ -249,50 +249,46 @@ export default function PaywallScreen() {
               showCancelAnytime={true}
             />
           </Animated.View>
+        </View>
+      </ScrollView>
 
-          {/* Shared "Cancel anytime" Microcopy */}
-          <Animated.View style={styles.cancelAnytimeContainer} entering={FadeInDown.duration(300).delay(550)}>
-            <Text style={[styles.cancelAnytimeText, { color: colors.textTertiary }]}>
-              Cancel anytime
+      {/* Sticky Footer with CTA and Secondary Actions */}
+      <View style={[styles.stickyFooter, { backgroundColor: colors.background }]}>
+        {/* CTA Button */}
+        <Animated.View style={styles.ctaContainer} entering={FadeInDown.duration(300).delay(600)}>
+          <PaywallButton
+            title="Subscribe"
+            onPress={handlePurchase}
+            isLoading={isPurchasing || isLoading}
+            disabled={isPurchasing || isLoading || (!monthlyPackage && !yearlyPackage)}
+          />
+        </Animated.View>
+
+        {/* Secondary Actions */}
+        <Animated.View style={styles.secondaryActions} entering={FadeInDown.duration(300).delay(700)}>
+          <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
+            <Text style={[styles.restoreLink, { color: colors.textSecondary }]}>
+              Restore Purchases
             </Text>
-          </Animated.View>
+          </TouchableOpacity>
 
-          {/* CTA Button */}
-          <Animated.View style={styles.ctaContainer} entering={FadeInDown.duration(300).delay(600)}>
-            <PaywallButton
-              title="Continue"
-              onPress={handlePurchase}
-              isLoading={isPurchasing || isLoading}
-              disabled={isPurchasing || isLoading || (!monthlyPackage && !yearlyPackage)}
-            />
-          </Animated.View>
-
-          {/* Secondary Actions */}
-          <Animated.View style={styles.secondaryActions} entering={FadeInDown.duration(300).delay(700)}>
-            <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
-              <Text style={[styles.restoreLink, { color: colors.textSecondary }]}>
-                Restore Purchases
+          <View style={styles.footerLinks}>
+            <TouchableOpacity onPress={openTerms}>
+              <Text style={[styles.footerLink, { color: colors.textTertiary }]}>
+                Terms of Service
               </Text>
             </TouchableOpacity>
 
-            <View style={styles.footerLinks}>
-              <TouchableOpacity onPress={openTerms}>
-                <Text style={[styles.footerLink, { color: colors.textTertiary }]}>
-                  Terms of Service
-                </Text>
-              </TouchableOpacity>
+            <Text style={[styles.footerSeparator, { color: colors.textTertiary }]}> · </Text>
 
-              <Text style={[styles.footerSeparator, { color: colors.textTertiary }]}> · </Text>
-
-              <TouchableOpacity onPress={openPrivacy}>
-                <Text style={[styles.footerLink, { color: colors.textTertiary }]}>
-                  Privacy Policy
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
-      </ScrollView>
+            <TouchableOpacity onPress={openPrivacy}>
+              <Text style={[styles.footerLink, { color: colors.textTertiary }]}>
+                Privacy Policy
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -305,7 +301,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.sm,
   },
 
   // Header
@@ -347,22 +343,22 @@ const styles = StyleSheet.create({
 
   // Carousel Section
   carouselSection: {
-    minHeight: 340,
+    minHeight: 280,
   },
 
   // Subscription Section
   subscriptionSection: {
     paddingHorizontal: Layout.screenPadding,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
 
   // Value Prop
   valuePropContainer: {
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   valueProp: {
-    fontSize: FontSizes.subheadline,
+    fontSize: FontSizes.footnote,
     fontWeight: FontWeights.regular,
   },
 
@@ -376,28 +372,27 @@ const styles = StyleSheet.create({
     width: Spacing.sm,
   },
 
-  // Cancel Anytime Microcopy
-  cancelAnytimeContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  cancelAnytimeText: {
-    fontSize: FontSizes.caption1, // 12px
-    fontWeight: FontWeights.regular,
+  // Sticky Footer
+  stickyFooter: {
+    paddingHorizontal: Layout.screenPadding,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
 
   // CTA
   ctaContainer: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
 
   // Secondary Actions
   secondaryActions: {
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   restoreLink: {
-    fontSize: FontSizes.subheadline,
+    fontSize: FontSizes.footnote,
     fontWeight: FontWeights.regular,
   },
   footerLinks: {
