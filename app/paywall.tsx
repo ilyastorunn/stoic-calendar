@@ -46,7 +46,7 @@ import {
 
 type PlanType = 'yearly' | 'monthly';
 
-const FEATURES: FeatureType[] = ['widgets', 'customization', 'unlimited'];
+const FEATURES: FeatureType[] = ['lockscreen', 'small', 'home', 'unlimited'];
 
 export default function PaywallScreen() {
   const router = useRouter();
