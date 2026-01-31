@@ -77,6 +77,29 @@ export const PlanOption: React.FC<PlanOptionProps> = ({
     <Animated.View style={[styles.wrapper, animatedStyle]}>
       <TouchableOpacity activeOpacity={0.9} onPress={handlePress} style={styles.touchable}>
         <Animated.View style={[styles.container, containerStyle]}>
+          {/* Ribbon Badge (Top of Card) */}
+          {showTrial && (
+            <View
+              style={[
+                styles.ribbonBadge,
+                {
+                  backgroundColor: colors.accent,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.ribbonText,
+                  {
+                    color: colors.background,
+                  },
+                ]}
+              >
+                7 DAYS FREE
+              </Text>
+            </View>
+          )}
+
           {/* Label */}
           <Text
             style={[
@@ -113,29 +136,6 @@ export const PlanOption: React.FC<PlanOptionProps> = ({
           >
             {discount || (showCancelAnytime ? `${period}, cancel anytime` : period)}
           </Text>
-
-          {/* Trial Badge (Yearly Only) */}
-          {showTrial && (
-            <View
-              style={[
-                styles.trialBadge,
-                {
-                  backgroundColor: colors.secondaryBackground,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.trialText,
-                  {
-                    color: colors.textSecondary,
-                  },
-                ]}
-              >
-                7 days free trial
-              </Text>
-            </View>
-          )}
         </Animated.View>
       </TouchableOpacity>
     </Animated.View>
@@ -176,16 +176,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
-  trialBadge: {
-    marginTop: Spacing.sm,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+  ribbonBadge: {
+    position: 'absolute',
+    top: -12,
     alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  trialText: {
+  ribbonText: {
     fontSize: FontSizes.caption1, // 12px
-    fontWeight: FontWeights.regular,
+    fontWeight: FontWeights.semibold,
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
 });

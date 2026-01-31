@@ -39,19 +39,19 @@ const PREVIEW_DATA = {
 const FEATURES = {
   lockscreen: {
     title: 'Lock Screen Widgets',
-    description: 'See your timeline at a glance, right on your lock screen.',
+    description: 'Your progress through time, visible every time you unlock your phone.',
   },
   small: {
-    title: 'Small Home Widgets',
-    description: 'Add beautiful widgets to your home screen.',
+    title: 'Compact Widgets',
+    description: "A moment's glance at your timeline. Time made tangible, wherever you need it.",
   },
   home: {
-    title: 'Home Screen Widgets',
-    description: 'Beautiful grid widgets in medium and large sizes.',
+    title: 'Grid Widgets',
+    description: 'Your year visualized. Every day, every moment, captured in a living grid.',
   },
   unlimited: {
     title: 'Unlimited Timelines',
-    description: "Track more than 3 timelines for life's important moments.",
+    description: 'Track multiple timelines at once. Years, months, projects—measure what matters to you.',
   },
 };
 

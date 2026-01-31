@@ -173,38 +173,38 @@ export default function PaywallScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header with Title and Close Button - Sticky */}
+      <View style={styles.header}>
+        <Animated.View style={styles.headerTitle} entering={FadeIn.duration(300).delay(100)}>
+          <Text
+            style={[
+              styles.premiumTitle,
+              {
+                color: colors.textPrimary,
+                fontFamily: Fonts.handwriting,
+              },
+            ]}
+          >
+            Stoic Calendar Pro
+          </Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.duration(300).delay(100)} style={styles.closeButtonWrapper}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={handleClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={[styles.closeIcon, { color: colors.textSecondary }]}>✕</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Title and Close Button */}
-        <View style={styles.header}>
-          <Animated.View style={styles.headerTitle} entering={FadeIn.duration(300).delay(100)}>
-            <Text
-              style={[
-                styles.premiumTitle,
-                {
-                  color: colors.textPrimary,
-                  fontFamily: Fonts.handwriting,
-                },
-              ]}
-            >
-              Stoic Calendar Pro
-            </Text>
-          </Animated.View>
-
-          <Animated.View entering={FadeIn.duration(300).delay(100)} style={styles.closeButtonWrapper}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Text style={[styles.closeIcon, { color: colors.textSecondary }]}>✕</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-
         {/* Feature Carousel (~50% of screen) */}
         <Animated.View style={styles.carouselSection} entering={FadeInDown.duration(300).delay(200)}>
           <FeatureCarousel features={FEATURES} />
@@ -317,6 +317,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Layout.screenPadding,
     paddingBottom: Spacing.md,
     position: 'relative',
+    zIndex: 10,
   },
   headerTitle: {
     flex: 1,
@@ -346,7 +347,6 @@ const styles = StyleSheet.create({
 
   // Carousel Section
   carouselSection: {
-    marginTop: Spacing.md,
     minHeight: 340,
   },
 
