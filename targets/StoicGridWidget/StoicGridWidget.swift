@@ -34,9 +34,14 @@ struct WidgetSettingsData: Codable {
 // MARK: - AppIntent Configuration
 
 /// Timeline entity for widget configuration picker
-struct TimelineEntity: AppEntity {
-    let id: String
+struct TimelineEntity: AppEntity, Equatable, Hashable {
+    var id: String
     let title: String
+
+    // REQUIRED: WidgetKit uses this to persist entity configurations
+    static var id: WritableKeyPath<TimelineEntity, String> {
+        \.id
+    }
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation {
         TypeDisplayRepresentation(name: "Timeline")
@@ -55,11 +60,33 @@ struct TimelineQuery: EntityQuery {
 
     func entities(for identifiers: [TimelineEntity.ID]) async throws -> [TimelineEntity] {
         let allTimelines = loadAllTimelines()
-        return allTimelines.filter { identifiers.contains($0.id) }
+
+        if !allTimelines.isEmpty {
+            // Normal case: Return found entities
+            let found = allTimelines.filter { identifiers.contains($0.id) }
+            if !found.isEmpty { return found }
+        }
+
+        // Data unavailable or entity not found:
+        // Return placeholder entities to preserve widget configuration
+        // This prevents WidgetKit from invalidating configurations during race conditions
+        return identifiers.map { TimelineEntity(id: $0, title: "Loading...") }
     }
 
     func suggestedEntities() async throws -> [TimelineEntity] {
         return loadAllTimelines()
+    }
+
+    /// Widget ilk eklendiğinde varsayılan timeline olarak aktif timeline'ı döndür
+    /// Bu sayede widget "kilitlenir" ve aktif timeline değişse bile sabit kalır
+    func defaultResult() async -> TimelineEntity? {
+        guard let userDefaults = UserDefaults(suiteName: appGroupId),
+              let jsonString = userDefaults.string(forKey: "widget_active_timeline"),
+              let data = jsonString.data(using: .utf8),
+              let timeline = try? JSONDecoder().decode(WidgetTimelineData.self, from: data) else {
+            return nil
+        }
+        return TimelineEntity(id: timeline.id, title: timeline.title)
     }
 
     private func loadAllTimelines() -> [TimelineEntity] {
@@ -123,7 +150,14 @@ struct StoicGridProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: SelectTimelineIntent, in context: Context) async -> StoicGridEntry {
-        return loadTimelineData(for: configuration)
+        let entry = loadTimelineData(for: configuration)
+
+        // If no real data available, use placeholder for preview
+        if entry.timeline == nil {
+            return placeholder(in: context)
+        }
+
+        return entry
     }
 
     func timeline(for configuration: SelectTimelineIntent, in context: Context) async -> Timeline<StoicGridEntry> {
@@ -140,6 +174,15 @@ struct StoicGridProvider: AppIntentTimelineProvider {
         return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
 
+    /// Load active timeline from App Groups (helper method)
+    private func loadActiveTimeline(from userDefaults: UserDefaults) -> WidgetTimelineData? {
+        guard let jsonString = userDefaults.string(forKey: "widget_active_timeline"),
+              let data = jsonString.data(using: .utf8) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(WidgetTimelineData.self, from: data)
+    }
+
     /// Load timeline and settings data from App Groups
     /// If configuration has a selected timeline, load that specific timeline
     /// Otherwise, fallback to active timeline (backward compatibility)
@@ -152,20 +195,27 @@ struct StoicGridProvider: AppIntentTimelineProvider {
         let timelineData: WidgetTimelineData? = {
             // If user selected a specific timeline in widget configuration
             if let selectedTimeline = configuration.timeline {
+                let selectedId = selectedTimeline.id
+
                 // Load all timelines and find the selected one
                 guard let jsonString = userDefaults.string(forKey: "widget_all_timelines"),
                       let data = jsonString.data(using: .utf8),
                       let allTimelines = try? JSONDecoder().decode([WidgetTimelineData].self, from: data) else {
-                    return nil
+                    // Data unavailable (race condition during sync) - use active as temporary fallback
+                    // This preserves the configuration; widget will show correct timeline on next refresh
+                    return loadActiveTimeline(from: userDefaults)
                 }
-                return allTimelines.first { $0.id == selectedTimeline.id }
+
+                // Find selected timeline in the list
+                if let timeline = allTimelines.first(where: { $0.id == selectedId }) {
+                    return timeline
+                }
+
+                // Timeline was deleted - fall back to active timeline (expected behavior)
+                return loadActiveTimeline(from: userDefaults)
             } else {
-                // No specific timeline selected - fallback to active timeline (backward compatibility)
-                guard let jsonString = userDefaults.string(forKey: "widget_active_timeline"),
-                      let data = jsonString.data(using: .utf8) else {
-                    return nil
-                }
-                return try? JSONDecoder().decode(WidgetTimelineData.self, from: data)
+                // No specific timeline selected - use active timeline (default for new widgets)
+                return loadActiveTimeline(from: userDefaults)
             }
         }()
 
@@ -204,9 +254,9 @@ struct StoicGridWidgetView: View {
                     if family == .systemMedium {
                         // Medium widget: Horizontal layout (Title left, Grid+Stats right)
                         HStack(alignment: .center, spacing: 0) {
-                            // Left: Title (optically centered vertically to grid)
+                            // Left: Title (larger, optically centered vertically to grid)
                             Text(timeline.title)
-                                .font(.system(size: 24, weight: .semibold))
+                                .font(.system(size: 28, weight: .semibold))
                                 .foregroundColor(textColor)
                                 .lineLimit(1)
                                 .alignmentGuide(VerticalAlignment.center) { d in
@@ -215,7 +265,7 @@ struct StoicGridWidgetView: View {
 
                             Spacer()
 
-                            // Right: Grid + Stats (centered alignment)
+                            // Right: Grid + Stats (centered alignment, wider grid)
                             VStack(alignment: .center, spacing: 6) {
                                 GeometryReader { geometry in
                                     StoicGridView(
@@ -227,7 +277,7 @@ struct StoicGridWidgetView: View {
                                         widgetFamily: family
                                     )
                                 }
-                                .frame(width: 160, height: 100)
+                                .frame(width: 180, height: 100)
 
                                 Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
                                     .font(.system(size: 11))
@@ -603,15 +653,15 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widget
         // Medium grids: 10 columns
         optimalColumns = 10
     } else {
-        // Large grids (365 days): 16 columns (Manus.ai MVP style)
+        // Large grids (365 days): adjust columns based on widget size
         // 365 days ÷ 16 columns ≈ 23 rows
         let aspectRatio = width / height
         if aspectRatio > 1.5 {
             // Wide widgets (medium, large): more columns
-            optimalColumns = 18
+            optimalColumns = 16  // Reduced from 18 for less cramped look
         } else {
-            // Portrait/square widgets: 16 columns
-            optimalColumns = 16
+            // Portrait/square widgets (small): fewer columns = bigger dots
+            optimalColumns = 14  // Reduced from 16 for better centering and larger dots
         }
     }
 
@@ -639,9 +689,9 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widget
         case .systemMedium:
             if totalDays <= 50 { return (5, 16) }
             else if totalDays <= 100 { return (4, 12) }
-            else { return (3.5, 8) }                    // Year: slightly bigger min
+            else { return (4, 10) }                     // Year: increased min for less cramped look
         default:
-            return totalDays > 180 ? (3, 10) : (5, 14)  // Small: unchanged
+            return totalDays > 180 ? (4, 10) : (5, 14)  // Small year: increased from 3 to 4pt min
         }
     }()
     dotSize = max(minDotSize, min(maxDotSize, dotSize))
