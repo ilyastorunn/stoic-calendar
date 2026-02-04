@@ -10,10 +10,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert, ActivityIndicator, Text } from 'react-native';
+import { View, StyleSheet, Alert, ActivityIndicator, Text, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { RevenueCatUI, CUSTOMER_CENTER_RESULT } from 'react-native-purchases-ui';
 import { getCustomerInfo } from '@/services/revenue-cat-service';
+
+const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
 
 export default function CustomerCenterScreen() {
   const router = useRouter();
@@ -56,48 +57,10 @@ export default function CustomerCenterScreen() {
         return;
       }
 
-      // Present the customer center using RevenueCat UI
-      // This will show a pre-built screen for managing subscriptions
-      const customerCenterResult = await RevenueCatUI.presentCustomerCenter();
-
+      // Open Apple's subscription management page
+      await Linking.openURL(APPLE_SUBSCRIPTIONS_URL);
       setCustomerCenterPresented(true);
-
-      // Handle customer center result
-      switch (customerCenterResult) {
-        case CUSTOMER_CENTER_RESULT.RESTORED:
-          // Purchases were restored
-          Alert.alert(
-            'Purchases Restored',
-            'Your purchases have been restored successfully.',
-            [
-              {
-                text: 'OK',
-                onPress: () => router.back(),
-              },
-            ]
-          );
-          break;
-
-        case CUSTOMER_CENTER_RESULT.CLOSED:
-          // User closed the customer center
-          console.log('User closed customer center');
-          router.back();
-          break;
-
-        case CUSTOMER_CENTER_RESULT.ERROR:
-          // Error occurred
-          Alert.alert(
-            'Error',
-            'Something went wrong. Please try again.',
-            [
-              {
-                text: 'OK',
-                onPress: () => router.back(),
-              },
-            ]
-          );
-          break;
-      }
+      router.back();
     } catch (error) {
       console.error('Error presenting customer center:', error);
       Alert.alert(
