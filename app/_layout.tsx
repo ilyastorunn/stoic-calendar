@@ -75,14 +75,18 @@ export default function RootLayout() {
 
   // Initialize RevenueCat and widget data sync on app start
   useEffect(() => {
-    initializeRevenueCat().catch((error) => {
-      console.error('Failed to initialize RevenueCat:', error);
-    });
-
-    // Sync timeline and settings data to widgets
-    syncAllWidgetData().catch((error) => {
-      console.error('Failed to sync widget data:', error);
-    });
+    const init = async () => {
+      try {
+        await initializeRevenueCat();
+      } catch (error) {
+        console.error('Failed to initialize RevenueCat:', error);
+      }
+      // Sync after RC is ready (syncAllWidgetData uses isPro internally)
+      await syncAllWidgetData().catch((error) => {
+        console.error('Failed to sync widget data:', error);
+      });
+    };
+    init();
   }, []);
 
   // Handle deep linking from widgets

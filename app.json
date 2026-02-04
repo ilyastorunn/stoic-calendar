@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stoiccalendar",
+      "bundleIdentifier": "com.ilyastorun.memento",
       "appleTeamId": "XC35LMM9B5",
       "entitlements": {
         "com.apple.security.application-groups": [

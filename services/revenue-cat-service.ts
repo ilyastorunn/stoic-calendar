@@ -18,6 +18,10 @@ import Purchases, {
 } from 'react-native-purchases';
 import { Platform } from 'react-native';
 
+// Initialization state tracking
+let isInitialized = false;
+let initializationPromise: Promise<void> | null = null;
+
 /**
  * RevenueCat API Key
  * Loaded from environment variable for security
@@ -45,22 +49,43 @@ export const PRODUCT_IDS = {
  * Call this once when the app starts
  */
 export async function initializeRevenueCat(): Promise<void> {
-  try {
-    // Enable debug logs in development
-    if (__DEV__) {
-      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+  if (isInitialized) return;
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = (async () => {
+    try {
+      // Enable debug logs in development
+      if (__DEV__) {
+        Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+      }
+
+      // Configure Purchases SDK
+      Purchases.configure({
+        apiKey: REVENUECAT_API_KEY,
+      });
+
+      isInitialized = true;
+      console.log('RevenueCat initialized successfully');
+    } catch (error) {
+      initializationPromise = null;
+      console.error('Error initializing RevenueCat:', error);
+      throw error;
     }
+  })();
 
-    // Configure Purchases SDK
-    Purchases.configure({
-      apiKey: REVENUECAT_API_KEY,
-    });
+  return initializationPromise;
+}
 
-    console.log('RevenueCat initialized successfully');
-  } catch (error) {
-    console.error('Error initializing RevenueCat:', error);
-    throw error;
+/**
+ * Ensure RevenueCat is initialized before calling SDK methods
+ */
+async function ensureInitialized(): Promise<void> {
+  if (isInitialized) return;
+  if (initializationPromise) {
+    await initializationPromise;
+    return;
   }
+  throw new Error('RevenueCat not initialized');
 }
 
 /**
@@ -69,6 +94,7 @@ export async function initializeRevenueCat(): Promise<void> {
  */
 export async function getCustomerInfo(): Promise<CustomerInfo> {
   try {
+    await ensureInitialized();
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo;
   } catch (error) {
@@ -102,6 +128,7 @@ export async function isPro(): Promise<boolean> {
  */
 export async function getOfferings(): Promise<PurchasesOffering | null> {
   try {
+    await ensureInitialized();
     const offerings = await Purchases.getOfferings();
 
     if (offerings.current !== null) {
@@ -129,6 +156,7 @@ export async function purchasePackage(
   packageToPurchase: PurchasesPackage
 ): Promise<{ customerInfo: CustomerInfo; userCancelled: boolean }> {
   try {
+    await ensureInitialized();
     const { customerInfo, productIdentifier } =
       await Purchases.purchasePackage(packageToPurchase);
 
@@ -164,6 +192,7 @@ export async function purchasePackage(
  */
 export async function restorePurchases(): Promise<CustomerInfo> {
   try {
+    await ensureInitialized();
     const customerInfo = await Purchases.restorePurchases();
     console.log('Purchases restored successfully');
     console.log(
@@ -243,6 +272,7 @@ export async function isFeatureAvailable(
  */
 export async function getAnonymousUserId(): Promise<string> {
   try {
+    await ensureInitialized();
     const appUserId = await Purchases.getAppUserID();
     return appUserId;
   } catch (error) {
@@ -257,6 +287,7 @@ export async function getAnonymousUserId(): Promise<string> {
  */
 export async function loginUser(userId: string): Promise<CustomerInfo> {
   try {
+    await ensureInitialized();
     const { customerInfo } = await Purchases.logIn(userId);
     console.log('User logged in:', userId);
     return customerInfo;
@@ -272,6 +303,7 @@ export async function loginUser(userId: string): Promise<CustomerInfo> {
  */
 export async function logoutUser(): Promise<CustomerInfo> {
   try {
+    await ensureInitialized();
     const { customerInfo } = await Purchases.logOut();
     console.log('User logged out');
     return customerInfo;

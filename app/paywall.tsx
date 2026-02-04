@@ -245,7 +245,7 @@ export default function PaywallScreen() {
               period="Billed yearly"
               isSelected={selectedPlan === 'yearly'}
               onPress={() => setSelectedPlan('yearly')}
-              showTrial={true}
+              showTrial={yearlyPackage?.product.introductoryPrice != null}
               showCancelAnytime={true}
             />
           </Animated.View>

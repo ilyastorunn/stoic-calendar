@@ -27,6 +27,7 @@ const WIDGET_DATA_KEYS = {
   SETTINGS: 'widget_settings',
   LAST_UPDATE: 'widget_last_update',
   IS_PRO: 'widget_is_pro',
+  DATA_VERSION: 'widget_data_version',
 } as const;
 
 /**
@@ -203,8 +204,11 @@ export async function syncAllTimelinesToWidget(): Promise<void> {
       };
     });
 
-    // Write to App Groups using ExtensionStorage
+    // Write to App Groups using ExtensionStorage with version markers
+    // This helps widgets detect partial writes during race conditions
+    storage.set(WIDGET_DATA_KEYS.DATA_VERSION, `writing_${Date.now()}`);
     storage.set(WIDGET_DATA_KEYS.ALL_TIMELINES, JSON.stringify(timelineDataArray));
+    storage.set(WIDGET_DATA_KEYS.DATA_VERSION, Date.now().toString());
 
     console.log(`✅ Widget timelines data synced (${timelineDataArray.length} timelines)`);
   } catch (error) {

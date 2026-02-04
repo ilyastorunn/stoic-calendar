@@ -57,19 +57,19 @@ struct StoicCircularWidgetView: View {
                     }
                     .padding(12)
                 } else {
-                    // Medium widget: Horizontal layout (Title left, Ring center, Stats right)
+                    // Medium widget: Horizontal layout (Title left, Ring + Stats right)
                     HStack(alignment: .center, spacing: 0) {
                         // Left: Title (larger, more prominent)
                         Text(timeline.title)
-                            .font(.system(size: 24, weight: .semibold))
+                            .font(.system(size: 28, weight: .semibold))
                             .foregroundColor(primaryColor)
                             .lineLimit(1)
 
                         Spacer()
 
-                        // Ring + Stats grouped together (more centered)
+                        // Ring (with percentage inside) + Stats on one line
                         HStack(spacing: 16) {
-                            // Circular progress ring
+                            // Circular progress ring with percentage inside
                             ZStack {
                                 // Empty track
                                 Circle()
@@ -83,23 +83,18 @@ struct StoicCircularWidgetView: View {
                                         style: StrokeStyle(lineWidth: 8, lineCap: .round)
                                     )
                                     .rotationEffect(.degrees(-90))
+
+                                // Percentage inside the ring
+                                Text("\(timeline.progressPercentage)%")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(primaryColor)
                             }
                             .frame(width: 70, height: 70)
 
-                            // Stats (percentage + days)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("\(timeline.progressPercentage)%")
-                                    .font(.system(size: 22, weight: .bold))
-                                    .foregroundColor(primaryColor)
-
-                                Text("\(timeline.daysPassed) of \(timeline.totalDays)")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(secondaryColor)
-
-                                Text("days")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(secondaryColor)
-                            }
+                            // Stats: single line "X of Y days"
+                            Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
+                                .font(.system(size: 12))
+                                .foregroundColor(secondaryColor)
                         }
                     }
                     .padding(16)

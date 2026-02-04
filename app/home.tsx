@@ -195,6 +195,7 @@ export default function HomeScreen() {
 
         // Background persistence
         await setActiveTimelineInStorage(timeline.id);
+        await syncAllTimelinesToWidget();
         await syncActiveTimelineToWidget();
 
         // Reload to ensure consistency
