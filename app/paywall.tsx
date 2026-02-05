@@ -24,6 +24,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   useSharedValue,
+  runOnJS,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -48,10 +49,34 @@ const PRICING_OVERLAP = 70;
 const AUTO_PLAY_MS = 3000;
 
 const SLIDES = [
-  { key: 'lock', source: require('@/assets/new-paywall/cropped/lock-screen 2.png') },
-  { key: 'small', source: require('@/assets/new-paywall/cropped/small-circular-percentage 2.png') },
-  { key: 'medium', source: require('@/assets/new-paywall/cropped/medium-text-circular 2.png') },
-  { key: 'big', source: require('@/assets/new-paywall/cropped/big-grid 2.png') },
+  {
+    key: 'lock',
+    source: require('@/assets/new-paywall/cropped/lock-screen 2.png'),
+    line1: 'lock screen',
+    line2: 'widgets',
+    subtitle: 'Your time, always in view.',
+  },
+  {
+    key: 'small',
+    source: require('@/assets/new-paywall/cropped/small-circular-percentage 2.png'),
+    line1: 'small',
+    line2: 'widgets',
+    subtitle: 'A quiet glance at your day, anytime.',
+  },
+  {
+    key: 'medium',
+    source: require('@/assets/new-paywall/cropped/medium-text-circular 2.png'),
+    line1: 'medium',
+    line2: 'widgets',
+    subtitle: 'A clearer window into your day.',
+  },
+  {
+    key: 'big',
+    source: require('@/assets/new-paywall/cropped/big-grid 2.png'),
+    line1: 'year',
+    line2: 'grid',
+    subtitle: 'See your entire year laid out in a grid.',
+  },
 ];
 
 type PlanType = 'yearly' | 'monthly';
@@ -75,6 +100,26 @@ export default function PaywallScreen() {
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeIndexRef = useRef(0); // keep ref in sync for timer closure
+
+  // --- header text crossfade ---
+  const [visibleIndex, setVisibleIndex] = useState(0);
+  const textOpacity = useSharedValue(1);
+
+  // fade out → swap text (JS thread) → fade in (separate effect)
+  useEffect(() => {
+    if (activeIndex === visibleIndex) return;
+    textOpacity.value = withTiming(0, { duration: 150 }, () => {
+      runOnJS(setVisibleIndex)(activeIndex);
+    });
+  }, [activeIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    textOpacity.value = withTiming(1, { duration: 150 });
+  }, [visibleIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const textAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: textOpacity.value,
+  }));
 
   // --- expand monthly ---
   const [showMonthly, setShowMonthly] = useState(false);
@@ -203,7 +248,7 @@ export default function PaywallScreen() {
 
   const handleMomentumScrollEnd = useCallback((e: any) => {
     const offset = e.nativeEvent.contentOffset.x;
-    const index = Math.round(offset / PHONE_WIDTH);
+    const index = Math.round(offset / screenW);
     if (index !== activeIndexRef.current) {
       activeIndexRef.current = index;
       setActiveIndex(index);
@@ -264,13 +309,11 @@ export default function PaywallScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header row */}
       <View style={styles.header}>
-        <View style={styles.headerTextBlock}>
-          <Text style={styles.headerLine1}>lock screen</Text>
-          <Text style={styles.headerLine2}>widgets</Text>
-          <Text style={styles.subtitle}>
-            Unlock all the exclusive lock screen and home screen widgets.
-          </Text>
-        </View>
+        <Animated.View style={[styles.headerTextBlock, textAnimatedStyle]}>
+          <Text style={styles.headerLine1}>{SLIDES[visibleIndex].line1}</Text>
+          <Text style={styles.headerLine2}>{SLIDES[visibleIndex].line2}</Text>
+          <Text style={styles.subtitle}>{SLIDES[visibleIndex].subtitle}</Text>
+        </Animated.View>
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => router.back()}
@@ -298,8 +341,8 @@ export default function PaywallScreen() {
           onMomentumScrollEnd={handleMomentumScrollEnd}
           onScrollBeginDrag={resetTimer}
           getItemLayout={(_, index) => ({
-            length: PHONE_WIDTH,
-            offset: PHONE_WIDTH * index,
+            length: screenW,
+            offset: screenW * index,
             index,
           })}
           style={styles.flatList}
