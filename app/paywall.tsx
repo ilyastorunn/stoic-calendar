@@ -1,17 +1,14 @@
 /**
- * Paywall Screen
- * Custom paywall UI for Stoic Calendar Pro subscription
+ * Paywall Screen — Box Box Club style (v2)
  *
- * Features:
- * - Lock Screen Widgets
- * - Customizable Widgets
- * - Unlimited Timelines
+ * Layout: phone-image carousel with bottom SVG fade, pricing cards
+ * overlap the fade via negative marginTop (ZStack pattern).
  *
  * Products: monthly, yearly
  * Entitlement: Memento Calendar Pro
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,45 +16,75 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
-  ScrollView,
-  useColorScheme,
+  FlatList,
+  Dimensions,
   Linking,
 } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { PurchasesPackage } from 'react-native-purchases';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { X, CheckCircle, CaretDown } from 'phosphor-react-native';
 import {
   getOfferings,
   purchasePackage,
   restorePurchases,
 } from '@/services/revenue-cat-service';
-import { FeatureCarousel } from '@/components/paywall/feature-carousel';
-import { FeatureType } from '@/components/paywall/feature-slide';
-import { PlanOption } from '@/components/paywall/plan-option';
-import { PaywallButton } from '@/components/paywall/paywall-button';
-import {
-  Colors,
-  Fonts,
-  FontSizes,
-  FontWeights,
-  Spacing,
-  Layout,
-} from '@/constants/theme';
+import { PaginationDots } from '@/components/paywall/pagination-dots';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const { height: screenH, width: screenW } = Dimensions.get('window');
+const PHONE_WIDTH = screenW - 48;
+const PHONE_HEIGHT = screenH * 0.42;
+const PRICING_OVERLAP = 70;
+const AUTO_PLAY_MS = 3000;
+
+const SLIDES = [
+  { key: 'lock', source: require('@/assets/new-paywall/cropped/lock-screen 2.png') },
+  { key: 'small', source: require('@/assets/new-paywall/cropped/small-circular-percentage 2.png') },
+  { key: 'medium', source: require('@/assets/new-paywall/cropped/medium-text-circular 2.png') },
+  { key: 'big', source: require('@/assets/new-paywall/cropped/big-grid 2.png') },
+];
 
 type PlanType = 'yearly' | 'monthly';
 
-const FEATURES: FeatureType[] = ['lockscreen', 'small', 'home', 'unlimited'];
+// ---------------------------------------------------------------------------
+// PaywallScreen
+// ---------------------------------------------------------------------------
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'dark'];
 
+  // --- offerings state ---
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
   const [isLoading, setIsLoading] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [monthlyPackage, setMonthlyPackage] = useState<PurchasesPackage | null>(null);
   const [yearlyPackage, setYearlyPackage] = useState<PurchasesPackage | null>(null);
+
+  // --- carousel state ---
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeIndexRef = useRef(0); // keep ref in sync for timer closure
+
+  // --- expand monthly ---
+  const [showMonthly, setShowMonthly] = useState(false);
+  const monthlyHeight = useSharedValue(0);
+  const monthlyOpacity = useSharedValue(0);
+  const caretRotation = useSharedValue(0);
+
+  // ---------------------------------------------------------------------------
+  // Offerings
+  // ---------------------------------------------------------------------------
 
   useEffect(() => {
     loadOfferings();
@@ -78,7 +105,6 @@ export default function PaywallScreen() {
         return;
       }
 
-      // Find monthly and yearly packages
       const monthly = offering.availablePackages.find(
         (pkg) => pkg.identifier === '$rc_monthly' || pkg.product.identifier.includes('monthly')
       );
@@ -98,6 +124,10 @@ export default function PaywallScreen() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Purchase / Restore
+  // ---------------------------------------------------------------------------
+
   const handlePurchase = async () => {
     const packageToPurchase = selectedPlan === 'yearly' ? yearlyPackage : monthlyPackage;
 
@@ -110,20 +140,13 @@ export default function PaywallScreen() {
       setIsPurchasing(true);
       const { customerInfo, userCancelled } = await purchasePackage(packageToPurchase);
 
-      if (userCancelled) {
-        // User cancelled, do nothing
-        return;
-      }
+      if (userCancelled) return;
 
-      // Check if user has pro access
       const hasProAccess = customerInfo.entitlements.active['Memento Calendar Pro'] !== undefined;
 
       if (hasProAccess) {
         Alert.alert('Welcome to Pro!', 'You now have access to all premium features.', [
-          {
-            text: 'Get Started',
-            onPress: () => router.back(),
-          },
+          { text: 'Get Started', onPress: () => router.back() },
         ]);
       }
     } catch (error: any) {
@@ -143,10 +166,7 @@ export default function PaywallScreen() {
 
       if (hasProAccess) {
         Alert.alert('Purchases Restored', 'Your premium access has been restored.', [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
+          { text: 'OK', onPress: () => router.back() },
         ]);
       } else {
         Alert.alert('No Purchases Found', 'We could not find any previous purchases to restore.');
@@ -159,251 +179,463 @@ export default function PaywallScreen() {
     }
   };
 
-  const handleClose = () => {
-    router.back();
+  const openTerms = () => Linking.openURL('https://stoiccalendar.com/terms');
+  const openPrivacy = () => Linking.openURL('https://stoiccalendar.com/privacy');
+
+  // ---------------------------------------------------------------------------
+  // Auto-play carousel
+  // ---------------------------------------------------------------------------
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const next = (activeIndexRef.current + 1) % SLIDES.length;
+      flatListRef.current?.scrollToIndex({ index: next, animated: true });
+      activeIndexRef.current = next;
+      setActiveIndex(next);
+    }, AUTO_PLAY_MS);
+  }, []);
+
+  useEffect(() => {
+    resetTimer();
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [activeIndex, resetTimer]);
+
+  const handleMomentumScrollEnd = useCallback((e: any) => {
+    const offset = e.nativeEvent.contentOffset.x;
+    const index = Math.round(offset / PHONE_WIDTH);
+    if (index !== activeIndexRef.current) {
+      activeIndexRef.current = index;
+      setActiveIndex(index);
+    }
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Expand / Collapse monthly
+  // ---------------------------------------------------------------------------
+
+  const toggleMonthly = () => {
+    const next = !showMonthly;
+    setShowMonthly(next);
+    monthlyHeight.value = withTiming(next ? 88 : 0, { duration: 280 });
+    monthlyOpacity.value = withTiming(next ? 1 : 0, { duration: 200 });
+    caretRotation.value = withTiming(next ? 180 : 0, { duration: 280 });
   };
 
-  const openTerms = () => {
-    Linking.openURL('https://stoiccalendar.com/terms');
-  };
+  const monthlyAnimatedStyle = useAnimatedStyle(() => ({
+    height: monthlyHeight.value,
+    opacity: monthlyOpacity.value,
+    overflow: 'hidden',
+  }));
 
-  const openPrivacy = () => {
-    Linking.openURL('https://stoiccalendar.com/privacy');
-  };
+  const caretAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${caretRotation.value}deg` }],
+  }));
+
+  // ---------------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------------
+
+  const renderSlide = ({ item }: { item: (typeof SLIDES)[0] }) => (
+    <View style={styles.slideContainer}>
+      <Image
+        source={item.source}
+        style={styles.slideImage}
+        contentFit="contain"
+      />
+      {/* Bottom gradient fade */}
+      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+        <Defs>
+          <LinearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="55%" stopColor="#000" stopOpacity={0} />
+            <Stop offset="100%" stopColor="#000" stopOpacity={1} />
+          </LinearGradient>
+        </Defs>
+        <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFade)" />
+      </Svg>
+    </View>
+  );
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header with Title and Close Button - Sticky */}
+    <SafeAreaView style={styles.container}>
+      {/* Header row */}
       <View style={styles.header}>
-        <Animated.View style={styles.headerTitle} entering={FadeIn.duration(300).delay(100)}>
-          <Text
-            style={[
-              styles.premiumTitle,
-              {
-                color: colors.textPrimary,
-                fontFamily: Fonts.handwriting,
-              },
-            ]}
-          >
-            Stoic Calendar Pro
+        <View style={styles.headerTextBlock}>
+          <Text style={styles.headerLine1}>lock screen</Text>
+          <Text style={styles.headerLine2}>widgets</Text>
+          <Text style={styles.subtitle}>
+            Unlock all the exclusive lock screen and home screen widgets.
           </Text>
-        </Animated.View>
+        </View>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <X size={22} color="rgba(255,255,255,0.7)" weight="bold" />
+        </TouchableOpacity>
+      </View>
 
-        <Animated.View entering={FadeIn.duration(300).delay(100)} style={styles.closeButtonWrapper}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleClose}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={[styles.closeIcon, { color: colors.textSecondary }]}>✕</Text>
+      {/* Phone carousel area */}
+      <View style={styles.carouselWrapper}>
+        {/* Radial glow — behind everything */}
+        <View style={styles.radialGlow} />
+
+        {/* FlatList horizontal carousel */}
+        <FlatList
+          ref={flatListRef}
+          data={SLIDES}
+          renderItem={renderSlide}
+          keyExtractor={(item) => item.key}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          snapToAlignment="start"
+          onMomentumScrollEnd={handleMomentumScrollEnd}
+          onScrollBeginDrag={resetTimer}
+          getItemLayout={(_, index) => ({
+            length: PHONE_WIDTH,
+            offset: PHONE_WIDTH * index,
+            index,
+          })}
+          style={styles.flatList}
+        />
+
+        {/* Pagination dots — absolute at bottom of carousel */}
+        <View style={styles.dotsWrapper}>
+          <PaginationDots total={SLIDES.length} activeIndex={activeIndex} />
+        </View>
+      </View>
+
+      {/* Pricing block — negative margin pulls up into faded area */}
+      <View style={styles.pricingBlock}>
+        {/* Yearly card */}
+        <PricingCard
+          label="Yearly"
+          price={yearlyPackage?.product.priceString || '...'}
+          period="/ year"
+          isSelected={selectedPlan === 'yearly'}
+          showBestValue
+          onPress={() => setSelectedPlan('yearly')}
+        />
+
+        <Text style={styles.currencyNote}>* All prices are in local currency</Text>
+
+        {/* Separator + expand toggle */}
+        <View style={styles.expandRow}>
+          <View style={styles.expandLine} />
+          <TouchableOpacity style={styles.expandButton} onPress={toggleMonthly}>
+            <Animated.View style={caretAnimatedStyle}>
+              <CaretDown size={16} color="rgba(255,255,255,0.6)" />
+            </Animated.View>
+            <Text style={styles.expandLabel}>Show more plans</Text>
           </TouchableOpacity>
+          <View style={styles.expandLine} />
+        </View>
+
+        {/* Monthly card — animated */}
+        <Animated.View style={monthlyAnimatedStyle}>
+          <PricingCard
+            label="Monthly"
+            price={monthlyPackage?.product.priceString || '...'}
+            period="/ month"
+            isSelected={selectedPlan === 'monthly'}
+            onPress={() => setSelectedPlan('monthly')}
+          />
         </Animated.View>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Feature Carousel */}
-        <Animated.View style={styles.carouselSection} entering={FadeInDown.duration(300).delay(200)}>
-          <FeatureCarousel features={FEATURES} />
-        </Animated.View>
+      {/* CTA + footer */}
+      <View style={styles.ctaBlock}>
+        <TouchableOpacity
+          style={styles.ctaButton}
+          onPress={handlePurchase}
+          disabled={isPurchasing || isLoading || (!monthlyPackage && !yearlyPackage)}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.ctaText}>
+            {isPurchasing ? 'Processing...' : 'Subscribe'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Subscription Section */}
-        <View style={styles.subscriptionSection}>
-          {/* Value Prop */}
-          <Animated.View style={styles.valuePropContainer} entering={FadeInDown.duration(300).delay(400)}>
-            <Text
-              style={[
-                styles.valueProp,
-                {
-                  color: colors.textSecondary,
-                },
-              ]}
-            >
-              Visualize time, your way
-            </Text>
-          </Animated.View>
+        <Text style={styles.billingNote}>Recurring Billing. Cancel anytime.</Text>
 
-          {/* Plan Options */}
-          <Animated.View style={styles.plansContainer} entering={FadeInDown.duration(300).delay(500)}>
-            <PlanOption
-              label="Monthly"
-              price={monthlyPackage?.product.priceString || '...'}
-              period="Billed monthly"
-              isSelected={selectedPlan === 'monthly'}
-              onPress={() => setSelectedPlan('monthly')}
-              showCancelAnytime={true}
-            />
+        <View style={styles.footerDivider} />
 
-            <View style={styles.planSpacer} />
+        <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
+          <Text style={styles.restoreLink}>Restore Purchases</Text>
+        </TouchableOpacity>
 
-            <PlanOption
-              label="Yearly"
-              price={yearlyPackage?.product.priceString || '...'}
-              period="Billed yearly"
-              isSelected={selectedPlan === 'yearly'}
-              onPress={() => setSelectedPlan('yearly')}
-              showTrial={yearlyPackage?.product.introductoryPrice != null}
-              showCancelAnytime={true}
-            />
-          </Animated.View>
-        </View>
-      </ScrollView>
-
-      {/* Sticky Footer with CTA and Secondary Actions */}
-      <View style={[styles.stickyFooter, { backgroundColor: colors.background }]}>
-        {/* CTA Button */}
-        <Animated.View style={styles.ctaContainer} entering={FadeInDown.duration(300).delay(600)}>
-          <PaywallButton
-            title="Subscribe"
-            onPress={handlePurchase}
-            isLoading={isPurchasing || isLoading}
-            disabled={isPurchasing || isLoading || (!monthlyPackage && !yearlyPackage)}
-          />
-        </Animated.View>
-
-        {/* Secondary Actions */}
-        <Animated.View style={styles.secondaryActions} entering={FadeInDown.duration(300).delay(700)}>
-          <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
-            <Text style={[styles.restoreLink, { color: colors.textSecondary }]}>
-              Restore Purchases
-            </Text>
+        <View style={styles.footerLinks}>
+          <TouchableOpacity onPress={openTerms}>
+            <Text style={styles.footerLink}>Terms of Service</Text>
           </TouchableOpacity>
-
-          <View style={styles.footerLinks}>
-            <TouchableOpacity onPress={openTerms}>
-              <Text style={[styles.footerLink, { color: colors.textTertiary }]}>
-                Terms of Service
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.footerSeparator, { color: colors.textTertiary }]}> · </Text>
-
-            <TouchableOpacity onPress={openPrivacy}>
-              <Text style={[styles.footerLink, { color: colors.textTertiary }]}>
-                Privacy Policy
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
+          <Text style={styles.footerSep}> · </Text>
+          <TouchableOpacity onPress={openPrivacy}>
+            <Text style={styles.footerLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
+// ---------------------------------------------------------------------------
+// PricingCard
+// ---------------------------------------------------------------------------
+
+interface PricingCardProps {
+  label: string;
+  price: string;
+  period: string;
+  isSelected: boolean;
+  showBestValue?: boolean;
+  onPress: () => void;
+}
+
+function PricingCard({ label, price, period, isSelected, showBestValue, onPress }: PricingCardProps) {
+  return (
+    <TouchableOpacity
+      style={[styles.pricingCard, { borderColor: isSelected ? '#F5C542' : '#38383A' }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {showBestValue && (
+        <View style={styles.bestValuePill}>
+          <Text style={styles.bestValueText}>Best Value</Text>
+        </View>
+      )}
+      <View style={styles.pricingCardRow}>
+        <View>
+          <Text style={styles.pricingLabel}>{label}</Text>
+          <Text style={styles.pricingPrice}>
+            {price} <Text style={styles.pricingPeriod}>{period}</Text>
+          </Text>
+        </View>
+        <CheckCircle size={24} color={isSelected ? '#F5C542' : '#38383A'} weight={isSelected ? 'fill' : 'regular'} />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: Spacing.sm,
+    backgroundColor: '#000',
   },
 
-  // Header
+  // --- Header ---
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: Spacing.md,
-    paddingHorizontal: Layout.screenPadding,
-    paddingBottom: Spacing.md,
-    position: 'relative',
-    zIndex: 10,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
-  headerTitle: {
+  headerTextBlock: {
     flex: 1,
-    alignItems: 'center',
   },
-  closeButtonWrapper: {
-    position: 'absolute',
-    right: Layout.screenPadding,
-    top: Spacing.md,
+  headerLine1: {
+    color: '#FFFFFF',
+    fontSize: 36,
+    fontWeight: '400',
+    lineHeight: 40,
+  },
+  headerLine2: {
+    color: '#F5C542',
+    fontSize: 50,
+    fontWeight: '800',
+    lineHeight: 54,
+  },
+  subtitle: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    fontWeight: '400',
+    marginTop: 6,
+    lineHeight: 20,
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    paddingTop: 4,
+  },
+
+  // --- Carousel ---
+  carouselWrapper: {
+    height: PHONE_HEIGHT,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  radialGlow: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(25, 25, 70, 0.65)',
+    shadowColor: '#5555CC',
+    shadowRadius: 75,
+    shadowOpacity: 0.5,
+    shadowOffset: { width: 0, height: 0 },
+    top: '50%',
+    left: '50%',
+    marginLeft: -150,
+    marginTop: -150,
+  },
+  flatList: {
+    width: screenW,
+    height: PHONE_HEIGHT,
+  },
+  slideContainer: {
+    width: PHONE_WIDTH,
+    height: PHONE_HEIGHT,
+    marginHorizontal: 24,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  slideImage: {
+    width: PHONE_WIDTH,
+    height: PHONE_HEIGHT,
+  },
+  dotsWrapper: {
+    position: 'absolute',
+    bottom: 4,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+
+  // --- Pricing block ---
+  pricingBlock: {
+    marginTop: -PRICING_OVERLAP,
+    zIndex: 1,
+    paddingHorizontal: 24,
+  },
+
+  // --- Pricing card ---
+  pricingCard: {
+    backgroundColor: '#1C1C1E',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+  },
+  bestValuePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#F5C542',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginBottom: 10,
+  },
+  bestValueText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  pricingCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pricingLabel: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  pricingPrice: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '400',
+    marginTop: 2,
+  },
+  pricingPeriod: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+  },
+
+  // --- Currency note ---
+  currencyNote: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+
+  // --- Expand row ---
+  expandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  expandLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#38383A',
+  },
+  expandButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+  },
+  expandLabel: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    fontWeight: '400',
+  },
+
+  // --- CTA block ---
+  ctaBlock: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    alignItems: 'center',
+  },
+  ctaButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    height: 56,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeIcon: {
-    fontSize: 24,
-    fontWeight: FontWeights.regular,
+  ctaText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: '700',
   },
-
-  // Title
-  premiumTitle: {
-    fontSize: 32,
-    fontWeight: FontWeights.semibold,
+  billingNote: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+    marginTop: 10,
   },
-
-  // Carousel Section
-  carouselSection: {
-    minHeight: 280,
-  },
-
-  // Subscription Section
-  subscriptionSection: {
-    paddingHorizontal: Layout.screenPadding,
-    marginTop: Spacing.md,
-  },
-
-  // Value Prop
-  valuePropContainer: {
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  valueProp: {
-    fontSize: FontSizes.footnote,
-    fontWeight: FontWeights.regular,
-  },
-
-  // Plans
-  plansContainer: {
-    flexDirection: 'row',
-    marginBottom: Spacing.md,
-    gap: Spacing.sm,
-  },
-  planSpacer: {
-    width: Spacing.sm,
-  },
-
-  // Sticky Footer
-  stickyFooter: {
-    paddingHorizontal: Layout.screenPadding,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-  },
-
-  // CTA
-  ctaContainer: {
-    marginBottom: Spacing.sm,
-  },
-
-  // Secondary Actions
-  secondaryActions: {
-    alignItems: 'center',
-    gap: Spacing.sm,
+  footerDivider: {
+    width: '60%',
+    height: 1,
+    backgroundColor: '#38383A',
+    marginVertical: 10,
   },
   restoreLink: {
-    fontSize: FontSizes.footnote,
-    fontWeight: FontWeights.regular,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    marginBottom: 6,
   },
   footerLinks: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   footerLink: {
-    fontSize: FontSizes.caption1,
-    fontWeight: FontWeights.regular,
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 11,
   },
-  footerSeparator: {
-    fontSize: FontSizes.caption1,
+  footerSep: {
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 11,
   },
 });
