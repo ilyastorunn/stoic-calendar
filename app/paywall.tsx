@@ -51,28 +51,28 @@ const AUTO_PLAY_MS = 3000;
 const SLIDES = [
   {
     key: 'lock',
-    source: require('@/assets/new-paywall/cropped/lock-screen 2.png'),
+    source: require('../assets/new-paywall/cropped/lock-screen 2.png'),
     line1: 'lock screen',
     line2: 'widgets',
     subtitle: 'Your time, always in view.',
   },
   {
     key: 'small',
-    source: require('@/assets/new-paywall/cropped/small-circular-percentage 2.png'),
+    source: require('../assets/new-paywall/cropped/small-circular-percentage 2.png'),
     line1: 'small',
     line2: 'widgets',
     subtitle: 'A quiet glance at your day, anytime.',
   },
   {
     key: 'medium',
-    source: require('@/assets/new-paywall/cropped/medium-text-circular 2.png'),
+    source: require('../assets/new-paywall/cropped/medium-text-circular 2.png'),
     line1: 'medium',
     line2: 'widgets',
     subtitle: 'A clearer window into your day.',
   },
   {
     key: 'big',
-    source: require('@/assets/new-paywall/cropped/big-grid 2.png'),
+    source: require('../assets/new-paywall/cropped/big-grid 2.png'),
     line1: 'year',
     line2: 'grid',
     subtitle: 'See your entire year laid out in a grid.',
@@ -325,8 +325,6 @@ export default function PaywallScreen() {
 
       {/* Phone carousel area */}
       <View style={styles.carouselWrapper}>
-        {/* Radial glow — behind everything */}
-        <View style={styles.radialGlow} />
 
         {/* FlatList horizontal carousel */}
         <FlatList
@@ -515,21 +513,6 @@ const styles = StyleSheet.create({
     height: PHONE_HEIGHT,
     position: 'relative',
     alignItems: 'center',
-  },
-  radialGlow: {
-    position: 'absolute',
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(25, 25, 70, 0.65)',
-    shadowColor: '#5555CC',
-    shadowRadius: 75,
-    shadowOpacity: 0.5,
-    shadowOffset: { width: 0, height: 0 },
-    top: '50%',
-    left: '50%',
-    marginLeft: -150,
-    marginTop: -150,
   },
   flatList: {
     width: screenW,
