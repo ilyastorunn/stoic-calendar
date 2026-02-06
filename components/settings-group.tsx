@@ -23,6 +23,7 @@ import {
   FontWeights,
   Spacing,
   BorderRadius,
+  Shadows,
 } from '@/constants/theme';
 
 export interface SettingsGroupItem {
@@ -192,7 +193,10 @@ function SettingsGroupItemView({
           borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
           borderBottomColor: colors.separator,
         },
-        variant === 'upgrade' && styles.itemUpgrade,
+        variant === 'upgrade' && [
+          styles.itemUpgrade,
+          { borderLeftWidth: 3, borderLeftColor: '#007AFF' },
+        ],
       ]}
     >
       {/* Left side: Icon + Label */}
@@ -258,19 +262,20 @@ function SettingsGroupItemView({
 
 const styles = StyleSheet.create({
   groupContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   groupTitle: {
-    fontSize: FontSizes.footnote,
-    fontWeight: FontWeights.regular,
+    fontSize: FontSizes.subheadline,
+    fontWeight: FontWeights.medium,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.md,
   },
   itemsContainer: {
     borderRadius: BorderRadius.large,
     overflow: 'hidden',
+    ...Shadows.small,
   },
   item: {
     flexDirection: 'row',
@@ -311,6 +316,7 @@ const styles = StyleSheet.create({
   childrenContainer: {
     borderRadius: BorderRadius.large,
     padding: Spacing.md,
+    ...Shadows.small,
   },
   groupFooter: {
     fontSize: FontSizes.footnote,

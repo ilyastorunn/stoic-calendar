@@ -33,6 +33,7 @@ import {
   FontWeights,
   Spacing,
   BorderRadius,
+  Shadows,
 } from '@/constants/theme';
 
 export interface TimelineCardProps {
@@ -189,6 +190,8 @@ export function TimelineCard({
 const styles = StyleSheet.create({
   cardWrapper: {
     width: '100%',
+    borderRadius: BorderRadius.large,
+    ...Shadows.small,
   },
   card: {
     flexDirection: 'row',

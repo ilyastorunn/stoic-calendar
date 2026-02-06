@@ -24,6 +24,7 @@ import {
   Alert,
   SafeAreaView,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
@@ -45,6 +46,7 @@ import {
 } from '@/services/widget-data-service';
 import {
   Colors,
+  Fonts,
   FontSizes,
   FontWeights,
   Spacing,
@@ -278,15 +280,19 @@ export function TimelineManagementModal({
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {timelines.map((timeline) => (
-                <TimelineCard
+              {timelines.map((timeline, index) => (
+                <Animated.View
                   key={timeline.id}
-                  timeline={timeline}
-                  onPress={handleTimelinePress}
-                  onEdit={handleTimelineEdit}
-                  onDelete={handleTimelineDelete}
-                  showDelete={timelines.length > 1}
-                />
+                  entering={FadeInDown.duration(300).delay(Math.min(index * 80, 400))}
+                >
+                  <TimelineCard
+                    timeline={timeline}
+                    onPress={handleTimelinePress}
+                    onEdit={handleTimelineEdit}
+                    onDelete={handleTimelineDelete}
+                    showDelete={timelines.length > 1}
+                  />
+                </Animated.View>
               ))}
 
               {!loading && timelines.length === 0 && (
@@ -299,14 +305,18 @@ export function TimelineManagementModal({
               )}
 
               {/* Create Button */}
-              <TouchableOpacity
-                style={styles.createButton}
-                onPress={handleAddButtonPress}
-                activeOpacity={0.6}
+              <Animated.View
+                entering={FadeInDown.duration(300).delay(Math.min(timelines.length * 80 + 80, 500))}
               >
-                <Plus size={24} color={colors.accent} weight="regular" />
-                <Text style={styles.createButtonText}>Create Timeline</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.createButton}
+                  onPress={handleAddButtonPress}
+                  activeOpacity={0.6}
+                >
+                  <Plus size={20} color={colors.background} weight="bold" />
+                  <Text style={styles.createButtonText}>Create Timeline</Text>
+                </TouchableOpacity>
+              </Animated.View>
             </ScrollView>
           </View>
         </SafeAreaView>
@@ -347,16 +357,15 @@ function createStyles(colors: typeof Colors.dark) {
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       paddingHorizontal: Spacing.lg,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.md,
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.separator,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.lg,
     },
     headerLeft: {
       flex: 1,
     },
     title: {
-      fontSize: FontSizes.title2,
+      fontFamily: Fonts.handwriting,
+      fontSize: FontSizes.title1,
       fontWeight: FontWeights.bold,
       color: colors.textPrimary,
       marginBottom: Spacing.xs,
@@ -378,24 +387,26 @@ function createStyles(colors: typeof Colors.dark) {
     },
     scrollContent: {
       paddingHorizontal: Spacing.lg,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.xl,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.xxl,
     },
     emptyState: {
       paddingVertical: Spacing.xxl,
       alignItems: 'center',
     },
     emptyText: {
-      fontSize: FontSizes.title3,
+      fontFamily: Fonts.serif,
+      fontSize: FontSizes.title2,
       fontWeight: FontWeights.medium,
       color: colors.textSecondary,
       marginBottom: Spacing.sm,
     },
     emptySubtext: {
-      fontSize: FontSizes.subheadline,
+      fontSize: FontSizes.body,
       fontWeight: FontWeights.regular,
       color: colors.textTertiary,
       textAlign: 'center',
+      lineHeight: 24,
     },
     createButton: {
       flexDirection: 'row',
@@ -403,17 +414,14 @@ function createStyles(colors: typeof Colors.dark) {
       justifyContent: 'center',
       paddingVertical: Spacing.md,
       paddingHorizontal: Spacing.lg,
-      borderRadius: BorderRadius.large,
-      borderWidth: 1,
-      borderStyle: 'dashed',
-      borderColor: colors.separator,
-      backgroundColor: colors.cardBackground,
+      borderRadius: BorderRadius.full,
+      backgroundColor: colors.textPrimary,
       marginTop: Spacing.md,
     },
     createButtonText: {
       fontSize: FontSizes.body,
-      fontWeight: FontWeights.medium,
-      color: colors.accent,
+      fontWeight: FontWeights.semibold,
+      color: colors.background,
       marginLeft: Spacing.sm,
     },
   });

@@ -22,7 +22,7 @@ import {
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { List, Moon, Sun, Monitor, Info, Crown, Bug, Check } from 'phosphor-react-native';
 import { SettingsGroup } from '@/components/settings-group';
@@ -32,6 +32,7 @@ import { ThemeMode, GridColorTheme } from '@/types/timeline';
 import { isPro } from '@/services/revenue-cat-service';
 import {
   Colors,
+  Fonts,
   FontSizes,
   FontWeights,
   Spacing,
@@ -40,6 +41,31 @@ import {
   GridColorPalettes,
 } from '@/constants/theme';
 import { debugWidgetSync } from '@/scripts/debug-widget-sync';
+
+/**
+ * Mini 4x4 dot grid preview for color palette selection
+ */
+function MiniColorPreview({ filledColor, emptyColor }: { filledColor: string; emptyColor: string }) {
+  const DOT_SIZE = 8;
+  const GAP = 3;
+  const FILLED_COUNT = 6; // First 6 of 16 dots filled
+
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', width: DOT_SIZE * 4 + GAP * 3, gap: GAP, marginBottom: Spacing.xs }}>
+      {Array.from({ length: 16 }, (_, i) => (
+        <View
+          key={i}
+          style={{
+            width: DOT_SIZE,
+            height: DOT_SIZE,
+            borderRadius: DOT_SIZE / 2,
+            backgroundColor: i < FILLED_COUNT ? filledColor : emptyColor,
+          }}
+        />
+      ))}
+    </View>
+  );
+}
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -272,7 +298,7 @@ export default function SettingsScreen() {
           styles.scrollContent,
           {
             paddingTop: Spacing.lg,
-            paddingBottom: Spacing.md,
+            paddingBottom: Spacing.xxl,
           },
         ]}
       >
@@ -285,35 +311,43 @@ export default function SettingsScreen() {
         <Animated.View entering={FadeInDown.duration(300).delay(200)}>
           <SettingsGroup title="Appearance" items={[]}>
             <View style={styles.appearanceContainer}>
-              {appearanceThemes.map((theme) => (
-                <TouchableOpacity
-                  key={theme.mode}
-                  style={[
-                    styles.appearanceItem,
-                    {
-                      backgroundColor: colors.cardBackground,
-                      borderColor: currentTheme === theme.mode ? colors.accent : colors.separator,
-                    },
-                  ]}
-                  onPress={() => handleThemeChange(theme.mode)}
-                  activeOpacity={0.6}
-                >
-                  {theme.icon}
-                  <Text
+              {appearanceThemes.map((theme) => {
+                const isSelected = currentTheme === theme.mode;
+                return (
+                  <TouchableOpacity
+                    key={theme.mode}
                     style={[
-                      styles.appearanceLabel,
+                      styles.appearanceItem,
                       {
-                        color: colors.textPrimary,
+                        backgroundColor: colors.cardBackground,
+                        borderColor: isSelected ? colors.accent : 'transparent',
+                      },
+                      isSelected && {
+                        shadowColor: colors.accent,
+                        shadowOpacity: 0.25,
+                        shadowRadius: 8,
+                        shadowOffset: { width: 0, height: 0 },
+                        elevation: 4,
                       },
                     ]}
+                    onPress={() => handleThemeChange(theme.mode)}
+                    activeOpacity={0.6}
                   >
-                    {theme.label}
-                  </Text>
-                  {currentTheme === theme.mode && (
-                    <Check size={20} color={colors.accent} weight="bold" />
-                  )}
-                </TouchableOpacity>
-              ))}
+                    {theme.icon}
+                    <Text
+                      style={[
+                        styles.appearanceLabel,
+                        { color: colors.textPrimary },
+                      ]}
+                    >
+                      {theme.label}
+                    </Text>
+                    {isSelected && (
+                      <Check size={20} color={colors.accent} weight="bold" />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </SettingsGroup>
         </Animated.View>
@@ -322,145 +356,46 @@ export default function SettingsScreen() {
         <Animated.View entering={FadeInDown.duration(300).delay(300)}>
           <SettingsGroup title="Grid Colors" items={[]}>
             <View style={styles.colorPaletteContainer}>
-              {/* Classic Blue */}
-              <TouchableOpacity
-                style={styles.colorPaletteItem}
-                onPress={() => handleGridColorThemeChange('classic')}
-                activeOpacity={0.6}
-              >
-                <View style={styles.colorPreviewWrapper}>
-                  <View
+              {(['classic', 'forest', 'sunset', 'monochrome'] as const).map((key) => {
+                const palette = GridColorPalettes[key];
+                const isSelected = currentGridColorTheme === key;
+                const filledColor = colorScheme === 'dark'
+                  ? palette.dark.dotFilled
+                  : palette.light.dotFilled;
+                const emptyColor = colorScheme === 'dark'
+                  ? palette.dark.dotEmpty
+                  : palette.light.dotEmpty;
+                return (
+                  <TouchableOpacity
+                    key={key}
                     style={[
-                      styles.colorPreview,
+                      styles.colorPaletteItem,
                       {
-                        backgroundColor: colorScheme === 'dark'
-                          ? GridColorPalettes.classic.dark.dotFilled
-                          : GridColorPalettes.classic.light.dotFilled,
+                        borderColor: isSelected ? colors.accent : 'transparent',
+                      },
+                      isSelected && {
+                        shadowColor: colors.accent,
+                        shadowOpacity: 0.25,
+                        shadowRadius: 8,
+                        shadowOffset: { width: 0, height: 0 },
+                        elevation: 4,
                       },
                     ]}
-                  />
-                  {currentGridColorTheme === 'classic' && (
-                    <View style={styles.colorCheckIcon}>
-                      <Check size={24} color="white" weight="bold" />
-                    </View>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.colorPaletteLabel,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
-                  {GridColorPalettes.classic.name}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Forest Green */}
-              <TouchableOpacity
-                style={styles.colorPaletteItem}
-                onPress={() => handleGridColorThemeChange('forest')}
-                activeOpacity={0.6}
-              >
-                <View style={styles.colorPreviewWrapper}>
-                  <View
-                    style={[
-                      styles.colorPreview,
-                      {
-                        backgroundColor: colorScheme === 'dark'
-                          ? GridColorPalettes.forest.dark.dotFilled
-                          : GridColorPalettes.forest.light.dotFilled,
-                      },
-                    ]}
-                  />
-                  {currentGridColorTheme === 'forest' && (
-                    <View style={styles.colorCheckIcon}>
-                      <Check size={24} color="white" weight="bold" />
-                    </View>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.colorPaletteLabel,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
-                  {GridColorPalettes.forest.name}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Sunset Orange */}
-              <TouchableOpacity
-                style={styles.colorPaletteItem}
-                onPress={() => handleGridColorThemeChange('sunset')}
-                activeOpacity={0.6}
-              >
-                <View style={styles.colorPreviewWrapper}>
-                  <View
-                    style={[
-                      styles.colorPreview,
-                      {
-                        backgroundColor: colorScheme === 'dark'
-                          ? GridColorPalettes.sunset.dark.dotFilled
-                          : GridColorPalettes.sunset.light.dotFilled,
-                      },
-                    ]}
-                  />
-                  {currentGridColorTheme === 'sunset' && (
-                    <View style={styles.colorCheckIcon}>
-                      <Check size={24} color="white" weight="bold" />
-                    </View>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.colorPaletteLabel,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
-                  {GridColorPalettes.sunset.name}
-                </Text>
-              </TouchableOpacity>
-
-              {/* Monochrome */}
-              <TouchableOpacity
-                style={styles.colorPaletteItem}
-                onPress={() => handleGridColorThemeChange('monochrome')}
-                activeOpacity={0.6}
-              >
-                <View style={styles.colorPreviewWrapper}>
-                  <View
-                    style={[
-                      styles.colorPreview,
-                      {
-                        backgroundColor: colorScheme === 'dark'
-                          ? GridColorPalettes.monochrome.dark.dotFilled
-                          : GridColorPalettes.monochrome.light.dotFilled,
-                      },
-                    ]}
-                  />
-                  {currentGridColorTheme === 'monochrome' && (
-                    <View style={styles.colorCheckIcon}>
-                      <Check size={24} color="white" weight="bold" />
-                    </View>
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.colorPaletteLabel,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
-                  {GridColorPalettes.monochrome.name}
-                </Text>
-              </TouchableOpacity>
+                    onPress={() => handleGridColorThemeChange(key)}
+                    activeOpacity={0.6}
+                  >
+                    <MiniColorPreview filledColor={filledColor} emptyColor={emptyColor} />
+                    <Text
+                      style={[
+                        styles.colorPaletteLabel,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
+                      {palette.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </SettingsGroup>
         </Animated.View>
@@ -491,6 +426,7 @@ export default function SettingsScreen() {
                 style={[
                   styles.philosophyQuote,
                   {
+                    fontFamily: Fonts.serif,
                     color: colors.textSecondary,
                   },
                 ]}
@@ -554,9 +490,9 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.medium,
-    borderWidth: 2,
+    borderWidth: 1.5,
     gap: Spacing.xs,
   },
   appearanceLabel: {
@@ -567,29 +503,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: Spacing.sm,
+    gap: Spacing.xs,
   },
   colorPaletteItem: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: Spacing.sm,
-  },
-  colorPreviewWrapper: {
-    position: 'relative',
-    marginBottom: Spacing.xs,
-  },
-  colorPreview: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  colorCheckIcon: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+    borderRadius: BorderRadius.medium,
+    borderWidth: 1.5,
   },
   colorPaletteLabel: {
     fontSize: FontSizes.caption1,
@@ -600,9 +522,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   philosophyQuote: {
-    fontSize: FontSizes.body,
+    fontSize: FontSizes.title3,
     fontStyle: 'italic',
-    lineHeight: 24,
+    lineHeight: 28,
     textAlign: 'center',
     marginBottom: Spacing.md,
   },
