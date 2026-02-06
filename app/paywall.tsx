@@ -30,7 +30,7 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { PurchasesPackage } from 'react-native-purchases';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
-import { X, CheckCircle, CaretDown } from 'phosphor-react-native';
+import { X, CheckCircle } from 'phosphor-react-native';
 import {
   getOfferings,
   purchasePackage,
@@ -45,7 +45,7 @@ import { PaginationDots } from '@/components/paywall/pagination-dots';
 const { height: screenH, width: screenW } = Dimensions.get('window');
 const PHONE_WIDTH = screenW - 48;
 const PHONE_HEIGHT = screenH * 0.42;
-const PRICING_OVERLAP = 70;
+const PRICING_OVERLAP = 15;
 const AUTO_PLAY_MS = 3000;
 
 const SLIDES = [
@@ -120,12 +120,6 @@ export default function PaywallScreen() {
   const textAnimatedStyle = useAnimatedStyle(() => ({
     opacity: textOpacity.value,
   }));
-
-  // --- expand monthly ---
-  const [showMonthly, setShowMonthly] = useState(false);
-  const monthlyHeight = useSharedValue(0);
-  const monthlyOpacity = useSharedValue(0);
-  const caretRotation = useSharedValue(0);
 
   // ---------------------------------------------------------------------------
   // Offerings
@@ -255,27 +249,6 @@ export default function PaywallScreen() {
     }
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // Expand / Collapse monthly
-  // ---------------------------------------------------------------------------
-
-  const toggleMonthly = () => {
-    const next = !showMonthly;
-    setShowMonthly(next);
-    monthlyHeight.value = withTiming(next ? 88 : 0, { duration: 280 });
-    monthlyOpacity.value = withTiming(next ? 1 : 0, { duration: 200 });
-    caretRotation.value = withTiming(next ? 180 : 0, { duration: 280 });
-  };
-
-  const monthlyAnimatedStyle = useAnimatedStyle(() => ({
-    height: monthlyHeight.value,
-    opacity: monthlyOpacity.value,
-    overflow: 'hidden',
-  }));
-
-  const caretAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${caretRotation.value}deg` }],
-  }));
 
   // ---------------------------------------------------------------------------
   // Render helpers
@@ -292,7 +265,8 @@ export default function PaywallScreen() {
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
         <Defs>
           <LinearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="55%" stopColor="#000" stopOpacity={0} />
+            <Stop offset="40%" stopColor="#000" stopOpacity={0} />
+            <Stop offset="75%" stopColor="#000" stopOpacity={0.6} />
             <Stop offset="100%" stopColor="#000" stopOpacity={1} />
           </LinearGradient>
         </Defs>
@@ -354,32 +328,7 @@ export default function PaywallScreen() {
 
       {/* Pricing block — negative margin pulls up into faded area */}
       <View style={styles.pricingBlock}>
-        {/* Yearly card */}
-        <PricingCard
-          label="Yearly"
-          price={yearlyPackage?.product.priceString || '...'}
-          period="/ year"
-          isSelected={selectedPlan === 'yearly'}
-          showBestValue
-          onPress={() => setSelectedPlan('yearly')}
-        />
-
-        <Text style={styles.currencyNote}>* All prices are in local currency</Text>
-
-        {/* Separator + expand toggle */}
-        <View style={styles.expandRow}>
-          <View style={styles.expandLine} />
-          <TouchableOpacity style={styles.expandButton} onPress={toggleMonthly}>
-            <Animated.View style={caretAnimatedStyle}>
-              <CaretDown size={16} color="rgba(255,255,255,0.6)" />
-            </Animated.View>
-            <Text style={styles.expandLabel}>Show more plans</Text>
-          </TouchableOpacity>
-          <View style={styles.expandLine} />
-        </View>
-
-        {/* Monthly card — animated */}
-        <Animated.View style={monthlyAnimatedStyle}>
+        <View style={styles.plansRow}>
           <PricingCard
             label="Monthly"
             price={monthlyPackage?.product.priceString || '...'}
@@ -387,7 +336,15 @@ export default function PaywallScreen() {
             isSelected={selectedPlan === 'monthly'}
             onPress={() => setSelectedPlan('monthly')}
           />
-        </Animated.View>
+          <PricingCard
+            label="Yearly"
+            price={yearlyPackage?.product.priceString || '...'}
+            period="/ year"
+            isSelected={selectedPlan === 'yearly'}
+            showBestValue
+            onPress={() => setSelectedPlan('yearly')}
+          />
+        </View>
       </View>
 
       {/* CTA + footer */}
@@ -441,7 +398,7 @@ interface PricingCardProps {
 function PricingCard({ label, price, period, isSelected, showBestValue, onPress }: PricingCardProps) {
   return (
     <TouchableOpacity
-      style={[styles.pricingCard, { borderColor: isSelected ? '#F5C542' : '#38383A' }]}
+      style={[styles.pricingCard, { borderColor: isSelected ? '#007AFF' : '#38383A' }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -457,7 +414,12 @@ function PricingCard({ label, price, period, isSelected, showBestValue, onPress 
             {price} <Text style={styles.pricingPeriod}>{period}</Text>
           </Text>
         </View>
-        <CheckCircle size={24} color={isSelected ? '#F5C542' : '#38383A'} weight={isSelected ? 'fill' : 'regular'} />
+        <CheckCircle
+          size={24}
+          color={isSelected ? '#007AFF' : '#38383A'}
+          weight={isSelected ? 'fill' : 'regular'}
+          style={styles.checkCircle}
+        />
       </View>
     </TouchableOpacity>
   );
@@ -492,7 +454,7 @@ const styles = StyleSheet.create({
     lineHeight: 40,
   },
   headerLine2: {
-    color: '#F5C542',
+    color: '#007AFF',
     fontSize: 50,
     fontWeight: '800',
     lineHeight: 54,
@@ -531,10 +493,11 @@ const styles = StyleSheet.create({
   },
   dotsWrapper: {
     position: 'absolute',
-    bottom: 4,
+    bottom: 8,
     left: 0,
     right: 0,
     alignItems: 'center',
+    zIndex: 10,
   },
 
   // --- Pricing block ---
@@ -543,32 +506,35 @@ const styles = StyleSheet.create({
     zIndex: 1,
     paddingHorizontal: 24,
   },
+  plansRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
 
   // --- Pricing card ---
   pricingCard: {
+    flex: 1,
     backgroundColor: '#1C1C1E',
     borderWidth: 1.5,
     borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   bestValuePill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F5C542',
+    backgroundColor: '#007AFF',
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 3,
     marginBottom: 10,
   },
   bestValueText: {
-    color: '#000',
+    color: '#FFF',
     fontSize: 12,
     fontWeight: '700',
   },
   pricingCardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
   },
   pricingLabel: {
     color: '#FFFFFF',
@@ -585,36 +551,9 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     fontSize: 14,
   },
-
-  // --- Currency note ---
-  currencyNote: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 12,
+  checkCircle: {
+    alignSelf: 'flex-end',
     marginTop: 8,
-    marginBottom: 4,
-  },
-
-  // --- Expand row ---
-  expandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 12,
-  },
-  expandLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#38383A',
-  },
-  expandButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 12,
-  },
-  expandLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    fontWeight: '400',
   },
 
   // --- CTA block ---
