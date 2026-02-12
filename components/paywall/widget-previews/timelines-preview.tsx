@@ -187,11 +187,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
 
-  // Mini grid
+  // Mini grid (matches home page spacing ratio: 8px dot × 0.25 = 2px gap)
   miniGridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 2,
   },
 
   miniGridDot: {

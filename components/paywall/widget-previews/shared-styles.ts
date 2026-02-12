@@ -102,6 +102,9 @@ export const sharedStyles = StyleSheet.create({
 
 /**
  * Calculate grid dimensions for preview
+ *
+ * Note: Spacing should match home page ratio (0.25) for consistency
+ * Example: For 8px dots, use 2px spacing (8 × 0.25 = 2)
  */
 export function calculatePreviewGrid(
   totalDays: number,
