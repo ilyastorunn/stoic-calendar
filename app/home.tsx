@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     flex: 1,
-    marginVertical: Spacing.lg,
+    marginVertical: Spacing.md,
   },
   footer: {
     alignItems: 'center',
