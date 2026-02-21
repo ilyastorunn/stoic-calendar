@@ -252,41 +252,48 @@ struct StoicGridWidgetView: View {
                     backgroundColor
 
                     if family == .systemMedium {
-                        // Medium widget: Horizontal layout (Title left, Grid+Stats right)
-                        HStack(alignment: .center, spacing: 0) {
-                            // Left: Title (larger, optically centered vertically to grid)
-                            Text(timeline.title)
-                                .font(.system(size: 28, weight: .semibold))
-                                .foregroundColor(textColor)
-                                .lineLimit(1)
-                                .alignmentGuide(VerticalAlignment.center) { d in
-                                    d[VerticalAlignment.center] + 5  // Slight upward shift to align with grid center
-                                }
-
-                            Spacer()
-
-                            // Right: Grid + Stats (centered alignment, wider grid)
-                            VStack(alignment: .center, spacing: 6) {
-                                GeometryReader { geometry in
-                                    StoicGridView(
-                                        daysPassed: timeline.daysPassed,
-                                        totalDays: timeline.totalDays,
-                                        colorTheme: entry.settings?.gridColorTheme ?? "classic",
-                                        effectiveColorScheme: effectiveColorScheme,
-                                        containerSize: geometry.size,
-                                        widgetFamily: family
-                                    )
-                                }
-                                .frame(width: 180, height: 100)
-
+                        // Medium widget: Title+subtitle left, grid fills right
+                        HStack(alignment: .center, spacing: 12) {
+                            // Left: Title + Subtitle stacked
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(timeline.title)
+                                    .font(.system(size: 28, weight: .semibold))
+                                    .foregroundColor(textColor)
+                                    .lineLimit(1)
                                 Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
                                     .font(.system(size: 11))
                                     .foregroundColor(secondaryTextColor)
                             }
+                            .frame(width: 80)
+
+                            // Right: Grid (fills remaining space)
+                            GeometryReader { geometry in
+                                StoicGridView(
+                                    daysPassed: timeline.daysPassed,
+                                    totalDays: timeline.totalDays,
+                                    colorTheme: entry.settings?.gridColorTheme ?? "classic",
+                                    effectiveColorScheme: effectiveColorScheme,
+                                    containerSize: geometry.size,
+                                    widgetFamily: family
+                                )
+                            }
+                        }
+                        .padding(paddingSize)
+                    } else if family == .systemSmall {
+                        // Small widget: grid only, no title, minimal padding
+                        GeometryReader { geometry in
+                            StoicGridView(
+                                daysPassed: timeline.daysPassed,
+                                totalDays: timeline.totalDays,
+                                colorTheme: entry.settings?.gridColorTheme ?? "classic",
+                                effectiveColorScheme: effectiveColorScheme,
+                                containerSize: geometry.size,
+                                widgetFamily: family
+                            )
                         }
                         .padding(paddingSize)
                     } else {
-                        // Small and Large widgets: Vertical layout
+                        // Large widget: Title + Grid + Caption
                         VStack(spacing: 8) {
                             // Title
                             Text(timeline.title)
@@ -307,11 +314,9 @@ struct StoicGridWidgetView: View {
                             }
 
                             // Progress text
-                            if family != .systemSmall {
-                                Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
-                                    .font(.system(size: captionFontSize))
-                                    .foregroundColor(secondaryTextColor)
-                            }
+                            Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
+                                .font(.system(size: captionFontSize))
+                                .foregroundColor(secondaryTextColor)
                         }
                         .padding(paddingSize)
                     }
@@ -368,7 +373,7 @@ struct StoicGridWidgetView: View {
         switch family {
         case .systemSmall: return 14
         case .systemMedium: return 16
-        case .systemLarge: return 18
+        case .systemLarge: return 22
         default: return 16
         }
     }
@@ -383,9 +388,9 @@ struct StoicGridWidgetView: View {
 
     private var paddingSize: CGFloat {
         switch family {
-        case .systemSmall: return 12
+        case .systemSmall: return 8
         case .systemMedium: return 14
-        case .systemLarge: return 16
+        case .systemLarge: return 14  // Reduced to give grid more space
         default: return 12
         }
     }
@@ -653,25 +658,26 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widget
         // Medium grids: 10 columns
         optimalColumns = 10
     } else {
-        // Large grids (365 days): adjust columns based on widget size
-        // 365 days ÷ 16 columns ≈ 23 rows
-        let aspectRatio = width / height
-        if aspectRatio > 1.5 {
-            // Wide widgets (medium, large): more columns
-            optimalColumns = 16  // Reduced from 18 for less cramped look
-        } else {
-            // Portrait/square widgets (small): fewer columns = bigger dots
-            optimalColumns = 14  // Reduced from 16 for better centering and larger dots
+        // Large grids (365 days): adjust columns based on widget family
+        switch widgetFamily {
+        case .systemLarge:
+            // Large widget is portrait but has lots of space - use more columns to fill width
+            optimalColumns = 19
+        case .systemMedium:
+            // Medium widget is landscape
+            optimalColumns = 16
+        default:
+            // Small widget: fewer columns = bigger dots
+            optimalColumns = 18
         }
     }
 
     // Step 2: Calculate rows
     let rows = Int(ceil(Double(totalDays) / Double(optimalColumns)))
 
-    // Step 3: Calculate asymmetric spacing ratios (Manus.ai MVP style)
-    // Horizontal: wider gaps (25%), Vertical: tighter gaps (8%)
+    // Step 3: Spacing ratios - wider horizontal gaps, moderate vertical gaps
     let horizontalSpacingRatio: CGFloat = 0.25
-    let verticalSpacingRatio: CGFloat = 0.08
+    let verticalSpacingRatio: CGFloat = 0.15
 
     // Step 4: Calculate maximum dot size with asymmetric spacing
     let maxDotSizeFromWidth = width / (CGFloat(optimalColumns) + CGFloat(optimalColumns - 1) * horizontalSpacingRatio)
@@ -685,7 +691,7 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widget
         case .systemLarge:
             if totalDays <= 50 { return (8, 28) }      // Month: big dots
             else if totalDays <= 100 { return (6, 20) } // Custom
-            else { return (4, 12) }                     // Year
+            else { return (4, 14) }                     // Year: increased max for better space utilization
         case .systemMedium:
             if totalDays <= 50 { return (5, 16) }
             else if totalDays <= 100 { return (4, 12) }
@@ -696,22 +702,23 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widget
     }()
     dotSize = max(minDotSize, min(maxDotSize, dotSize))
 
-    // Step 6: Calculate asymmetric spacing
-    let spacingHorizontal = dotSize * horizontalSpacingRatio
-    let spacingVertical = dotSize * verticalSpacingRatio
+    // Step 6: Floor dot size and spacing first to match Canvas drawing
+    let flooredDotSize = floor(dotSize)
+    let flooredSpacingH = floor(dotSize * horizontalSpacingRatio)
+    let flooredSpacingV = floor(dotSize * verticalSpacingRatio)
 
-    // Step 7: Calculate grid dimensions
-    let gridWidth = CGFloat(optimalColumns) * dotSize + CGFloat(optimalColumns - 1) * spacingHorizontal
-    let gridHeight = CGFloat(rows) * dotSize + CGFloat(rows - 1) * spacingVertical
+    // Step 7: Calculate grid dimensions from floored values (prevents centering drift)
+    let gridWidth = CGFloat(optimalColumns) * flooredDotSize + CGFloat(optimalColumns - 1) * flooredSpacingH
+    let gridHeight = CGFloat(rows) * flooredDotSize + CGFloat(rows - 1) * flooredSpacingV
 
     return GridLayout(
         columns: optimalColumns,
         rows: rows,
-        dotSize: floor(dotSize),
-        spacingHorizontal: floor(spacingHorizontal),
-        spacingVertical: floor(spacingVertical),
-        gridWidth: floor(gridWidth),
-        gridHeight: floor(gridHeight)
+        dotSize: flooredDotSize,
+        spacingHorizontal: flooredSpacingH,
+        spacingVertical: flooredSpacingV,
+        gridWidth: gridWidth,
+        gridHeight: gridHeight
     )
 }
 
