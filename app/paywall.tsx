@@ -28,7 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { PurchasesPackage } from 'react-native-purchases';
+import { PurchasesPackage, PurchasesStoreProduct } from 'react-native-purchases';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { X, CheckCircle } from 'phosphor-react-native';
 import {
@@ -39,6 +39,8 @@ import {
 import { PaginationDots } from '@/components/paywall/pagination-dots';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+
+type IntroPrice = NonNullable<PurchasesStoreProduct['introPrice']>;
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -348,6 +350,7 @@ export default function PaywallScreen() {
             period="/ year"
             isSelected={selectedPlan === 'yearly'}
             showBestValue
+            introPrice={yearlyPackage?.product.introPrice ?? null}
             onPress={() => setSelectedPlan('yearly')}
             colors={colors}
           />
@@ -399,23 +402,36 @@ interface PricingCardProps {
   period: string;
   isSelected: boolean;
   showBestValue?: boolean;
+  introPrice?: IntroPrice | null;
   onPress: () => void;
   colors: typeof Colors.dark;
 }
 
-function PricingCard({ label, price, period, isSelected, showBestValue, onPress, colors }: PricingCardProps) {
+function formatTrialLabel(introPrice: IntroPrice): string {
+  const n = introPrice.periodNumberOfUnits;
+  const unit = introPrice.periodUnit.toLowerCase();
+  const unitLabel = n === 1 ? unit : `${unit}s`;
+  return `Try free for ${n} ${unitLabel}`;
+}
+
+function PricingCard({ label, price, period, isSelected, showBestValue, introPrice, onPress, colors }: PricingCardProps) {
   const styles = getStyles(colors);
+  const hasFreeTrial = introPrice != null && introPrice.price === 0;
   return (
     <TouchableOpacity
       style={[styles.pricingCard, { borderColor: isSelected ? '#007AFF' : colors.separator }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {showBestValue && (
+      {hasFreeTrial ? (
+        <View style={styles.freeTrialPill}>
+          <Text style={styles.freeTrialText}>{formatTrialLabel(introPrice!)}</Text>
+        </View>
+      ) : showBestValue ? (
         <View style={styles.bestValuePill}>
           <Text style={styles.bestValueText}>Best Value</Text>
         </View>
-      )}
+      ) : null}
       <View style={styles.pricingCardRow}>
         <View>
           <Text style={styles.pricingLabel}>{label}</Text>
@@ -540,6 +556,19 @@ function getStyles(colors: typeof Colors.dark) {
       marginBottom: 10,
     },
     bestValueText: {
+      color: '#FFF',
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    freeTrialPill: {
+      alignSelf: 'flex-start',
+      backgroundColor: '#34C759',
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      marginBottom: 10,
+    },
+    freeTrialText: {
       color: '#FFF',
       fontSize: 12,
       fontWeight: '700',
