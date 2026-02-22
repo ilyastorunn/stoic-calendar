@@ -37,6 +37,8 @@ import {
   restorePurchases,
 } from '@/services/revenue-cat-service';
 import { PaginationDots } from '@/components/paywall/pagination-dots';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -87,6 +89,9 @@ type PlanType = 'yearly' | 'monthly';
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'dark'];
+  const styles = getStyles(colors);
 
   // --- offerings state ---
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
@@ -265,9 +270,9 @@ export default function PaywallScreen() {
       <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
         <Defs>
           <LinearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="40%" stopColor="#000" stopOpacity={0} />
-            <Stop offset="75%" stopColor="#000" stopOpacity={0.6} />
-            <Stop offset="100%" stopColor="#000" stopOpacity={1} />
+            <Stop offset="40%" stopColor={colors.background} stopOpacity={0} />
+            <Stop offset="75%" stopColor={colors.background} stopOpacity={0.6} />
+            <Stop offset="100%" stopColor={colors.background} stopOpacity={1} />
           </LinearGradient>
         </Defs>
         <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFade)" />
@@ -293,7 +298,7 @@ export default function PaywallScreen() {
           onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <X size={22} color="rgba(255,255,255,0.7)" weight="bold" />
+          <X size={22} color={colors.textSecondary} weight="bold" />
         </TouchableOpacity>
       </View>
 
@@ -335,6 +340,7 @@ export default function PaywallScreen() {
             period="/ month"
             isSelected={selectedPlan === 'monthly'}
             onPress={() => setSelectedPlan('monthly')}
+            colors={colors}
           />
           <PricingCard
             label="Yearly"
@@ -343,6 +349,7 @@ export default function PaywallScreen() {
             isSelected={selectedPlan === 'yearly'}
             showBestValue
             onPress={() => setSelectedPlan('yearly')}
+            colors={colors}
           />
         </View>
       </View>
@@ -393,12 +400,14 @@ interface PricingCardProps {
   isSelected: boolean;
   showBestValue?: boolean;
   onPress: () => void;
+  colors: typeof Colors.dark;
 }
 
-function PricingCard({ label, price, period, isSelected, showBestValue, onPress }: PricingCardProps) {
+function PricingCard({ label, price, period, isSelected, showBestValue, onPress, colors }: PricingCardProps) {
+  const styles = getStyles(colors);
   return (
     <TouchableOpacity
-      style={[styles.pricingCard, { borderColor: isSelected ? '#007AFF' : '#38383A' }]}
+      style={[styles.pricingCard, { borderColor: isSelected ? '#007AFF' : colors.separator }]}
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -416,7 +425,7 @@ function PricingCard({ label, price, period, isSelected, showBestValue, onPress 
         </View>
         <CheckCircle
           size={24}
-          color={isSelected ? '#007AFF' : '#38383A'}
+          color={isSelected ? '#007AFF' : colors.separator}
           weight={isSelected ? 'fill' : 'regular'}
           style={styles.checkCircle}
         />
@@ -429,178 +438,181 @@ function PricingCard({ label, price, period, isSelected, showBestValue, onPress 
 // Styles
 // ---------------------------------------------------------------------------
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
+function getStyles(colors: typeof Colors.dark) {
+  const isDark = colors.background === '#000000';
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
 
-  // --- Header ---
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  headerTextBlock: {
-    flex: 1,
-  },
-  headerLine1: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    fontWeight: '400',
-    lineHeight: 40,
-  },
-  headerLine2: {
-    color: '#007AFF',
-    fontSize: 50,
-    fontWeight: '800',
-    lineHeight: 54,
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    fontWeight: '400',
-    marginTop: 6,
-    lineHeight: 20,
-  },
-  closeButton: {
-    paddingTop: 4,
-  },
+    // --- Header ---
+    header: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingTop: 12,
+      paddingBottom: 8,
+    },
+    headerTextBlock: {
+      flex: 1,
+    },
+    headerLine1: {
+      color: colors.textPrimary,
+      fontSize: 36,
+      fontWeight: '400',
+      lineHeight: 40,
+    },
+    headerLine2: {
+      color: colors.accent,
+      fontSize: 50,
+      fontWeight: '800',
+      lineHeight: 54,
+    },
+    subtitle: {
+      color: colors.textSecondary,
+      fontSize: 14,
+      fontWeight: '400',
+      marginTop: 6,
+      lineHeight: 20,
+    },
+    closeButton: {
+      paddingTop: 4,
+    },
 
-  // --- Carousel ---
-  carouselWrapper: {
-    height: PHONE_HEIGHT,
-    position: 'relative',
-    alignItems: 'center',
-  },
-  flatList: {
-    width: screenW,
-    height: PHONE_HEIGHT,
-  },
-  slideContainer: {
-    width: PHONE_WIDTH,
-    height: PHONE_HEIGHT,
-    marginHorizontal: 24,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  slideImage: {
-    width: PHONE_WIDTH,
-    height: PHONE_HEIGHT,
-  },
-  dotsWrapper: {
-    position: 'absolute',
-    bottom: 8,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 10,
-  },
+    // --- Carousel ---
+    carouselWrapper: {
+      height: PHONE_HEIGHT,
+      position: 'relative',
+      alignItems: 'center',
+    },
+    flatList: {
+      width: screenW,
+      height: PHONE_HEIGHT,
+    },
+    slideContainer: {
+      width: PHONE_WIDTH,
+      height: PHONE_HEIGHT,
+      marginHorizontal: 24,
+      borderRadius: 16,
+      overflow: 'hidden',
+    },
+    slideImage: {
+      width: PHONE_WIDTH,
+      height: PHONE_HEIGHT,
+    },
+    dotsWrapper: {
+      position: 'absolute',
+      bottom: 8,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 10,
+    },
 
-  // --- Pricing block ---
-  pricingBlock: {
-    marginTop: -PRICING_OVERLAP,
-    zIndex: 1,
-    paddingHorizontal: 24,
-  },
-  plansRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+    // --- Pricing block ---
+    pricingBlock: {
+      marginTop: -PRICING_OVERLAP,
+      zIndex: 1,
+      paddingHorizontal: 24,
+    },
+    plansRow: {
+      flexDirection: 'row',
+      gap: 12,
+    },
 
-  // --- Pricing card ---
-  pricingCard: {
-    flex: 1,
-    backgroundColor: '#1C1C1E',
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  bestValuePill: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginBottom: 10,
-  },
-  bestValueText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  pricingCardRow: {
-    flexDirection: 'column',
-  },
-  pricingLabel: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  pricingPrice: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '400',
-    marginTop: 2,
-  },
-  pricingPeriod: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 14,
-  },
-  checkCircle: {
-    alignSelf: 'flex-end',
-    marginTop: 8,
-  },
+    // --- Pricing card ---
+    pricingCard: {
+      flex: 1,
+      backgroundColor: colors.cardBackground,
+      borderWidth: 1.5,
+      borderRadius: 16,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    bestValuePill: {
+      alignSelf: 'flex-start',
+      backgroundColor: '#007AFF',
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      marginBottom: 10,
+    },
+    bestValueText: {
+      color: '#FFF',
+      fontSize: 12,
+      fontWeight: '700',
+    },
+    pricingCardRow: {
+      flexDirection: 'column',
+    },
+    pricingLabel: {
+      color: colors.textPrimary,
+      fontSize: 17,
+      fontWeight: '600',
+    },
+    pricingPrice: {
+      color: colors.textPrimary,
+      fontSize: 15,
+      fontWeight: '400',
+      marginTop: 2,
+    },
+    pricingPeriod: {
+      color: colors.textSecondary,
+      fontSize: 14,
+    },
+    checkCircle: {
+      alignSelf: 'flex-end',
+      marginTop: 8,
+    },
 
-  // --- CTA block ---
-  ctaBlock: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    alignItems: 'center',
-  },
-  ctaButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    height: 56,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ctaText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  billingNote: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
-    marginTop: 10,
-  },
-  footerDivider: {
-    width: '60%',
-    height: 1,
-    backgroundColor: '#38383A',
-    marginVertical: 10,
-  },
-  restoreLink: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    marginBottom: 6,
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  footerLink: {
-    color: 'rgba(255,255,255,0.35)',
-    fontSize: 11,
-  },
-  footerSep: {
-    color: 'rgba(255,255,255,0.35)',
-    fontSize: 11,
-  },
-});
+    // --- CTA block ---
+    ctaBlock: {
+      paddingHorizontal: 24,
+      paddingTop: 16,
+      alignItems: 'center',
+    },
+    ctaButton: {
+      backgroundColor: isDark ? '#FFFFFF' : '#000000',
+      borderRadius: 28,
+      height: 56,
+      width: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    ctaText: {
+      color: isDark ? '#000000' : '#FFFFFF',
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    billingNote: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      marginTop: 10,
+    },
+    footerDivider: {
+      width: '60%',
+      height: 1,
+      backgroundColor: colors.separator,
+      marginVertical: 10,
+    },
+    restoreLink: {
+      color: colors.textSecondary,
+      fontSize: 12,
+      marginBottom: 6,
+    },
+    footerLinks: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    footerLink: {
+      color: colors.textTertiary,
+      fontSize: 11,
+    },
+    footerSep: {
+      color: colors.textTertiary,
+      fontSize: 11,
+    },
+  });
+}
