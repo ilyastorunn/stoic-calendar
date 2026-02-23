@@ -62,8 +62,6 @@ struct ProUpgradePlaceholderView: View {
 
     var body: some View {
         ZStack {
-            backgroundColor
-
             VStack(spacing: spacing) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: iconSize, weight: .light))

@@ -249,22 +249,21 @@ struct StoicGridWidgetView: View {
                 ProUpgradePlaceholderView()
             } else {
                 ZStack {
-                    backgroundColor
-
                     if family == .systemMedium {
                         // Medium widget: Title+subtitle left, grid fills right
                         HStack(alignment: .center, spacing: 12) {
                             // Left: Title + Subtitle stacked
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(timeline.title)
-                                    .font(.system(size: 28, weight: .semibold))
+                                    .font(.system(size: 22, weight: .semibold))
                                     .foregroundColor(textColor)
-                                    .lineLimit(1)
+                                    .lineLimit(2)
                                 Text("\(timeline.daysPassed) of \(timeline.totalDays) days")
                                     .font(.system(size: 11))
                                     .foregroundColor(secondaryTextColor)
+                                    .lineLimit(1)
                             }
-                            .frame(width: 80)
+                            .frame(width: 110)
 
                             // Right: Grid (fills remaining space)
                             GeometryReader { geometry in
@@ -329,8 +328,6 @@ struct StoicGridWidgetView: View {
         } else {
             // No active timeline
             ZStack {
-                backgroundColor
-
                 VStack(spacing: 8) {
                     Image(systemName: "calendar")
                         .font(.system(size: 32))
@@ -664,8 +661,8 @@ func calculateGridLayout(totalDays: Int, width: CGFloat, height: CGFloat, widget
             // Large widget is portrait but has lots of space - use more columns to fill width
             optimalColumns = 19
         case .systemMedium:
-            // Medium widget is landscape
-            optimalColumns = 16
+            // Medium widget is landscape — wide grid fills horizontal space
+            optimalColumns = 30
         default:
             // Small widget: fewer columns = bigger dots
             optimalColumns = 18
@@ -787,6 +784,7 @@ struct StoicGridWidget: Widget {
         .configurationDisplayName("Stoic Grid")
         .description("Visualize your timeline progress as a grid of days")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
     }
 }
 
@@ -802,6 +800,7 @@ struct StoicLockScreenWidget: Widget {
         .configurationDisplayName("Stoic Progress")
         .description("Track your timeline progress on the lock screen")
         .supportedFamilies([.accessoryCircular, .accessoryRectangular, .accessoryInline])
+        .contentMarginsDisabled()
     }
 }
 

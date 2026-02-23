@@ -20,8 +20,6 @@ struct StoicTextWidgetView: View {
         } else if let timeline = entry.timeline {
             // Show text content for Pro users
             ZStack {
-                backgroundColor
-
                 VStack(spacing: 12) {
                     // Timeline title (uppercase, tracked)
                     Text(timeline.title)
@@ -66,8 +64,6 @@ struct StoicTextWidgetView: View {
         } else {
             // No timeline state
             ZStack {
-                backgroundColor
-
                 VStack(spacing: 8) {
                     Image(systemName: "calendar")
                         .font(.system(size: 28))
@@ -118,5 +114,6 @@ struct StoicTextWidget: Widget {
         .configurationDisplayName("Days Remaining")
         .description("Minimalist text showing days left in your timeline")
         .supportedFamilies([.systemMedium])
+        .contentMarginsDisabled()
     }
 }

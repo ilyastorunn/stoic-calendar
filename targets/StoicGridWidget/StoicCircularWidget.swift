@@ -21,8 +21,6 @@ struct StoicCircularWidgetView: View {
         } else if let timeline = entry.timeline {
             // Show circular progress for Pro users
             ZStack {
-                backgroundColor
-
                 if family == .systemSmall {
                     // Small widget: Compact layout
                     VStack(spacing: 6) {
@@ -107,8 +105,6 @@ struct StoicCircularWidgetView: View {
         } else {
             // No timeline state
             ZStack {
-                backgroundColor
-
                 VStack(spacing: 8) {
                     Image(systemName: "calendar")
                         .font(.system(size: 32))
@@ -169,5 +165,6 @@ struct StoicCircularWidget: Widget {
         .configurationDisplayName("Circular Progress")
         .description("Pie chart showing timeline completion")
         .supportedFamilies([.systemSmall, .systemMedium])
+        .contentMarginsDisabled()
     }
 }

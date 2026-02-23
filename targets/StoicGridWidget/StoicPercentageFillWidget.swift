@@ -20,8 +20,6 @@ struct StoicPercentageFillWidgetView: View {
         } else if let timeline = entry.timeline {
             // Show percentage content for Pro users
             ZStack {
-                backgroundColor
-
                 // Background fill from bottom, proportional to progress (edge-to-edge)
                 GeometryReader { geo in
                     VStack {
@@ -51,11 +49,12 @@ struct StoicPercentageFillWidgetView: View {
                 }
             }
             .widgetURL(URL(string: "stoiccalendar://home"))
+            .containerBackground(for: .widget) {
+                backgroundColor
+            }
         } else {
             // No timeline state
             ZStack {
-                backgroundColor
-
                 VStack(spacing: 8) {
                     Image(systemName: "calendar")
                         .font(.system(size: 24))
