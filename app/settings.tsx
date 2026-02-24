@@ -20,11 +20,12 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
-import { List, Moon, Sun, Monitor, Info, Crown, Bug, Check } from 'phosphor-react-native';
+import { List, Moon, Sun, Monitor, Info, Sparkle, Bug, Check } from 'phosphor-react-native';
 import { SettingsGroup } from '@/components/settings-group';
 import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
@@ -231,7 +232,7 @@ export default function SettingsScreen() {
         {
           label: 'Manage Subscription',
           onPress: () => router.push('/customer-center'),
-          icon: <Crown size={20} color="#FFD700" weight="fill" />,
+          icon: <Sparkle size={20} color="#FFD700" weight="fill" />,
           showChevron: true,
         },
       ]
@@ -245,7 +246,7 @@ export default function SettingsScreen() {
         {
           label: 'Upgrade to Pro',
           onPress: () => router.push('/paywall'),
-          icon: <Crown size={20} color="#FFD700" weight="fill" />,
+          icon: <Sparkle size={20} color="#FFD700" weight="fill" />,
           showChevron: true,
           variant: 'upgrade' as const,
         },
@@ -262,10 +263,22 @@ export default function SettingsScreen() {
       icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
     {
-      label: 'Build',
-      value: 'MVP',
-      pressable: false,
+      label: 'Privacy Policy',
+      onPress: () => Linking.openURL('https://stoic-calendar.forvibe.app/privacy-policy'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
+      showChevron: true,
+    },
+    {
+      label: 'Website',
+      onPress: () => Linking.openURL('https://stoic-calendar.forvibe.app/'),
+      icon: <Info size={20} color={colors.accent} weight="regular" />,
+      showChevron: true,
+    },
+    {
+      label: 'Contact',
+      onPress: () => Linking.openURL('mailto:stoic-calendar@forvibe.app'),
+      icon: <Info size={20} color={colors.accent} weight="regular" />,
+      showChevron: true,
     },
   ];
 
@@ -490,10 +503,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: Spacing.xs + 2,
+    paddingHorizontal: Spacing.xs,
     borderRadius: BorderRadius.medium,
     borderWidth: 1.5,
-    gap: Spacing.xs,
+    gap: 4,
   },
   appearanceLabel: {
     fontSize: FontSizes.caption1,
@@ -508,7 +522,7 @@ const styles = StyleSheet.create({
   colorPaletteItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: 6,
     paddingHorizontal: Spacing.xs,
     borderRadius: BorderRadius.medium,
     borderWidth: 1.5,
