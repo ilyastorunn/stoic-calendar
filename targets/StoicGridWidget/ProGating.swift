@@ -14,16 +14,12 @@ struct ProGating {
 
     /// Load Pro status from App Groups
     /// Returns false if not Pro or if data unavailable
-    /// TEMPORARY: Hardcoded to true for testing - remove before production
     static func loadProStatus() -> Bool {
-        return true // 🔥 TEMP: Always return true for testing
-
-        // Original code (uncomment when ready for production):
-        // guard let userDefaults = UserDefaults(suiteName: appGroupId),
-        //       let proStatusString = userDefaults.string(forKey: "widget_is_pro") else {
-        //     return false
-        // }
-        // return proStatusString == "true"
+        guard let userDefaults = UserDefaults(suiteName: appGroupId),
+              let proStatusString = userDefaults.string(forKey: "widget_is_pro") else {
+            return false
+        }
+        return proStatusString == "true"
     }
 
     /// Check if grid widget requires Pro based on timeline type and widget family
