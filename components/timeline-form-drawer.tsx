@@ -20,7 +20,7 @@ import {
   useColorScheme,
   Platform,
   Animated,
-  Dimensions,
+  KeyboardAvoidingView,
   TouchableWithoutFeedback,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -28,6 +28,7 @@ import { Timeline, TimelineType } from '@/types/timeline';
 import { createTimeline } from '@/services/timeline-calculator';
 import {
   Colors,
+  Fonts,
   FontSizes,
   FontWeights,
   Spacing,
@@ -207,7 +208,7 @@ export function TimelineFormDrawer({
                 styles.typeButton,
                 {
                   backgroundColor: isSelected
-                    ? colors.secondaryBackground
+                    ? colors.tertiaryBackground
                     : 'transparent',
                   borderColor: colors.separator,
                 },
@@ -399,108 +400,90 @@ export function TimelineFormDrawer({
         />
       </TouchableWithoutFeedback>
 
-      {/* Drawer Container */}
-      <Animated.View
-        style={[
-          styles.drawerContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
+      {/* Keyboard-aware centered dialog */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+        pointerEvents="box-none"
       >
-        <View
+        <Animated.View
           style={[
-            styles.drawer,
+            styles.dialogContainer,
             {
-              backgroundColor: colors.secondaryBackground,
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
             },
           ]}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={onClose} style={styles.headerButton}>
-              <Text
-                style={[
-                  styles.cancelButton,
-                  {
-                    color: colors.accent,
-                  },
-                ]}
+          <View
+            style={[
+              styles.dialog,
+              {
+                backgroundColor: colors.secondaryBackground,
+              },
+            ]}
+          >
+            {/* Header */}
+            <View style={[styles.header, { borderBottomColor: colors.separator }]}>
+              <TouchableOpacity
+                onPress={onClose}
+                style={[styles.headerButton, styles.cancelButtonContainer, { borderColor: colors.separator }]}
+                activeOpacity={0.6}
               >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-
-            <Text
-              style={[
-                styles.headerTitle,
-                {
-                  color: colors.textPrimary,
-                },
-              ]}
-            >
-              {timeline ? 'Edit Timeline' : 'New Timeline'}
-            </Text>
-
-            <TouchableOpacity onPress={handleSave} style={styles.headerButton}>
-              <Text
-                style={[
-                  styles.saveButton,
-                  {
-                    color: colors.accent,
-                  },
-                ]}
-              >
-                Save
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Content */}
-          <View style={styles.content}>
-            {/* Only show type picker in create mode */}
-            {!timeline && (
-              <View style={styles.section}>
-                <Text
-                  style={[
-                    styles.sectionTitle,
-                    {
-                      color: colors.textSecondary,
-                    },
-                  ]}
-                >
-                  TYPE
+                <Text style={[styles.cancelButton, { color: colors.textSecondary }]}>
+                  Cancel
                 </Text>
-                {renderTypePicker()}
-              </View>
-            )}
+              </TouchableOpacity>
 
-            {renderCustomFields()}
+              <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+                {timeline ? 'Edit Timeline' : 'New Timeline'}
+              </Text>
+
+              <TouchableOpacity
+                onPress={handleSave}
+                style={[styles.headerButton, styles.saveButtonContainer, { backgroundColor: colors.accent }]}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.saveButton}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Content */}
+            <View style={styles.content}>
+              {/* Only show type picker in create mode */}
+              {!timeline && (
+                <View style={styles.section}>
+                  {renderTypePicker()}
+                </View>
+              )}
+
+              {renderCustomFields()}
+            </View>
           </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
-  drawerContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  keyboardView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  drawer: {
-    borderTopLeftRadius: BorderRadius.medium,
-    borderTopRightRadius: BorderRadius.medium,
-    maxHeight: SCREEN_HEIGHT * 0.75,
+  dialogContainer: {
+    width: '88%',
+  },
+  dialog: {
+    borderRadius: BorderRadius.xlarge,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -509,22 +492,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerButton: {
     minWidth: 60,
   },
+  cancelButtonContainer: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: BorderRadius.small,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 5,
+  },
   cancelButton: {
-    fontSize: FontSizes.body,
+    fontSize: FontSizes.footnote,
     fontWeight: FontWeights.regular,
   },
   headerTitle: {
-    fontSize: FontSizes.headline,
-    fontWeight: FontWeights.medium,
+    fontSize: FontSizes.title3,
+    fontWeight: FontWeights.regular,
+    fontFamily: Fonts.handwriting,
+    letterSpacing: 0.5,
+  },
+  saveButtonContainer: {
+    borderRadius: BorderRadius.small,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 5,
+    alignItems: 'center',
   },
   saveButton: {
-    fontSize: FontSizes.body,
+    fontSize: FontSizes.footnote,
     fontWeight: FontWeights.medium,
-    textAlign: 'right',
+    color: '#FFFFFF',
   },
   content: {
     paddingHorizontal: Spacing.lg,
