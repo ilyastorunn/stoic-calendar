@@ -225,8 +225,8 @@ export default function PaywallScreen() {
     }
   };
 
-  const openTerms = () => Linking.openURL('https://stoiccalendar.com/terms');
-  const openPrivacy = () => Linking.openURL('https://stoiccalendar.com/privacy');
+  const openTerms = () => Linking.openURL('https://stoic-calendar.forvibe.app/terms-of-use');
+  const openPrivacy = () => Linking.openURL('https://stoic-calendar.forvibe.app/privacy-policy');
 
   // ---------------------------------------------------------------------------
   // Auto-play carousel
@@ -370,7 +370,11 @@ export default function PaywallScreen() {
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.billingNote}>Recurring Billing. Cancel anytime.</Text>
+        <Text style={styles.billingNote}>
+          {selectedPlan === 'yearly'
+            ? `Billed ${yearlyPackage?.product.priceString || '...'}/year. Renews annually. Cancel anytime.`
+            : `Billed ${monthlyPackage?.product.priceString || '...'}/month. Renews monthly. Cancel anytime.`}
+        </Text>
 
         <View style={styles.footerDivider} />
 
@@ -423,20 +427,24 @@ function PricingCard({ label, price, period, isSelected, showBestValue, introPri
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {hasFreeTrial ? (
+      {hasFreeTrial && (
         <View style={styles.freeTrialPill}>
           <Text style={styles.freeTrialText}>{formatTrialLabel(introPrice!)}</Text>
         </View>
-      ) : showBestValue ? (
+      )}
+      {showBestValue && !hasFreeTrial && (
         <View style={styles.bestValuePill}>
           <Text style={styles.bestValueText}>Best Value</Text>
         </View>
-      ) : null}
+      )}
       <View style={styles.pricingCardRow}>
         <View>
           <Text style={styles.pricingLabel}>{label}</Text>
           <Text style={styles.pricingPrice}>
             {price} <Text style={styles.pricingPeriod}>{period}</Text>
+          </Text>
+          <Text style={styles.pricingRenewNote}>
+            {label === 'Yearly' ? 'Auto-renews annually' : 'Auto-renews monthly'}
           </Text>
         </View>
         <CheckCircle
@@ -536,6 +544,7 @@ function getStyles(colors: typeof Colors.dark) {
     plansRow: {
       flexDirection: 'row',
       gap: 12,
+      paddingTop: 14, // space for the floating badge
     },
 
     // --- Pricing card ---
@@ -544,34 +553,49 @@ function getStyles(colors: typeof Colors.dark) {
       backgroundColor: colors.cardBackground,
       borderWidth: 1.5,
       borderRadius: 16,
-      paddingVertical: 14,
+      paddingVertical: 12,
       paddingHorizontal: 16,
+      overflow: 'visible',
     },
     bestValuePill: {
-      alignSelf: 'flex-start',
-      backgroundColor: '#007AFF',
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 3,
-      marginBottom: 10,
+      position: 'absolute',
+      top: -13,
+      alignSelf: 'center',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 10,
     },
     bestValueText: {
       color: '#FFF',
       fontSize: 12,
       fontWeight: '700',
-    },
-    freeTrialPill: {
-      alignSelf: 'flex-start',
-      backgroundColor: '#34C759',
+      backgroundColor: '#007AFF',
       borderRadius: 12,
       paddingHorizontal: 10,
       paddingVertical: 3,
-      marginBottom: 10,
+      overflow: 'hidden',
+    },
+    pillPlaceholder: {
+      height: 0,
+    },
+    freeTrialPill: {
+      position: 'absolute',
+      top: -13,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 10,
     },
     freeTrialText: {
-      color: '#FFF',
+      color: colors.background,
       fontSize: 12,
       fontWeight: '700',
+      backgroundColor: colors.textPrimary,
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+      overflow: 'hidden',
     },
     pricingCardRow: {
       flexDirection: 'column',
@@ -590,6 +614,11 @@ function getStyles(colors: typeof Colors.dark) {
     pricingPeriod: {
       color: colors.textSecondary,
       fontSize: 14,
+    },
+    pricingRenewNote: {
+      color: colors.textTertiary,
+      fontSize: 11,
+      marginTop: 2,
     },
     checkCircle: {
       alignSelf: 'flex-end',

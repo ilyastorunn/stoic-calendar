@@ -54,6 +54,13 @@ export async function initializeRevenueCat(): Promise<void> {
 
   initializationPromise = (async () => {
     try {
+      // Skip initialization in Expo Go (native store not available)
+      if (MOCK_OFFERINGS_ENABLED) {
+        isInitialized = true;
+        console.log('[DEV] RevenueCat skipped in mock mode');
+        return;
+      }
+
       // Enable debug logs in development
       if (__DEV__) {
         Purchases.setLogLevel(LOG_LEVEL.DEBUG);
@@ -93,6 +100,9 @@ async function ensureInitialized(): Promise<void> {
  * Contains all purchase and subscription information
  */
 export async function getCustomerInfo(): Promise<CustomerInfo> {
+  if (MOCK_OFFERINGS_ENABLED) {
+    return { entitlements: { active: {}, all: {} }, activeSubscriptions: [], allPurchasedProductIdentifiers: [], latestExpirationDate: null, firstSeen: '', originalAppUserId: '', requestDate: '', allExpirationDates: {}, originalApplicationVersion: null, originalPurchaseDate: null, managementURL: null, nonSubscriptionTransactions: [] } as any;
+  }
   try {
     await ensureInitialized();
     const customerInfo = await Purchases.getCustomerInfo();
@@ -122,11 +132,82 @@ export async function isPro(): Promise<boolean> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Mock offerings for simulator/development (no StoreKit sandbox needed)
+// ---------------------------------------------------------------------------
+
+const MOCK_OFFERINGS_ENABLED = __DEV__ && false; // Set to `true` to use mock data in simulator
+
+function buildMockOffering(): PurchasesOffering {
+  const makeProduct = (id: string, price: number, priceString: string) => ({
+    productIdentifier: id,
+    identifier: id,
+    localizedDescription: 'Memento Calendar Pro',
+    localizedTitle: 'Memento Calendar Pro',
+    price,
+    priceString,
+    currencyCode: 'USD',
+    introPrice: null,
+    discounts: [],
+    productCategory: 'SUBSCRIPTION' as any,
+    productType: 'AUTO_RENEWABLE_SUBSCRIPTION' as any,
+    subscriptionPeriod: '',
+    defaultOption: null,
+    subscriptionOptions: [],
+    presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
+  });
+
+  const monthly: PurchasesPackage = {
+    identifier: '$rc_monthly',
+    packageType: 'MONTHLY' as any,
+    product: makeProduct('memento_monthly', 2.99, '$2.99'),
+    offeringIdentifier: 'default',
+    presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
+  };
+
+  const yearly: PurchasesPackage = {
+    identifier: '$rc_annual',
+    packageType: 'ANNUAL' as any,
+    product: {
+      ...makeProduct('memento_yearly', 19.99, '$19.99'),
+      introPrice: {
+        price: 0,
+        priceString: 'Free',
+        period: 'P1W',
+        periodUnit: 'WEEK' as any,
+        periodNumberOfUnits: 1,
+        cycles: 1,
+      },
+    },
+    offeringIdentifier: 'default',
+    presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
+  };
+
+  return {
+    identifier: 'default',
+    serverDescription: 'Default offering',
+    metadata: {},
+    availablePackages: [monthly, yearly],
+    lifetime: null,
+    annual: yearly,
+    sixMonth: null,
+    threeMonth: null,
+    twoMonth: null,
+    monthly,
+    weekly: null,
+  };
+}
+
 /**
  * Get available offerings (subscription plans)
  * Returns the current offering with available packages
  */
 export async function getOfferings(): Promise<PurchasesOffering | null> {
+  if (MOCK_OFFERINGS_ENABLED) {
+    console.log('[DEV] Using mock offerings');
+    return buildMockOffering();
+  }
+
   try {
     await ensureInitialized();
     const offerings = await Purchases.getOfferings();
