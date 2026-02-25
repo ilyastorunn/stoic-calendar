@@ -48,7 +48,7 @@ type IntroPrice = NonNullable<PurchasesStoreProduct['introPrice']>;
 
 const { height: screenH, width: screenW } = Dimensions.get('window');
 const PHONE_WIDTH = screenW - 48;
-const PHONE_HEIGHT = screenH * 0.42;
+const PHONE_HEIGHT = Math.min(screenH * 0.42, 400);
 const PRICING_OVERLAP = 15;
 const AUTO_PLAY_MS = 3000;
 
@@ -225,8 +225,8 @@ export default function PaywallScreen() {
     }
   };
 
-  const openTerms = () => Linking.openURL('https://stoic-calendar.forvibe.app/terms-of-use');
-  const openPrivacy = () => Linking.openURL('https://stoic-calendar.forvibe.app/privacy-policy');
+  const openTerms = () => Linking.openURL('https://memento-calendar.pages.dev/terms-of-use');
+  const openPrivacy = () => Linking.openURL('https://memento-calendar.pages.dev/privacy-policy');
 
   // ---------------------------------------------------------------------------
   // Auto-play carousel

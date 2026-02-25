@@ -22,6 +22,42 @@ struct WidgetTimelineData: Codable {
     let daysRemaining: Int
     let totalDays: Int
     let progressPercentage: Int
+
+    /// Returns a new copy with daysPassed/daysRemaining/progressPercentage
+    /// recalculated from startDate/endDate relative to today.
+    /// This ensures the widget shows the correct value even when the app
+    /// hasn't been opened since the last day change.
+    func recalculated() -> WidgetTimelineData {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        guard let start = formatter.date(from: startDate),
+              let end   = formatter.date(from: endDate) else {
+            return self
+        }
+
+        let startDay = calendar.startOfDay(for: start)
+        let endDay   = calendar.startOfDay(for: end)
+
+        let total    = max(1, calendar.dateComponents([.day], from: startDay, to: endDay).day! + 1)
+        let passed   = max(0, min(total, calendar.dateComponents([.day], from: startDay, to: today).day! + 1))
+        let remaining = max(0, total - passed)
+        let progress  = Int((Double(passed) / Double(total) * 100).rounded())
+
+        return WidgetTimelineData(
+            id: id,
+            type: type,
+            title: title,
+            startDate: startDate,
+            endDate: endDate,
+            daysPassed: passed,
+            daysRemaining: remaining,
+            totalDays: total,
+            progressPercentage: progress
+        )
+    }
 }
 
 /// Settings data read from App Groups
@@ -230,7 +266,7 @@ struct StoicGridProvider: AppIntentTimelineProvider {
         // Load Pro status
         let isPro = ProGating.loadProStatus()
 
-        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData, isPro: isPro)
+        return StoicGridEntry(date: Date(), timeline: timelineData?.recalculated(), settings: settingsData, isPro: isPro)
     }
 }
 
@@ -461,7 +497,7 @@ struct StoicLockScreenProvider: TimelineProvider {
         // Load Pro status
         let isPro = ProGating.loadProStatus()
 
-        return StoicGridEntry(date: Date(), timeline: timelineData, settings: settingsData, isPro: isPro)
+        return StoicGridEntry(date: Date(), timeline: timelineData?.recalculated(), settings: settingsData, isPro: isPro)
     }
 }
 
