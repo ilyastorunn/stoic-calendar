@@ -264,13 +264,19 @@ export default function SettingsScreen() {
     },
     {
       label: 'Privacy Policy',
-      onPress: () => Linking.openURL('https://stoic-calendar.forvibe.app/privacy-policy'),
+      onPress: () => Linking.openURL('https://memento-calendar.pages.dev/privacy-policy'),
+      icon: <Info size={20} color={colors.accent} weight="regular" />,
+      showChevron: true,
+    },
+    {
+      label: 'Terms of Use',
+      onPress: () => Linking.openURL('https://memento-calendar.pages.dev/terms-of-use'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
     },
     {
       label: 'Website',
-      onPress: () => Linking.openURL('https://stoic-calendar.forvibe.app/'),
+      onPress: () => Linking.openURL('https://memento-calendar.pages.dev/'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
     },

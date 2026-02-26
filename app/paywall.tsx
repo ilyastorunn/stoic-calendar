@@ -14,6 +14,7 @@ import {
   Text,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
   TouchableOpacity,
   Alert,
   FlatList,
@@ -288,110 +289,114 @@ export default function PaywallScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header row */}
-      <View style={styles.header}>
+      {/* Close button — fixed top-right */}
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => router.back()}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <X size={22} color={colors.textSecondary} weight="bold" />
+      </TouchableOpacity>
+
+      <ScrollView
+        style={styles.mainScroll}
+        contentContainerStyle={styles.mainScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
         <Animated.View style={[styles.headerTextBlock, textAnimatedStyle]}>
           <Text style={styles.headerLine1}>{SLIDES[visibleIndex].line1}</Text>
           <Text style={styles.headerLine2}>{SLIDES[visibleIndex].line2}</Text>
           <Text style={styles.subtitle}>{SLIDES[visibleIndex].subtitle}</Text>
         </Animated.View>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => router.back()}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <X size={22} color={colors.textSecondary} weight="bold" />
-        </TouchableOpacity>
-      </View>
 
-      {/* Phone carousel area */}
-      <View style={styles.carouselWrapper}>
-
-        {/* FlatList horizontal carousel */}
-        <FlatList
-          ref={flatListRef}
-          data={SLIDES}
-          renderItem={renderSlide}
-          keyExtractor={(item) => item.key}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          snapToAlignment="start"
-          onMomentumScrollEnd={handleMomentumScrollEnd}
-          onScrollBeginDrag={resetTimer}
-          getItemLayout={(_, index) => ({
-            length: screenW,
-            offset: screenW * index,
-            index,
-          })}
-          style={styles.flatList}
-        />
-
-        {/* Pagination dots — absolute at bottom of carousel */}
-        <View style={styles.dotsWrapper}>
-          <PaginationDots total={SLIDES.length} activeIndex={activeIndex} />
-        </View>
-      </View>
-
-      {/* Pricing block — negative margin pulls up into faded area */}
-      <View style={styles.pricingBlock}>
-        <View style={styles.plansRow}>
-          <PricingCard
-            label="1-Month"
-            price={monthlyPackage?.product.priceString || '...'}
-            period="/ month"
-            isSelected={selectedPlan === 'monthly'}
-            onPress={() => setSelectedPlan('monthly')}
-            colors={colors}
+        {/* Phone carousel area */}
+        <View style={styles.carouselWrapper}>
+          <FlatList
+            ref={flatListRef}
+            data={SLIDES}
+            renderItem={renderSlide}
+            keyExtractor={(item) => item.key}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            snapToAlignment="start"
+            onMomentumScrollEnd={handleMomentumScrollEnd}
+            onScrollBeginDrag={resetTimer}
+            getItemLayout={(_, index) => ({
+              length: screenW,
+              offset: screenW * index,
+              index,
+            })}
+            style={styles.flatList}
           />
-          <PricingCard
-            label="1-Year"
-            price={yearlyPackage?.product.priceString || '...'}
-            period="/ year"
-            isSelected={selectedPlan === 'yearly'}
-            showBestValue
-            introPrice={yearlyPackage?.product.introPrice ?? null}
-            onPress={() => setSelectedPlan('yearly')}
-            colors={colors}
-          />
+          <View style={styles.dotsWrapper}>
+            <PaginationDots total={SLIDES.length} activeIndex={activeIndex} />
+          </View>
         </View>
-      </View>
 
-      {/* CTA + footer */}
-      <View style={styles.ctaBlock}>
-        <TouchableOpacity
-          style={styles.ctaButton}
-          onPress={handlePurchase}
-          disabled={isPurchasing || isLoading || (!monthlyPackage && !yearlyPackage)}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.ctaText}>
-            {isPurchasing ? 'Processing...' : 'Subscribe'}
+        {/* Pricing cards */}
+        <View style={styles.pricingBlock}>
+          <View style={styles.plansRow}>
+            <PricingCard
+              label="1-Month"
+              price={monthlyPackage?.product.priceString || '...'}
+              period="/ month"
+              isSelected={selectedPlan === 'monthly'}
+              onPress={() => setSelectedPlan('monthly')}
+              colors={colors}
+            />
+            <PricingCard
+              label="1-Year"
+              price={yearlyPackage?.product.priceString || '...'}
+              period="/ year"
+              isSelected={selectedPlan === 'yearly'}
+              showBestValue
+              introPrice={yearlyPackage?.product.introPrice ?? null}
+              onPress={() => setSelectedPlan('yearly')}
+              colors={colors}
+            />
+          </View>
+        </View>
+
+        {/* Pro features + CTA */}
+        <View style={styles.ctaBlock}>
+          <Text style={styles.featureDescription}>
+            Unlimited timelines, circular & text & percentage widgets, lock screen widgets, and more.
           </Text>
-        </TouchableOpacity>
 
-        <Text style={styles.billingNote}>
-          {selectedPlan === 'yearly'
-            ? `Billed ${yearlyPackage?.product.priceString || '...'}/year. Renews annually. Cancel anytime.`
-            : `Billed ${monthlyPackage?.product.priceString || '...'}/month. Renews monthly. Cancel anytime.`}
-        </Text>
-
-        <View style={styles.footerDivider} />
-
-        <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
-          <Text style={styles.restoreLink}>Restore Purchases</Text>
-        </TouchableOpacity>
-
-        <View style={styles.footerLinks}>
-          <TouchableOpacity onPress={openTerms}>
-            <Text style={styles.footerLink}>Terms of Service</Text>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={handlePurchase}
+            disabled={isPurchasing || isLoading || (!monthlyPackage && !yearlyPackage)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.ctaText}>
+              {isPurchasing ? 'Processing...' : 'Subscribe'}
+            </Text>
           </TouchableOpacity>
-          <Text style={styles.footerSep}> · </Text>
-          <TouchableOpacity onPress={openPrivacy}>
-            <Text style={styles.footerLink}>Privacy Policy</Text>
+
+          <Text style={styles.billingNote}>
+            {selectedPlan === 'yearly'
+              ? `Billed ${yearlyPackage?.product.priceString || '...'}/year. Renews annually. Cancel anytime.`
+              : `Billed ${monthlyPackage?.product.priceString || '...'}/month. Renews monthly. Cancel anytime.`}
+          </Text>
+
+          <View style={styles.footerLinks}>
+            <TouchableOpacity onPress={openTerms}>
+              <Text style={styles.footerLink}>Terms of Use</Text>
+            </TouchableOpacity>
+            <Text style={styles.footerSep}> · </Text>
+            <TouchableOpacity onPress={openPrivacy}>
+              <Text style={styles.footerLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
+            <Text style={styles.restoreLink}>Restore Purchases</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -470,17 +475,27 @@ function getStyles(colors: typeof Colors.dark) {
       backgroundColor: colors.background,
     },
 
+    // --- Close button ---
+    closeButton: {
+      position: 'absolute',
+      top: 16,
+      right: 24,
+      zIndex: 20,
+    },
+
+    // --- Main scroll ---
+    mainScroll: {
+      flex: 1,
+    },
+    mainScrollContent: {
+      paddingBottom: 40,
+    },
+
     // --- Header ---
-    header: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      justifyContent: 'space-between',
+    headerTextBlock: {
       paddingHorizontal: 24,
       paddingTop: 12,
       paddingBottom: 8,
-    },
-    headerTextBlock: {
-      flex: 1,
     },
     headerLine1: {
       color: colors.textPrimary,
@@ -500,9 +515,6 @@ function getStyles(colors: typeof Colors.dark) {
       fontWeight: '400',
       marginTop: 6,
       lineHeight: 20,
-    },
-    closeButton: {
-      paddingTop: 4,
     },
 
     // --- Carousel ---
@@ -644,21 +656,22 @@ function getStyles(colors: typeof Colors.dark) {
       fontSize: 18,
       fontWeight: '700',
     },
+    featureDescription: {
+      color: colors.textSecondary,
+      fontSize: 13,
+      textAlign: 'center',
+      lineHeight: 18,
+      marginBottom: 12,
+    },
     billingNote: {
       color: colors.textSecondary,
       fontSize: 13,
-      marginTop: 10,
-    },
-    footerDivider: {
-      width: '60%',
-      height: 1,
-      backgroundColor: colors.separator,
-      marginVertical: 10,
+      marginBottom: 6,
     },
     restoreLink: {
       color: colors.textSecondary,
       fontSize: 12,
-      marginBottom: 6,
+      marginTop: 8,
     },
     footerLinks: {
       flexDirection: 'row',
