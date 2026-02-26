@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ilyastorun.memento",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "appleTeamId": "XC35LMM9B5",
       "entitlements": {
         "com.apple.security.application-groups": [

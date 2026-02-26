@@ -337,7 +337,7 @@ export default function PaywallScreen() {
       <View style={styles.pricingBlock}>
         <View style={styles.plansRow}>
           <PricingCard
-            label="Monthly"
+            label="1-Month"
             price={monthlyPackage?.product.priceString || '...'}
             period="/ month"
             isSelected={selectedPlan === 'monthly'}
@@ -345,7 +345,7 @@ export default function PaywallScreen() {
             colors={colors}
           />
           <PricingCard
-            label="Yearly"
+            label="1-Year"
             price={yearlyPackage?.product.priceString || '...'}
             period="/ year"
             isSelected={selectedPlan === 'yearly'}
@@ -444,7 +444,7 @@ function PricingCard({ label, price, period, isSelected, showBestValue, introPri
             {price} <Text style={styles.pricingPeriod}>{period}</Text>
           </Text>
           <Text style={styles.pricingRenewNote}>
-            {label === 'Yearly' ? 'Auto-renews annually' : 'Auto-renews monthly'}
+            {label === '1-Year' ? '1-year subscription · Auto-renews annually' : '1-month subscription · Auto-renews monthly'}
           </Text>
         </View>
         <CheckCircle
