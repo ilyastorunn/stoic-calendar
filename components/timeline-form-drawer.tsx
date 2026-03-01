@@ -22,10 +22,12 @@ import {
   Animated,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
+  Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { createTimeline } from '@/services/timeline-calculator';
+import { loadTimelines } from '@/services/storage';
 import {
   Colors,
   Fonts,
@@ -130,7 +132,7 @@ export function TimelineFormDrawer({
   /**
    * Handle save
    */
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
       let newTimeline: Timeline;
 
@@ -143,6 +145,26 @@ export function TimelineFormDrawer({
           endDate: customEndDate.toISOString(),
         };
       } else {
+        // Duplicate check for non-custom types
+        if (selectedType !== TimelineType.CUSTOM) {
+          const existingTimelines = await loadTimelines();
+          const duplicate = existingTimelines.find((t) => {
+            if (t.type !== selectedType) return false;
+            if (selectedType === TimelineType.WEEK) return true;
+            // Compare year for YEAR, year+month for MONTH
+            const tStart = new Date(t.startDate);
+            const newStart = selectedType === TimelineType.YEAR
+              ? new Date(new Date().getFullYear(), 0, 1)
+              : new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+            return tStart.getFullYear() === newStart.getFullYear()
+              && (selectedType === TimelineType.YEAR || tStart.getMonth() === newStart.getMonth());
+          });
+          if (duplicate) {
+            Alert.alert('Duplicate Timeline', `A ${selectedType} timeline for this period already exists.`);
+            return;
+          }
+        }
+
         // Create mode
         if (selectedType === TimelineType.CUSTOM) {
           // Custom timeline with custom dates
@@ -272,6 +294,7 @@ export function TimelineFormDrawer({
             onChangeText={setCustomTitle}
             placeholder="Enter timeline name"
             placeholderTextColor={colors.textTertiary}
+            maxLength={80}
           />
         </View>
 
@@ -359,6 +382,7 @@ export function TimelineFormDrawer({
             value={customStartDate}
             mode="date"
             display="spinner"
+            maximumDate={customEndDate}
             onChange={(event, date) => {
               setShowStartPicker(Platform.OS === 'ios');
               if (date) setCustomStartDate(date);
@@ -371,6 +395,7 @@ export function TimelineFormDrawer({
             value={customEndDate}
             mode="date"
             display="spinner"
+            minimumDate={customStartDate}
             onChange={(event, date) => {
               setShowEndPicker(Platform.OS === 'ios');
               if (date) setCustomEndDate(date);

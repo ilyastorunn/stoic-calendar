@@ -157,8 +157,12 @@ export async function setActiveTimeline(id: string): Promise<void> {
 
     await AsyncStorage.setItem(STORAGE_KEYS.TIMELINES, JSON.stringify(updated));
 
-    // Sync to widgets
-    await syncWidgetData('timeline');
+    // Sync to widgets (non-fatal)
+    try {
+      await syncWidgetData('timeline');
+    } catch (widgetError) {
+      console.warn('Widget sync failed (non-fatal):', widgetError);
+    }
   } catch (error) {
     console.error('Error setting active timeline:', error);
     throw error;
@@ -244,8 +248,12 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
 
-    // Sync to widgets
-    await syncWidgetData('settings');
+    // Sync to widgets (non-fatal)
+    try {
+      await syncWidgetData('settings');
+    } catch (widgetError) {
+      console.warn('Widget sync failed (non-fatal):', widgetError);
+    }
   } catch (error) {
     console.error('Error saving settings:', error);
     throw error;

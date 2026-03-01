@@ -18,6 +18,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
+  AppState,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -160,6 +161,19 @@ export default function HomeScreen() {
   );
 
   /**
+   * Reload timeline when app returns to foreground (catches midnight transitions)
+   */
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        loadActiveTimeline();
+        loadAllTimelines();
+      }
+    });
+    return () => subscription.remove();
+  }, [loadActiveTimeline, loadAllTimelines]);
+
+  /**
    * Handle dot press - calculate and show date
    */
   const handleDotPress = useCallback(
@@ -240,9 +254,9 @@ export default function HomeScreen() {
       setShowTimelineFormModal(true);
     } catch (error) {
       console.error('Error checking timeline limits:', error);
-      // Fail open - allow creation
+      // Fail closed - do not allow bypassing limits on error
       setShowTimelineDropdown(false);
-      setShowTimelineFormModal(true);
+      Alert.alert('Error', 'Could not verify subscription status. Please try again.');
     }
   }, [timelines.length, router]);
 

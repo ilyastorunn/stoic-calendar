@@ -78,6 +78,12 @@ export default function RootLayout() {
     const init = async () => {
       try {
         await initializeRevenueCat();
+        // Auto-restore purchases on every launch to recover subscriptions
+        // after app reinstall (e.g., TestFlight → App Store transition)
+        const { restorePurchases } = await import('@/services/revenue-cat-service');
+        await restorePurchases().catch((e) =>
+          console.warn('Auto-restore failed (non-fatal):', e)
+        );
       } catch (error) {
         console.error('Failed to initialize RevenueCat:', error);
       }

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Memento Calendar",
     "slug": "stoic-calendar",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "stoiccalendar",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ilyastorun.memento",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "appleTeamId": "XC35LMM9B5",
       "entitlements": {
         "com.apple.security.application-groups": [
