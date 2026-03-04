@@ -10,7 +10,8 @@ import { useColorScheme, Appearance } from 'react-native';
 import { useEffect, useState } from 'react';
 import * as Linking from 'expo-linking';
 import 'react-native-reanimated';
-import { initializeRevenueCat } from '@/services/revenue-cat-service';
+import Purchases from 'react-native-purchases';
+import { initializeRevenueCat, setCustomerInfoUpdateCallback } from '@/services/revenue-cat-service';
 import { syncAllWidgetData } from '@/services/widget-data-service';
 import { getThemeMode } from '@/services/storage';
 import { ThemeMode } from '@/types/timeline';
@@ -78,8 +79,20 @@ export default function RootLayout() {
     const init = async () => {
       try {
         await initializeRevenueCat();
-        // Auto-restore purchases on every launch to recover subscriptions
-        // after app reinstall (e.g., TestFlight → App Store transition)
+
+        // Set up listener to sync widget pro status on any subscription change
+        setCustomerInfoUpdateCallback(async (customerInfo) => {
+          try {
+            const { syncProStatusToWidget } = await import('@/services/widget-data-service');
+            await syncProStatusToWidget();
+          } catch (e) {
+            console.warn('Widget sync after CustomerInfo update failed:', e);
+          }
+        });
+
+        // Invalidate cache before auto-restore to ensure fresh server data
+        // Critical for reinstall scenarios (TestFlight → App Store)
+        await Purchases.invalidateCustomerInfoCache();
         const { restorePurchases } = await import('@/services/revenue-cat-service');
         await restorePurchases().catch((e) =>
           console.warn('Auto-restore failed (non-fatal):', e)
@@ -93,6 +106,10 @@ export default function RootLayout() {
       });
     };
     init();
+
+    return () => {
+      setCustomerInfoUpdateCallback(null);
+    };
   }, []);
 
   // Handle deep linking from widgets

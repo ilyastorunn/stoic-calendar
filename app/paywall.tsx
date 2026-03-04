@@ -215,8 +215,17 @@ export default function PaywallScreen() {
         Alert.alert('Purchases Restored', 'Your premium access has been restored.', [
           { text: 'OK', onPress: () => router.back() },
         ]);
+      } else if (customerInfo.allPurchasedProductIdentifiers.length > 0) {
+        // User has past purchases but no active entitlement — likely expired
+        Alert.alert(
+          'Subscription Expired',
+          'A previous subscription was found but it appears to have expired. Please subscribe again to regain access.'
+        );
       } else {
-        Alert.alert('No Purchases Found', 'We could not find any previous purchases to restore.');
+        Alert.alert(
+          'No Purchases Found',
+          'No purchases were found for this Apple ID. If you subscribed with a different account, please sign in with that Apple ID and try again.'
+        );
       }
     } catch (error: any) {
       console.error('Error restoring purchases:', error);

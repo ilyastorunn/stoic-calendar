@@ -22,6 +22,10 @@ import { Platform } from 'react-native';
 let isInitialized = false;
 let initializationPromise: Promise<void> | null = null;
 
+// Customer info update listener callback
+type CustomerInfoUpdateCallback = (customerInfo: CustomerInfo) => void;
+let customerInfoUpdateCallback: CustomerInfoUpdateCallback | null = null;
+
 /**
  * RevenueCat API Key
  * Loaded from environment variable for security
@@ -69,6 +73,16 @@ export async function initializeRevenueCat(): Promise<void> {
       // Configure Purchases SDK
       Purchases.configure({
         apiKey: REVENUECAT_API_KEY,
+      });
+
+      // Listen for subscription status changes (restore, purchase, expiration)
+      Purchases.addCustomerInfoUpdateListener((customerInfo) => {
+        console.log('[RevenueCat] CustomerInfo updated');
+        console.log('[RevenueCat]   activeEntitlements:', Object.keys(customerInfo.entitlements.active));
+        console.log('[RevenueCat]   activeSubscriptions:', customerInfo.activeSubscriptions);
+        if (customerInfoUpdateCallback) {
+          customerInfoUpdateCallback(customerInfo);
+        }
       });
 
       isInitialized = true;
@@ -268,18 +282,36 @@ export async function purchasePackage(
 }
 
 /**
+ * Set a callback for CustomerInfo updates (restore, purchase, expiration)
+ */
+export function setCustomerInfoUpdateCallback(callback: CustomerInfoUpdateCallback | null): void {
+  customerInfoUpdateCallback = callback;
+}
+
+/**
  * Restore purchases
  * Restores previous purchases from App Store/Play Store
+ * Invalidates cache first to ensure fresh data from RevenueCat servers
  */
 export async function restorePurchases(): Promise<CustomerInfo> {
   try {
     await ensureInitialized();
+
+    // Invalidate cache to force fresh server fetch
+    await Purchases.invalidateCustomerInfoCache();
+
     const customerInfo = await Purchases.restorePurchases();
-    console.log('Purchases restored successfully');
-    console.log(
-      'Active entitlements:',
-      Object.keys(customerInfo.entitlements.active)
-    );
+
+    // Detailed diagnostic logging for debugging restore issues
+    const appUserID = await Purchases.getAppUserID();
+    console.log('[RestorePurchases] === Restore Diagnostics ===');
+    console.log('[RestorePurchases] appUserID:', appUserID);
+    console.log('[RestorePurchases] allPurchasedProductIdentifiers:', customerInfo.allPurchasedProductIdentifiers);
+    console.log('[RestorePurchases] activeSubscriptions:', customerInfo.activeSubscriptions);
+    console.log('[RestorePurchases] entitlements.all:', Object.keys(customerInfo.entitlements.all));
+    console.log('[RestorePurchases] entitlements.active:', Object.keys(customerInfo.entitlements.active));
+    console.log('[RestorePurchases] latestExpirationDate:', customerInfo.latestExpirationDate);
+    console.log('[RestorePurchases] ========================');
 
     // Sync Pro status to widgets after successful restore
     try {
