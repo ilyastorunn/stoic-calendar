@@ -80,8 +80,7 @@ export function TimelineFormDrawer({
   const [customTitle, setCustomTitle] = useState('');
   const [customStartDate, setCustomStartDate] = useState(new Date());
   const [customEndDate, setCustomEndDate] = useState(new Date());
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [activePicker, setActivePicker] = useState<'start' | 'end' | null>(null);
 
   // Reset form and animate when drawer opens
   useEffect(() => {
@@ -103,6 +102,8 @@ export function TimelineFormDrawer({
         setCustomEndDate(futureDate);
       }
 
+      setActivePicker(null);
+
       // Animate in
       Animated.parallel([
         Animated.timing(fadeAnim, {
@@ -117,6 +118,8 @@ export function TimelineFormDrawer({
         }),
       ]).start();
     } else {
+      setActivePicker(null);
+
       // Animate out
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -318,7 +321,7 @@ export function TimelineFormDrawer({
                 borderColor: colors.separator,
               },
             ]}
-            onPress={() => setShowStartPicker(true)}
+            onPress={() => setActivePicker('start')}
           >
             <Text
               style={[
@@ -357,7 +360,7 @@ export function TimelineFormDrawer({
                 borderColor: colors.separator,
               },
             ]}
-            onPress={() => setShowEndPicker(true)}
+            onPress={() => setActivePicker('end')}
           >
             <Text
               style={[
@@ -377,27 +380,31 @@ export function TimelineFormDrawer({
         </View>
 
         {/* Date Pickers */}
-        {showStartPicker && (
+        {activePicker === 'start' && (
           <DateTimePicker
             value={customStartDate}
             mode="date"
             display="spinner"
             maximumDate={customEndDate}
-            onChange={(event, date) => {
-              setShowStartPicker(Platform.OS === 'ios');
+            onChange={(_, date) => {
+              if (Platform.OS !== 'ios') {
+                setActivePicker(null);
+              }
               if (date) setCustomStartDate(date);
             }}
           />
         )}
 
-        {showEndPicker && (
+        {activePicker === 'end' && (
           <DateTimePicker
             value={customEndDate}
             mode="date"
             display="spinner"
             minimumDate={customStartDate}
-            onChange={(event, date) => {
-              setShowEndPicker(Platform.OS === 'ios');
+            onChange={(_, date) => {
+              if (Platform.OS !== 'ios') {
+                setActivePicker(null);
+              }
               if (date) setCustomEndDate(date);
             }}
           />
