@@ -10,8 +10,11 @@ import { useColorScheme, Appearance } from 'react-native';
 import { useEffect, useState } from 'react';
 import * as Linking from 'expo-linking';
 import 'react-native-reanimated';
-import Purchases from 'react-native-purchases';
-import { initializeRevenueCat, setCustomerInfoUpdateCallback } from '@/services/revenue-cat-service';
+import {
+  hasActiveEntitlement,
+  initializeRevenueCat,
+  setCustomerInfoUpdateCallback,
+} from '@/services/revenue-cat-service';
 import { syncAllWidgetData } from '@/services/widget-data-service';
 import { getThemeMode } from '@/services/storage';
 import { ThemeMode } from '@/types/timeline';
@@ -84,18 +87,16 @@ export default function RootLayout() {
         setCustomerInfoUpdateCallback(async (customerInfo) => {
           try {
             const { syncProStatusToWidget } = await import('@/services/widget-data-service');
-            await syncProStatusToWidget();
+            await syncProStatusToWidget(hasActiveEntitlement(customerInfo));
           } catch (e) {
             console.warn('Widget sync after CustomerInfo update failed:', e);
           }
         });
 
-        // Invalidate cache before auto-restore to ensure fresh server data
-        // Critical for reinstall scenarios (TestFlight → App Store)
-        await Purchases.invalidateCustomerInfoCache();
-        const { restorePurchases } = await import('@/services/revenue-cat-service');
-        await restorePurchases().catch((e) =>
-          console.warn('Auto-restore failed (non-fatal):', e)
+        // Warm the cached customer state without forcing a restore flow on launch.
+        const { getCustomerInfo } = await import('@/services/revenue-cat-service');
+        await getCustomerInfo().catch((e) =>
+          console.warn('Initial customer info refresh failed (non-fatal):', e)
         );
       } catch (error) {
         console.error('Failed to initialize RevenueCat:', error);

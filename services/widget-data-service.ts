@@ -290,16 +290,21 @@ export function getWidgetData(): { timeline: string | null; settings: string | n
  *
  * NOTE: Widget sync requires a development build and will not work in Expo Go.
  */
-export async function syncProStatusToWidget(): Promise<void> {
+export async function syncProStatusToWidget(hasProOverride?: boolean): Promise<void> {
   const storage = getExtensionStorage();
   if (!storage) {
     return;
   }
 
   try {
-    // Lazy import to avoid circular dependency
-    const { isPro } = await import('@/services/revenue-cat-service');
-    const hasPro = await isPro();
+    let hasPro = hasProOverride;
+
+    if (typeof hasPro !== 'boolean') {
+      // Lazy import to avoid circular dependency.
+      const { getCustomerInfo, hasActiveEntitlement } = await import('@/services/revenue-cat-service');
+      const customerInfo = await getCustomerInfo();
+      hasPro = hasActiveEntitlement(customerInfo);
+    }
 
     // Write as string "true" or "false"
     storage.set(WIDGET_DATA_KEYS.IS_PRO, hasPro ? 'true' : 'false');

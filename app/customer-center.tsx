@@ -9,77 +9,49 @@
  * - Contact support
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, Alert, ActivityIndicator, Text, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
-import { getCustomerInfo } from '@/services/revenue-cat-service';
+import RevenueCatUI from 'react-native-purchases-ui';
 
 const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
 
 export default function CustomerCenterScreen() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [customerCenterPresented, setCustomerCenterPresented] = useState(false);
 
-  useEffect(() => {
-    presentCustomerCenter();
-  }, []);
-
-  const presentCustomerCenter = async () => {
+  const presentCustomerCenter = useCallback(async () => {
     try {
       setIsLoading(true);
-
-      // Check if user has active subscription before showing customer center
-      const customerInfo = await getCustomerInfo();
-      const hasActiveSubscription = Object.keys(customerInfo.entitlements.active).length > 0;
-
-      if (!hasActiveSubscription) {
-        // If no active subscription, show alert and go back
-        Alert.alert(
-          'No Active Subscription',
-          'You don\'t have an active subscription. Would you like to subscribe?',
-          [
-            {
-              text: 'Subscribe',
-              onPress: () => {
-                router.back();
-                router.push('/paywall');
-              },
-            },
-            {
-              text: 'Cancel',
-              style: 'cancel',
-              onPress: () => router.back(),
-            },
-          ]
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      // Open Apple's subscription management page
-      await Linking.openURL(APPLE_SUBSCRIPTIONS_URL);
-      setCustomerCenterPresented(true);
+      await RevenueCatUI.presentCustomerCenter();
       router.back();
     } catch (error) {
       console.error('Error presenting customer center:', error);
-      Alert.alert(
-        'Error',
-        'Failed to load subscription management. Please try again.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+
+      try {
+        await Linking.openURL(APPLE_SUBSCRIPTIONS_URL);
+        router.back();
+        return;
+      } catch (linkingError) {
+        console.error('Error opening Apple subscriptions page:', linkingError);
+      }
+
+      Alert.alert('Error', 'Failed to load subscription management. Please try again.', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
 
-  // Show loading state while customer center is being presented
-  if (isLoading || !customerCenterPresented) {
+  useEffect(() => {
+    presentCustomerCenter();
+  }, [presentCustomerCenter]);
+
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -88,7 +60,6 @@ export default function CustomerCenterScreen() {
     );
   }
 
-  // Return null once customer center is presented (it will be shown as a native modal)
   return null;
 }
 

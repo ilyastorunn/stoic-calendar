@@ -33,7 +33,9 @@ import { PurchasesPackage, PurchasesStoreProduct } from 'react-native-purchases'
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { X, CheckCircle } from 'phosphor-react-native';
 import {
+  ENTITLEMENTS,
   getOfferings,
+  hasActiveEntitlement,
   purchasePackage,
   restorePurchases,
 } from '@/services/revenue-cat-service';
@@ -152,12 +154,16 @@ export default function PaywallScreen() {
         return;
       }
 
-      const monthly = offering.availablePackages.find(
-        (pkg) => pkg.identifier === '$rc_monthly' || pkg.product.identifier.includes('monthly')
-      );
-      const yearly = offering.availablePackages.find(
-        (pkg) => pkg.identifier === '$rc_annual' || pkg.product.identifier.includes('yearly')
-      );
+      const monthly =
+        offering.monthly ||
+        offering.availablePackages.find(
+          (pkg) => pkg.packageType === 'MONTHLY' || pkg.identifier === '$rc_monthly'
+        );
+      const yearly =
+        offering.annual ||
+        offering.availablePackages.find(
+          (pkg) => pkg.packageType === 'ANNUAL' || pkg.identifier === '$rc_annual'
+        );
 
       setMonthlyPackage(monthly || null);
       setYearlyPackage(yearly || null);
@@ -189,7 +195,7 @@ export default function PaywallScreen() {
 
       if (userCancelled) return;
 
-      const hasProAccess = customerInfo.entitlements.active['Memento Calendar Pro'] !== undefined;
+      const hasProAccess = hasActiveEntitlement(customerInfo, ENTITLEMENTS.PRO);
 
       if (hasProAccess) {
         Alert.alert('Welcome to Pro!', 'You now have access to all premium features.', [
@@ -209,7 +215,7 @@ export default function PaywallScreen() {
       setIsPurchasing(true);
       const customerInfo = await restorePurchases();
 
-      const hasProAccess = customerInfo.entitlements.active['Memento Calendar Pro'] !== undefined;
+      const hasProAccess = hasActiveEntitlement(customerInfo, ENTITLEMENTS.PRO);
 
       if (hasProAccess) {
         Alert.alert('Purchases Restored', 'Your premium access has been restored.', [

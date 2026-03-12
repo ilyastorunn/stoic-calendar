@@ -108,7 +108,10 @@ Ensure these match in both systems:
 - ✅ No need to purchase again
 
 **Technical Note:**
-RevenueCat stores anonymous user ID in iOS Keychain, which survives app deletion. Same device should auto-restore even without "Restore Purchases" button.
+With RevenueCat-generated anonymous App User IDs, uninstalling the app generates a new anonymous ID on reinstall. Same-device recovery should rely on the **"Restore Purchases"** button in production.
+
+**Sandbox / TestFlight Caveat:**
+TestFlight purchases run in Apple's sandbox environment. RevenueCat notes that with anonymous IDs on iOS, sandbox purchases may not restore after uninstall until another sandbox purchase is made. Treat this as a testing limitation, not production behavior.
 
 #### Test 2: Cross-Device Restore
 1. Purchase on Device A with Apple ID X
@@ -133,14 +136,14 @@ RevenueCat stores anonymous user ID in iOS Keychain, which survives app deletion
 // services/revenue-cat-service.ts
 Purchases.configure({ apiKey: REVENUECAT_API_KEY });
 // No explicit user ID → RevenueCat generates anonymous ID
-// Anonymous ID stored in iOS Keychain (persists across reinstalls)
+// Anonymous IDs are cached on device, but a reinstall creates a new anonymous ID
 ```
 
 **Persistence Matrix:**
 
 | Scenario | Subscription Persists? | Solution |
 |----------|----------------------|----------|
-| Delete + reinstall (same device) | ✅ Yes (Keychain ID) | Automatic |
+| Delete + reinstall (same device) | ⚠️ Requires restore | "Restore Purchases" |
 | New device + same Apple ID | ⚠️ Requires restore | "Restore Purchases" |
 | New device + different Apple ID | ❌ No | Different account |
 

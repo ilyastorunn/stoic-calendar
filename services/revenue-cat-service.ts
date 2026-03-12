@@ -14,6 +14,7 @@ import Purchases, {
   CustomerInfo,
   PurchasesOffering,
   PurchasesPackage,
+  PurchasesStoreProduct,
   LOG_LEVEL,
 } from 'react-native-purchases';
 import { Platform } from 'react-native';
@@ -128,20 +129,29 @@ export async function getCustomerInfo(): Promise<CustomerInfo> {
 }
 
 /**
+ * Check whether a CustomerInfo payload includes an active entitlement.
+ */
+export function hasActiveEntitlement(
+  customerInfo: CustomerInfo,
+  entitlementId: string = ENTITLEMENTS.PRO
+): boolean {
+  return customerInfo.entitlements.active[entitlementId] !== undefined;
+}
+
+/**
  * Check if user has Pro subscription
  * Checks for active "Memento Calendar Pro" entitlement
  */
 export async function isPro(): Promise<boolean> {
   try {
     const customerInfo = await getCustomerInfo();
-    const hasProEntitlement =
-      customerInfo.entitlements.active[ENTITLEMENTS.PRO] !== undefined;
+    const hasProEntitlement = hasActiveEntitlement(customerInfo);
 
     console.log('Pro status:', hasProEntitlement);
     return hasProEntitlement;
   } catch (error) {
     console.error('Error checking pro status:', error);
-    // Fail open - allow access if error checking
+    // Fail closed when subscription state cannot be verified.
     return false;
   }
 }
@@ -153,13 +163,26 @@ export async function isPro(): Promise<boolean> {
 const MOCK_OFFERINGS_ENABLED = __DEV__ && false; // Set to `true` to use mock data in simulator
 
 function buildMockOffering(): PurchasesOffering {
-  const makeProduct = (id: string, price: number, priceString: string) => ({
+  const makeProduct = (
+    id: string,
+    price: number,
+    priceString: string
+  ) =>
+    ({
     productIdentifier: id,
     identifier: id,
+    description: 'Memento Calendar Pro',
+    title: 'Memento Calendar Pro',
     localizedDescription: 'Memento Calendar Pro',
     localizedTitle: 'Memento Calendar Pro',
     price,
     priceString,
+    pricePerWeek: null,
+    pricePerMonth: null,
+    pricePerYear: null,
+    pricePerWeekString: null,
+    pricePerMonthString: null,
+    pricePerYearString: null,
     currencyCode: 'USD',
     introPrice: null,
     discounts: [],
@@ -168,8 +191,9 @@ function buildMockOffering(): PurchasesOffering {
     subscriptionPeriod: '',
     defaultOption: null,
     subscriptionOptions: [],
+    presentedOfferingIdentifier: 'default',
     presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
-  });
+  }) as any as PurchasesStoreProduct;
 
   const monthly: PurchasesPackage = {
     identifier: '$rc_monthly',
@@ -264,7 +288,7 @@ export async function purchasePackage(
     // Sync Pro status to widgets after successful purchase
     try {
       const { syncProStatusToWidget } = await import('@/services/widget-data-service');
-      await syncProStatusToWidget();
+      await syncProStatusToWidget(hasActiveEntitlement(customerInfo));
     } catch (widgetError) {
       console.warn('Failed to sync Pro status to widgets:', widgetError);
     }
@@ -316,7 +340,7 @@ export async function restorePurchases(): Promise<CustomerInfo> {
     // Sync Pro status to widgets after successful restore
     try {
       const { syncProStatusToWidget } = await import('@/services/widget-data-service');
-      await syncProStatusToWidget();
+      await syncProStatusToWidget(hasActiveEntitlement(customerInfo));
     } catch (widgetError) {
       console.warn('Failed to sync Pro status to widgets:', widgetError);
     }
@@ -417,7 +441,7 @@ export async function loginUser(userId: string): Promise<CustomerInfo> {
 export async function logoutUser(): Promise<CustomerInfo> {
   try {
     await ensureInitialized();
-    const { customerInfo } = await Purchases.logOut();
+    const customerInfo = await Purchases.logOut();
     console.log('User logged out');
     return customerInfo;
   } catch (error) {
