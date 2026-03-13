@@ -160,7 +160,8 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadActiveTimeline();
-    }, [loadActiveTimeline])
+      loadAllTimelines();
+    }, [loadActiveTimeline, loadAllTimelines])
   );
 
   /**

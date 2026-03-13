@@ -250,6 +250,7 @@ export function TimelineManagementModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
+      onDismiss={onClose}
     >
       <BlurView
         intensity={100}
