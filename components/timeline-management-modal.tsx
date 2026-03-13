@@ -197,7 +197,7 @@ export function TimelineManagementModal({
       setEditingTimeline(undefined);
 
       // Notify parent to refresh
-      onRefresh?.();
+      await onRefresh?.();
     } catch (error) {
       console.error('Error saving timeline:', error);
     }

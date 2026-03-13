@@ -538,7 +538,11 @@ export default function HomeScreen() {
       {/* Timeline Management Modal */}
       <TimelineManagementModal
         visible={showManagementModal}
-        onClose={() => setShowManagementModal(false)}
+        onClose={async () => {
+          setShowManagementModal(false);
+          await loadActiveTimeline();
+          await loadAllTimelines();
+        }}
         onRefresh={async () => {
           await loadActiveTimeline();
           await loadAllTimelines();
