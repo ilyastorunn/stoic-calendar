@@ -20,6 +20,7 @@ import {
   useColorScheme,
   Pressable,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Timeline } from '@/types/timeline';
 import { StoicGrid } from './stoic-grid';
 import {
@@ -76,6 +77,7 @@ export function TimelineCard({
 }: TimelineCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const { t } = useTranslation();
 
   const description = getTimelineDescription(timeline);
   const progress = getTimelineProgress(timeline);
@@ -149,7 +151,7 @@ export function TimelineCard({
                   },
                 ]}
               >
-                Edit
+                {t('common.edit')}
               </Text>
             </TouchableOpacity>
           )}

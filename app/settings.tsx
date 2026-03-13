@@ -25,7 +25,9 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { List, Moon, Sun, Monitor, Info, Sparkle, Bug, Check } from 'phosphor-react-native';
+import { setDebugLanguage, SUPPORTED_LOCALES, SupportedLocale } from '@/services/i18n-service';
 import { SettingsGroup } from '@/components/settings-group';
 import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
@@ -72,6 +74,7 @@ export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
+  const { t, i18n } = useTranslation();
 
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('dark');
   const [currentGridColorTheme, setCurrentGridColorTheme] = useState<GridColorTheme>('classic');
@@ -169,18 +172,30 @@ export default function SettingsScreen() {
       console.log('\n🔍 Running widget sync debug...\n');
       await debugWidgetSync();
       Alert.alert(
-        'Widget Debug Complete',
-        'Check the console logs for detailed information about widget sync status.',
-        [{ text: 'OK' }]
+        t('settings.debugComplete'),
+        t('settings.debugCompleteMessage'),
+        [{ text: t('common.ok') }]
       );
     } catch (error) {
       console.error('Debug error:', error);
       Alert.alert(
-        'Debug Error',
+        t('settings.debugError'),
         error instanceof Error ? error.message : 'Unknown error occurred',
-        [{ text: 'OK' }]
+        [{ text: t('common.ok') }]
       );
     }
+  };
+
+  // MARK: Debug Language Selector (geçici — build öncesi kaldırılacak)
+  const languageOptions: { label: string; code: SupportedLocale | 'auto' }[] = [
+    { label: t('settings.auto'), code: 'auto' },
+    { label: 'English', code: 'en' },
+    { label: 'Türkçe', code: 'tr' },
+    { label: 'Français', code: 'fr' },
+  ];
+
+  const handleLanguageChange = async (code: SupportedLocale | 'auto') => {
+    await setDebugLanguage(code);
   };
 
   /**
@@ -188,7 +203,7 @@ export default function SettingsScreen() {
    */
   const timelineItems = [
     {
-      label: 'Manage Timelines',
+      label: t('settings.manageTimelines'),
       onPress: () => setShowTimelineManagement(true),
       icon: <List size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
@@ -201,17 +216,17 @@ export default function SettingsScreen() {
   const appearanceThemes = [
     {
       mode: 'system' as ThemeMode,
-      label: 'System',
+      label: t('settings.system'),
       icon: <Monitor size={20} color={colors.accent} weight="regular" />,
     },
     {
       mode: 'light' as ThemeMode,
-      label: 'Light',
+      label: t('settings.light'),
       icon: <Sun size={20} color={colors.accent} weight="regular" />,
     },
     {
       mode: 'dark' as ThemeMode,
-      label: 'Dark',
+      label: t('settings.dark'),
       icon: <Moon size={20} color={colors.accent} weight="regular" />,
     },
   ];
@@ -224,13 +239,13 @@ export default function SettingsScreen() {
     : hasPro
     ? [
         {
-          label: 'Subscription Status',
-          value: 'Pro',
+          label: t('settings.subscriptionStatus'),
+          value: t('settings.pro'),
           pressable: false,
           icon: <Info size={20} color={colors.accent} weight="regular" />,
         },
         {
-          label: 'Manage Subscription',
+          label: t('settings.manageSubscription'),
           onPress: () => router.push('/customer-center'),
           icon: <Sparkle size={20} color="#FFD700" weight="fill" />,
           showChevron: true,
@@ -238,13 +253,13 @@ export default function SettingsScreen() {
       ]
     : [
         {
-          label: 'Subscription Status',
-          value: 'Free',
+          label: t('settings.subscriptionStatus'),
+          value: t('settings.free'),
           pressable: false,
           icon: <Info size={20} color={colors.accent} weight="regular" />,
         },
         {
-          label: 'Upgrade to Pro',
+          label: t('settings.upgradeToPro'),
           onPress: () => router.push('/paywall'),
           icon: <Sparkle size={20} color="#FFD700" weight="fill" />,
           showChevron: true,
@@ -257,31 +272,31 @@ export default function SettingsScreen() {
    */
   const aboutItems = [
     {
-      label: 'Version',
+      label: t('settings.version'),
       value: '1.0.0',
       pressable: false,
       icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
     {
-      label: 'Privacy Policy',
+      label: t('settings.privacyPolicy'),
       onPress: () => Linking.openURL('https://memento-calendar.pages.dev/privacy-policy'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
     },
     {
-      label: 'Terms of Use',
+      label: t('settings.termsOfUse'),
       onPress: () => Linking.openURL('https://memento-calendar.pages.dev/terms-of-use'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
     },
     {
-      label: 'Website',
+      label: t('settings.website'),
       onPress: () => Linking.openURL('https://memento-calendar.pages.dev/'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
     },
     {
-      label: 'Contact',
+      label: t('settings.contact'),
       onPress: () => Linking.openURL('mailto:stoic-calendar@forvibe.app'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
@@ -294,7 +309,7 @@ export default function SettingsScreen() {
   const debugItems = __DEV__
     ? [
         {
-          label: 'Debug Widget Sync',
+          label: t('settings.debugWidgetSync'),
           onPress: handleDebugWidgetSync,
           icon: <Bug size={20} color={colors.accent} weight="regular" />,
         },
@@ -323,12 +338,12 @@ export default function SettingsScreen() {
       >
         {/* Timelines - 100ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(100)}>
-          <SettingsGroup title="Timelines" items={timelineItems} />
+          <SettingsGroup title={t('settings.timelines')} items={timelineItems} />
         </Animated.View>
 
         {/* Appearance - 200ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(200)}>
-          <SettingsGroup title="Appearance" items={[]}>
+          <SettingsGroup title={t('settings.appearance')} items={[]}>
             <View style={styles.appearanceContainer}>
               {appearanceThemes.map((theme) => {
                 const isSelected = currentTheme === theme.mode;
@@ -373,7 +388,7 @@ export default function SettingsScreen() {
 
         {/* Grid Colors - 300ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(300)}>
-          <SettingsGroup title="Grid Colors" items={[]}>
+          <SettingsGroup title={t('settings.gridColors')} items={[]}>
             <View style={styles.colorPaletteContainer}>
               {(['classic', 'forest', 'sunset', 'monochrome'] as const).map((key) => {
                 const palette = GridColorPalettes[key];
@@ -426,20 +441,62 @@ export default function SettingsScreen() {
               <ActivityIndicator size="small" color={colors.accent} />
             </View>
           ) : (
-            <SettingsGroup title="Subscription" items={premiumItems} />
+            <SettingsGroup title={t('settings.subscription')} items={premiumItems} />
           )}
         </Animated.View>
 
         {/* Debug (development only) - 500ms delay */}
         {__DEV__ && (
           <Animated.View entering={FadeInDown.duration(300).delay(500)}>
-            <SettingsGroup title="Debug" items={debugItems} />
+            <SettingsGroup title={t('settings.debug')} items={debugItems} />
+          </Animated.View>
+        )}
+
+        {/* MARK: Debug Language Selector — remove before release build */}
+        {__DEV__ && (
+          <Animated.View entering={FadeInDown.duration(300).delay(550)}>
+            <SettingsGroup title={t('settings.language')} items={[]}>
+              <View style={styles.appearanceContainer}>
+                {languageOptions.map((opt) => {
+                  const isSelected =
+                    opt.code === 'auto'
+                      ? !SUPPORTED_LOCALES.includes(i18n.language as SupportedLocale)
+                      : i18n.language === opt.code;
+                  return (
+                    <TouchableOpacity
+                      key={opt.code}
+                      style={[
+                        styles.appearanceItem,
+                        {
+                          backgroundColor: colors.cardBackground,
+                          borderColor: isSelected ? colors.accent : 'transparent',
+                        },
+                        isSelected && {
+                          shadowColor: colors.accent,
+                          shadowOpacity: 0.25,
+                          shadowRadius: 8,
+                          shadowOffset: { width: 0, height: 0 },
+                          elevation: 4,
+                        },
+                      ]}
+                      onPress={() => handleLanguageChange(opt.code)}
+                      activeOpacity={0.6}
+                    >
+                      <Text style={[styles.appearanceLabel, { color: colors.textPrimary }]}>
+                        {opt.label}
+                      </Text>
+                      {isSelected && <Check size={16} color={colors.accent} weight="bold" />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </SettingsGroup>
           </Animated.View>
         )}
 
         {/* Philosophy - 600ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(600)}>
-          <SettingsGroup title="Philosophy" items={[]}>
+          <SettingsGroup title={t('settings.philosophy')} items={[]}>
             <View style={styles.philosophyContainer}>
               <Text
                 style={[
@@ -450,7 +507,7 @@ export default function SettingsScreen() {
                   },
                 ]}
               >
-                &ldquo;Time is presented neutrally, calmly, and honestly.&rdquo;
+                {t('settings.philosophyQuote')}
               </Text>
 
               <View style={styles.philosophyDivider} />
@@ -463,8 +520,7 @@ export default function SettingsScreen() {
                   },
                 ]}
               >
-                Stoic Calendar exists to make time visible, not actionable. No urgency, no
-                productivity pressure, no gamification.
+                {t('settings.philosophyBody')}
               </Text>
             </View>
           </SettingsGroup>
@@ -472,7 +528,7 @@ export default function SettingsScreen() {
 
         {/* About - 700ms delay */}
         <Animated.View entering={FadeInDown.duration(300).delay(700)}>
-          <SettingsGroup title="About" items={aboutItems} />
+          <SettingsGroup title={t('settings.about')} items={aboutItems} />
         </Animated.View>
       </ScrollView>
 
