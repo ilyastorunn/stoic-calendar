@@ -431,6 +431,31 @@ export function validateTimeline(timeline: Partial<Timeline>): boolean {
 // ============================================================================
 
 /**
+ * Get the locale-aware display title for a timeline.
+ * For non-custom types, derives the title from the timeline's startDate and
+ * the active locale so it always reflects the current language — even after
+ * a language switch without re-creating the timeline.
+ *
+ * CUSTOM timelines keep their user-chosen title unchanged.
+ */
+export function getTimelineDisplayTitle(timeline: Timeline): string {
+  switch (timeline.type) {
+    case TimelineType.WEEK:
+      return i18n.t('timeline.thisWeek');
+    case TimelineType.MONTH: {
+      const date = new Date(timeline.startDate);
+      return date.toLocaleDateString(getCurrentLocale(), { month: 'long' });
+    }
+    case TimelineType.YEAR:
+      return new Date(timeline.startDate).getFullYear().toString();
+    case TimelineType.CUSTOM:
+      return timeline.title;
+    default:
+      return timeline.title;
+  }
+}
+
+/**
  * Get a human-readable description of a timeline
  * Examples: "Year · 1%", "Week · 100%", "Custom · 50%"
  *

@@ -29,6 +29,7 @@ import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { Pencil, Trash, X, Faders } from 'phosphor-react-native';
 import { Timeline, TimelineType } from '@/types/timeline';
+import { getTimelineDisplayTitle } from '@/services/timeline-calculator';
 import {
   Colors,
   FontSizes,
@@ -209,7 +210,7 @@ export function TimelineDropdown({
                       ]}
                       numberOfLines={1}
                     >
-                      {timeline.title}
+                      {getTimelineDisplayTitle(timeline)}
                     </Text>
                     {isActive && (
                       <Text style={styles.checkmark}>✓</Text>

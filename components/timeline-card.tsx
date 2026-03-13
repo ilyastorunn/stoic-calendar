@@ -26,6 +26,7 @@ import { StoicGrid } from './stoic-grid';
 import {
   getTimelineDescription,
   getTimelineProgress,
+  getTimelineDisplayTitle,
 } from '@/services/timeline-calculator';
 import {
   Colors,
@@ -79,6 +80,7 @@ export function TimelineCard({
   const colors = Colors[colorScheme ?? 'dark'];
   const { t } = useTranslation();
 
+  const displayTitle = getTimelineDisplayTitle(timeline);
   const description = getTimelineDescription(timeline);
   const progress = getTimelineProgress(timeline);
   const isCustomTimeline = timeline.type === 'custom';
@@ -108,7 +110,7 @@ export function TimelineCard({
               },
             ]}
           >
-            {timeline.title}
+            {displayTitle}
           </Text>
 
           <Text

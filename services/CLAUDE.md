@@ -8,4 +8,22 @@
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #351 | 12:18 PM | 🔵 | RevenueCat Service Implementation Examined | ~370 |
+
+### Mar 1, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #679 | 2:56 PM | 🔵 | Security audit reveals critical API key exposure and 10 vulnerabilities | ~671 |
+| #677 | 2:54 PM | 🔵 | Code audit reveals 20 bugs including critical race conditions and data corruption risks | ~662 |
+| #669 | 2:49 PM | 🔵 | iOS widget data synchronization via App Groups and ExtensionStorage | ~487 |
+| #668 | " | 🔵 | Timeline business logic with auto-updating period timelines | ~422 |
+| #667 | 2:48 PM | 🔵 | AsyncStorage persistence layer with automatic widget synchronization | ~418 |
+| #664 | 2:47 PM | 🔵 | RevenueCat subscription system with freemium model | ~389 |
+| #663 | " | 🔵 | Firebase integration placeholder - MVP uses local storage only | ~330 |
+
+### Mar 10, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #794 | 5:45 PM | 🔵 | Current RevenueCat Subscription Pricing Configuration | ~330 |
 </claude-mem-context>

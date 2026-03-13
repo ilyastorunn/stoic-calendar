@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stoic Calendar Color Reference</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --page-bg: #0d0d0f;
+        --panel-bg: #16171b;
+        --panel-border: #2a2c33;
+        --text-primary: #f5f5f7;
+        --text-secondary: #a3a7b3;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #0d0d0f 0%, #14151a 100%);
+        color: var(--text-primary);
+      }
+
+      .page {
+        width: min(1240px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 40px 0 80px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero {
+        padding: 28px;
+        border: 1px solid var(--panel-border);
+        border-radius: 24px;
+        background: rgba(22, 23, 27, 0.88);
+        backdrop-filter: blur(18px);
+      }
+
+      .hero p {
+        margin-top: 10px;
+        color: var(--text-secondary);
+        max-width: 720px;
+        line-height: 1.5;
+      }
+
+      .section {
+        margin-top: 28px;
+        padding: 24px;
+        border: 1px solid var(--panel-border);
+        border-radius: 24px;
+        background: var(--panel-bg);
+      }
+
+      .section-title {
+        font-size: 22px;
+        margin-bottom: 8px;
+      }
+
+      .section-copy {
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-bottom: 20px;
+      }
+
+      .swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .swatch-card {
+        overflow: hidden;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: #111216;
+      }
+
+      .swatch {
+        height: 120px;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        padding: 14px;
+      }
+
+      .swatch-label {
+        padding: 16px;
+      }
+
+      .role {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .name {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .hex {
+        margin-top: 10px;
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+      }
+
+      .notes {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.45;
+      }
+
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+      }
+
+      .theme-card {
+        padding: 18px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: #111216;
+      }
+
+      .theme-card h3 {
+        font-size: 18px;
+        margin-bottom: 14px;
+      }
+
+      .tone-row {
+        display: grid;
+        grid-template-columns: 76px 1fr 1fr;
+        gap: 12px;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .tone-label {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .mini-swatch {
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .mini-color {
+        height: 56px;
+      }
+
+      .mini-meta {
+        padding: 10px 12px 12px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        background: #17191f;
+      }
+
+      .footnote {
+        margin-top: 20px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <h1>Stoic Calendar Color Reference</h1>
+        <p>
+          Prepared from the app theme and current UI hardcoded accents. This is a
+          Figma-ready swatch sheet for App Store screen design work. The app is
+          dark-mode-first, so the dark palette should be your primary reference.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Core UI Palette</h2>
+        <p class="section-copy">
+          Semantic colors from <code>constants/theme.ts</code>. These define the
+          actual product look across light and dark themes.
+        </p>
+
+        <div class="swatch-grid">
+          <article class="swatch-card">
+            <div class="swatch" style="background:#000000;color:#ffffff;">
+              <span>Dark mode base</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Background</div>
+              <div class="name">Pure Black</div>
+              <div class="hex">#000000</div>
+              <div class="notes">Primary app background. Main visual foundation.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#1C1C1E;color:#ffffff;">
+              <span>Layer 2</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Secondary Background</div>
+              <div class="name">Charcoal</div>
+              <div class="hex">#1C1C1E</div>
+              <div class="notes">Cards, sheets, widget surfaces, grouped content.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#2C2C2E;color:#ffffff;">
+              <span>Layer 3</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Tertiary Background</div>
+              <div class="name">Graphite</div>
+              <div class="hex">#2C2C2E</div>
+              <div class="notes">Raised or nested surfaces, borders in dark UI.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#FFFFFF;color:#000000;">
+              <span>High contrast text</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Text Primary</div>
+              <div class="name">White</div>
+              <div class="hex">#FFFFFF</div>
+              <div class="notes">Primary text on dark mode. Also monochrome dark grid fill.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#8E8E93;color:#ffffff;">
+              <span>Supporting copy</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Text Secondary</div>
+              <div class="name">iOS Gray</div>
+              <div class="hex">#8E8E93</div>
+              <div class="notes">Secondary labels, helper text, inactive icons.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#48484A;color:#ffffff;">
+              <span>Muted metadata</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Text Tertiary</div>
+              <div class="name">Deep Gray</div>
+              <div class="hex">#48484A</div>
+              <div class="notes">Low-emphasis metadata and empty-dot borders in dark mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#007AFF;color:#ffffff;">
+              <span>Primary accent</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Accent</div>
+              <div class="name">iOS Blue</div>
+              <div class="hex">#007AFF</div>
+              <div class="notes">Selections, active states, classic grid fill, CTA emphasis.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#5AC8FA;color:#06202d;">
+              <span>Soft accent</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Accent Light</div>
+              <div class="name">Sky Blue</div>
+              <div class="hex">#5AC8FA</div>
+              <div class="notes">Secondary accent usage where a lighter blue is needed.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#333333;color:#ffffff;">
+              <span>Future days</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Dot Empty</div>
+              <div class="name">Grid Dark Gray</div>
+              <div class="hex">#333333</div>
+              <div class="notes">Default empty dot color in dark mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#38383A;color:#ffffff;">
+              <span>Divider</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Separator</div>
+              <div class="name">Separator Gray</div>
+              <div class="hex">#38383A</div>
+              <div class="notes">Dividers and structural separation in dark mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#FF453A;color:#ffffff;">
+              <span>Destructive</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Error / Remove</div>
+              <div class="name">Destructive Red</div>
+              <div class="hex">#FF453A</div>
+              <div class="notes">Delete actions in dark mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#FFFFFF;color:#000000;">
+              <span>Light mode base</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Background</div>
+              <div class="name">White</div>
+              <div class="hex">#FFFFFF</div>
+              <div class="notes">Primary background and text inverse for light mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#F2F2F7;color:#202124;">
+              <span>Light grouped surface</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Secondary Background</div>
+              <div class="name">Off White</div>
+              <div class="hex">#F2F2F7</div>
+              <div class="notes">Cards and grouped sections in light mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#D1D1D6;color:#202124;">
+              <span>Light empty dot</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Dot Empty</div>
+              <div class="name">Light Gray</div>
+              <div class="hex">#D1D1D6</div>
+              <div class="notes">Default empty dot color in light mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#C7C7CC;color:#202124;">
+              <span>Light tertiary</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Muted Gray</div>
+              <div class="name">Border Gray</div>
+              <div class="hex">#C7C7CC</div>
+              <div class="notes">Tertiary text and empty-dot border in light mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#E5E5EA;color:#202124;">
+              <span>Card border</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Card Border</div>
+              <div class="name">Soft Border</div>
+              <div class="hex">#E5E5EA</div>
+              <div class="notes">Card borders and subtle structural edges.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#C6C6C8;color:#202124;">
+              <span>Divider</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Separator</div>
+              <div class="name">Separator Gray</div>
+              <div class="hex">#C6C6C8</div>
+              <div class="notes">Dividers and list separation in light mode.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#FF3B30;color:#ffffff;">
+              <span>Destructive</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Light Error / Remove</div>
+              <div class="name">Destructive Red</div>
+              <div class="hex">#FF3B30</div>
+              <div class="notes">Delete actions in light mode.</div>
+            </div>
+          </article>
+        </div>
+
+        <p class="footnote">
+          Transparency-based values also used in the app theme:
+          <code>rgba(28, 28, 30, 0.8)</code> for the dark tab bar and
+          <code>rgba(242, 242, 247, 0.8)</code> for the light tab bar.
+        </p>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Grid Theme Palettes</h2>
+        <p class="section-copy">
+          These are the selectable timeline grid themes shown in Settings.
+          Filled dots represent elapsed time, empty dots represent remaining time.
+        </p>
+
+        <div class="theme-grid">
+          <article class="theme-card">
+            <h3>Classic Blue</h3>
+            <div class="tone-row">
+              <div class="tone-label">Light</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#007AFF;"></div>
+                <div class="mini-meta">Filled: <code>#007AFF</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#D1D1D6;"></div>
+                <div class="mini-meta">Empty: <code>#D1D1D6</code></div>
+              </div>
+            </div>
+            <div class="tone-row">
+              <div class="tone-label">Dark</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#007AFF;"></div>
+                <div class="mini-meta">Filled: <code>#007AFF</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#333333;"></div>
+                <div class="mini-meta">Empty: <code>#333333</code></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="theme-card">
+            <h3>Forest Green</h3>
+            <div class="tone-row">
+              <div class="tone-label">Light</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#34C759;"></div>
+                <div class="mini-meta">Filled: <code>#34C759</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#D1D1D6;"></div>
+                <div class="mini-meta">Empty: <code>#D1D1D6</code></div>
+              </div>
+            </div>
+            <div class="tone-row">
+              <div class="tone-label">Dark</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#30D158;"></div>
+                <div class="mini-meta">Filled: <code>#30D158</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#333333;"></div>
+                <div class="mini-meta">Empty: <code>#333333</code></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="theme-card">
+            <h3>Sunset Orange</h3>
+            <div class="tone-row">
+              <div class="tone-label">Light</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#FF9500;"></div>
+                <div class="mini-meta">Filled: <code>#FF9500</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#D1D1D6;"></div>
+                <div class="mini-meta">Empty: <code>#D1D1D6</code></div>
+              </div>
+            </div>
+            <div class="tone-row">
+              <div class="tone-label">Dark</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#FF9F0A;"></div>
+                <div class="mini-meta">Filled: <code>#FF9F0A</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#333333;"></div>
+                <div class="mini-meta">Empty: <code>#333333</code></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="theme-card">
+            <h3>Monochrome</h3>
+            <div class="tone-row">
+              <div class="tone-label">Light</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#000000;"></div>
+                <div class="mini-meta">Filled: <code>#000000</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#D1D1D6;"></div>
+                <div class="mini-meta">Empty: <code>#D1D1D6</code></div>
+              </div>
+            </div>
+            <div class="tone-row">
+              <div class="tone-label">Dark</div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#FFFFFF;"></div>
+                <div class="mini-meta">Filled: <code>#FFFFFF</code></div>
+              </div>
+              <div class="mini-swatch">
+                <div class="mini-color" style="background:#333333;"></div>
+                <div class="mini-meta">Empty: <code>#333333</code></div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Additional Product Accents</h2>
+        <p class="section-copy">
+          Small hardcoded accents currently used in the product and support files.
+        </p>
+
+        <div class="swatch-grid">
+          <article class="swatch-card">
+            <div class="swatch" style="background:#FFD700;color:#3b2f00;">
+              <span>Premium / sparkle</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Premium Accent</div>
+              <div class="name">Gold</div>
+              <div class="hex">#FFD700</div>
+              <div class="notes">Used for the sparkle icon in subscription-related settings.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#888888;color:#ffffff;">
+              <span>Muted utility text</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">Utility Gray</div>
+              <div class="name">Neutral Gray</div>
+              <div class="hex">#888888</div>
+              <div class="notes">Used in customer center loading and utility states.</div>
+            </div>
+          </article>
+
+          <article class="swatch-card">
+            <div class="swatch" style="background:#E6F4FE;color:#123148;">
+              <span>Splash background</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">App Config</div>
+              <div class="name">Splash Blue</div>
+              <div class="hex">#E6F4FE</div>
+              <div class="notes">Defined in <code>app.json</code> for native splash background.</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">Current App Store Reference</h2>
+        <p class="section-copy">
+          Existing screenshot planning docs use one marketing color that is not
+          part of the in-app palette but may matter if you want continuity.
+        </p>
+
+        <div class="swatch-grid">
+          <article class="swatch-card">
+            <div class="swatch" style="background:#4845FF;color:#ffffff;">
+              <span>Marketing background</span>
+            </div>
+            <div class="swatch-label">
+              <div class="role">App Store Screens</div>
+              <div class="name">Marketing Indigo</div>
+              <div class="hex">#4845FF</div>
+              <div class="notes">
+                Used in <code>documentation/app-store-screenshots.md</code> as the
+                planned solid background color for App Store creatives.
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

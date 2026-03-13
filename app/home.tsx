@@ -36,6 +36,7 @@ import {
   getTimelineProgress,
   getTimelineRemaining,
   getTimelineProgressPercentage,
+  getTimelineDisplayTitle,
   createTimeline,
   updateTimelineIfNeeded,
   sortTimelinesWithActiveFirst,
@@ -456,7 +457,7 @@ export default function HomeScreen() {
                 },
               ]}
             >
-              {activeTimeline.title}
+              {getTimelineDisplayTitle(activeTimeline)}
             </Text>
             <Animated.View style={animatedIconStyle}>
               <CaretDown size={24} color={colors.textSecondary} weight="regular" />
