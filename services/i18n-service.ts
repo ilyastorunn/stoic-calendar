@@ -2,7 +2,8 @@
  * i18n Service
  * Internationalization setup using i18next + react-i18next + expo-localization
  *
- * Supported languages: English (en), Turkish (tr), French (fr)
+ * Supported languages: English (en), Turkish (tr), French (fr), Chinese (zh),
+ *   Spanish (es), Arabic (ar), Danish (da), Greek (el), Russian (ru)
  * Language override stored in AsyncStorage for debug purposes.
  * NOTE: MARK: Debug language selector — remove LANGUAGE_KEY and setDebugLanguage before release build.
  */
@@ -14,11 +15,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import en from '@/locales/en.json';
 import tr from '@/locales/tr.json';
 import fr from '@/locales/fr.json';
+import zh from '@/locales/zh.json';
+import es from '@/locales/es.json';
+import ar from '@/locales/ar.json';
+import da from '@/locales/da.json';
+import el from '@/locales/el.json';
+import ru from '@/locales/ru.json';
 
 // MARK: Debug — remove before release build
 const LANGUAGE_KEY = '@debug_language';
 
-export const SUPPORTED_LOCALES = ['en', 'tr', 'fr'] as const;
+export const SUPPORTED_LOCALES = ['en', 'tr', 'fr', 'zh', 'es', 'ar', 'da', 'el', 'ru'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 /** Resolve the best supported locale from device settings */
@@ -43,6 +50,12 @@ export async function initI18n(): Promise<void> {
       en: { translation: en },
       tr: { translation: tr },
       fr: { translation: fr },
+      zh: { translation: zh },
+      es: { translation: es },
+      ar: { translation: ar },
+      da: { translation: da },
+      el: { translation: el },
+      ru: { translation: ru },
     },
     lng,
     fallbackLng: 'en',

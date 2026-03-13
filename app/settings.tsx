@@ -192,6 +192,12 @@ export default function SettingsScreen() {
     { label: 'English', code: 'en' },
     { label: 'Türkçe', code: 'tr' },
     { label: 'Français', code: 'fr' },
+    { label: '中文', code: 'zh' },
+    { label: 'Español', code: 'es' },
+    { label: 'العربية', code: 'ar' },
+    { label: 'Dansk', code: 'da' },
+    { label: 'Ελληνικά', code: 'el' },
+    { label: 'Русский', code: 'ru' },
   ];
 
   const handleLanguageChange = async (code: SupportedLocale | 'auto') => {
