@@ -279,7 +279,7 @@ export default function SettingsScreen() {
   const aboutItems = [
     {
       label: t('settings.version'),
-      value: '1.0.0',
+      value: '1.0.4',
       pressable: false,
       icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
