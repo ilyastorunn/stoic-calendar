@@ -25,6 +25,8 @@ import {
   CormorantGaramond_500Medium,
   CormorantGaramond_600SemiBold,
 } from '@expo-google-fonts/cormorant-garamond';
+import { initI18n } from '@/services/i18n-service';
+import { useTranslation } from 'react-i18next';
 
 export default function RootLayout() {
   const systemColorScheme = useColorScheme();
@@ -38,9 +40,22 @@ export default function RootLayout() {
     'CormorantGaramond-SemiBold': CormorantGaramond_600SemiBold,
   });
 
+  const { t } = useTranslation();
+
   // State for user's theme preference
   const [userThemeMode, setUserThemeMode] = useState<ThemeMode>('dark');
   const [isThemeLoaded, setIsThemeLoaded] = useState(false);
+  const [isI18nReady, setIsI18nReady] = useState(false);
+
+  // Initialize i18n on app start
+  useEffect(() => {
+    initI18n()
+      .then(() => setIsI18nReady(true))
+      .catch((err) => {
+        console.error('Failed to init i18n:', err);
+        setIsI18nReady(true); // Proceed with fallback
+      });
+  }, []);
 
   // Load user's theme preference from storage
   useEffect(() => {
@@ -131,8 +146,8 @@ export default function RootLayout() {
     ? systemColorScheme
     : userThemeMode;
 
-  // Don't render until theme and fonts are loaded to prevent flash
-  if (!isThemeLoaded || !fontsLoaded) {
+  // Don't render until theme, fonts, and i18n are ready to prevent flash
+  if (!isThemeLoaded || !fontsLoaded || !isI18nReady) {
     return null;
   }
 
@@ -146,7 +161,7 @@ export default function RootLayout() {
           options={{
             presentation: 'modal',
             headerShown: true,
-            title: 'Settings',
+            title: t('settings.title'),
           }}
         />
         <Stack.Screen
@@ -160,7 +175,7 @@ export default function RootLayout() {
           name="customer-center"
           options={{
             presentation: 'modal',
-            title: 'Manage Subscription',
+            title: t('settings.manageSubscription'),
             headerShown: true,
           }}
         />

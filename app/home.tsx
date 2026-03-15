@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Gear, CaretDown } from 'phosphor-react-native';
 import { Timeline, TimelineType } from '@/types/timeline';
@@ -35,6 +36,7 @@ import {
   getTimelineProgress,
   getTimelineRemaining,
   getTimelineProgressPercentage,
+  getTimelineDisplayTitle,
   createTimeline,
   updateTimelineIfNeeded,
   sortTimelinesWithActiveFirst,
@@ -55,6 +57,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [activeTimeline, setActiveTimeline] = useState<Timeline | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,7 +160,8 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadActiveTimeline();
-    }, [loadActiveTimeline])
+      loadAllTimelines();
+    }, [loadActiveTimeline, loadAllTimelines])
   );
 
   /**
@@ -171,7 +175,7 @@ export default function HomeScreen() {
       }
     });
     return () => subscription.remove();
-  }, [loadActiveTimeline, loadAllTimelines]);
+  }, [loadActiveTimeline, loadAllTimelines, t]);
 
   /**
    * Handle dot press - calculate and show date
@@ -233,12 +237,12 @@ export default function HomeScreen() {
       if (!hasPro && timelines.length >= FREE_TIER_LIMITS.MAX_TIMELINES) {
         // Show paywall alert
         Alert.alert(
-          'Timeline Limit Reached',
-          `Free users can create up to ${FREE_TIER_LIMITS.MAX_TIMELINES} timelines. Upgrade to Pro for unlimited timelines.`,
+          t('alerts.timelineLimitReached'),
+          t('alerts.timelineLimitMessage', { max: FREE_TIER_LIMITS.MAX_TIMELINES }),
           [
-            { text: 'Cancel', style: 'cancel' },
+            { text: t('common.cancel'), style: 'cancel' },
             {
-              text: 'Upgrade to Pro',
+              text: t('alerts.upgradeToPro'),
               onPress: () => {
                 setShowTimelineDropdown(false);
                 router.push('/paywall');
@@ -256,9 +260,9 @@ export default function HomeScreen() {
       console.error('Error checking timeline limits:', error);
       // Fail closed - do not allow bypassing limits on error
       setShowTimelineDropdown(false);
-      Alert.alert('Error', 'Could not verify subscription status. Please try again.');
+      Alert.alert(t('common.error'), t('alerts.couldNotVerifySubscription'));
     }
-  }, [timelines.length, router]);
+  }, [timelines.length, router, t]);
 
   /**
    * Handle timeline save with widget sync
@@ -287,13 +291,13 @@ export default function HomeScreen() {
     } catch (error) {
       console.error('Error saving timeline:', error);
       Alert.alert(
-        'Error',
-        'Could not save timeline. Please try again.',
-        [{ text: 'OK' }]
+        t('common.error'),
+        t('alerts.couldNotSave'),
+        [{ text: t('common.ok') }]
       );
       // Keep modal open for retry
     }
-  }, [loadActiveTimeline, loadAllTimelines, editingTimeline]);
+  }, [loadActiveTimeline, loadAllTimelines, editingTimeline, t]);
 
   /**
    * Handle opening timeline management modal
@@ -317,12 +321,12 @@ export default function HomeScreen() {
    */
   const handleTimelineDelete = useCallback(async (timeline: Timeline) => {
     Alert.alert(
-      'Delete Timeline',
-      `Are you sure you want to delete "${timeline.title}"? This action cannot be undone.`,
+      t('alerts.deleteTimeline'),
+      t('alerts.deleteConfirm', { title: timeline.title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -342,13 +346,13 @@ export default function HomeScreen() {
               await syncActiveTimelineToWidget();
             } catch (error) {
               console.error('Error deleting timeline:', error);
-              Alert.alert('Error', 'Could not delete timeline. Please try again.');
+              Alert.alert(t('common.error'), t('alerts.couldNotDelete'));
             }
           },
         },
       ]
     );
-  }, [loadActiveTimeline, loadAllTimelines]);
+  }, [loadActiveTimeline, loadAllTimelines, t]);
 
   // Animated style for icon rotation (must be before early returns)
   const animatedIconStyle = useAnimatedStyle(() => {
@@ -379,7 +383,7 @@ export default function HomeScreen() {
               },
             ]}
           >
-            No active timeline
+            {t('home.noActiveTimeline')}
           </Text>
           <Text
             style={[
@@ -389,7 +393,7 @@ export default function HomeScreen() {
               },
             ]}
           >
-            Create a timeline to get started
+            {t('home.createToGetStarted')}
           </Text>
         </View>
       </SafeAreaView>
@@ -454,7 +458,7 @@ export default function HomeScreen() {
                 },
               ]}
             >
-              {activeTimeline.title}
+              {getTimelineDisplayTitle(activeTimeline)}
             </Text>
             <Animated.View style={animatedIconStyle}>
               <CaretDown size={24} color={colors.textSecondary} weight="regular" />
@@ -499,7 +503,7 @@ export default function HomeScreen() {
               },
             ]}
           >
-            {percentage}% passed
+            {t('home.percentPassed', { percent: percentage })}
           </Text>
         </Animated.View>
       </View>
@@ -535,7 +539,11 @@ export default function HomeScreen() {
       {/* Timeline Management Modal */}
       <TimelineManagementModal
         visible={showManagementModal}
-        onClose={() => setShowManagementModal(false)}
+        onClose={async () => {
+          setShowManagementModal(false);
+          await loadActiveTimeline();
+          await loadAllTimelines();
+        }}
         onRefresh={async () => {
           await loadActiveTimeline();
           await loadAllTimelines();

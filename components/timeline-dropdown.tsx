@@ -26,8 +26,10 @@ import {
   Platform,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from 'react-i18next';
 import { Pencil, Trash, X, Faders } from 'phosphor-react-native';
 import { Timeline, TimelineType } from '@/types/timeline';
+import { getTimelineDisplayTitle } from '@/services/timeline-calculator';
 import {
   Colors,
   FontSizes,
@@ -67,6 +69,7 @@ export function TimelineDropdown({
 }: TimelineDropdownProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const { t } = useTranslation();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.98)).current;
 
@@ -207,7 +210,7 @@ export function TimelineDropdown({
                       ]}
                       numberOfLines={1}
                     >
-                      {timeline.title}
+                      {getTimelineDisplayTitle(timeline)}
                     </Text>
                     {isActive && (
                       <Text style={styles.checkmark}>✓</Text>
@@ -223,7 +226,7 @@ export function TimelineDropdown({
                 onPress={onAddTimeline}
                 activeOpacity={0.6}
               >
-                <Text style={styles.addText}>+ Add Timeline</Text>
+                <Text style={styles.addText}>{t('dropdown.addTimeline')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -232,7 +235,7 @@ export function TimelineDropdown({
                 activeOpacity={0.6}
               >
                 <Faders size={20} color={colors.textSecondary} weight="regular" />
-                <Text style={styles.manageText}>Manage Timelines...</Text>
+                <Text style={styles.manageText}>{t('dropdown.manageTimelines')}</Text>
               </TouchableOpacity>
             </ScrollView>
           </TouchableOpacity>
@@ -268,7 +271,7 @@ export function TimelineDropdown({
                     activeOpacity={0.6}
                   >
                     <Pencil size={18} color={colors.textPrimary} weight="regular" />
-                    <Text style={styles.contextItemText}>Edit</Text>
+                    <Text style={styles.contextItemText}>{t('common.edit')}</Text>
                   </TouchableOpacity>
                 )}
 
@@ -283,7 +286,7 @@ export function TimelineDropdown({
                     activeOpacity={0.6}
                   >
                     <Trash size={18} color={colors.destructive} weight="regular" />
-                    <Text style={[styles.contextItemText, styles.contextItemTextDestructive]}>Delete</Text>
+                    <Text style={[styles.contextItemText, styles.contextItemTextDestructive]}>{t('common.delete')}</Text>
                   </TouchableOpacity>
                 )}
 
@@ -294,7 +297,7 @@ export function TimelineDropdown({
                   activeOpacity={0.6}
                 >
                   <X size={18} color={colors.textPrimary} weight="regular" />
-                  <Text style={styles.contextItemText}>Cancel</Text>
+                  <Text style={styles.contextItemText}>{t('common.cancel')}</Text>
                 </TouchableOpacity>
               </Animated.View>
             </View>

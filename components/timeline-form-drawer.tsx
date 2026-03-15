@@ -25,9 +25,11 @@ import {
   Alert,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { Timeline, TimelineType } from '@/types/timeline';
 import { createTimeline } from '@/services/timeline-calculator';
 import { loadTimelines } from '@/services/storage';
+import { getCurrentLocale } from '@/services/i18n-service';
 import {
   Colors,
   Fonts,
@@ -70,6 +72,7 @@ export function TimelineFormDrawer({
 }: TimelineFormDrawerProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const { t } = useTranslation();
 
   // Animation state
   const [scaleAnim] = useState(new Animated.Value(0.98));
@@ -163,7 +166,7 @@ export function TimelineFormDrawer({
               && (selectedType === TimelineType.YEAR || tStart.getMonth() === newStart.getMonth());
           });
           if (duplicate) {
-            Alert.alert('Duplicate Timeline', `A ${selectedType} timeline for this period already exists.`);
+            Alert.alert(t('timelineForm.duplicateTimeline'), t('timelineForm.duplicateMessage', { type: selectedType }));
             return;
           }
         }
@@ -219,12 +222,12 @@ export function TimelineFormDrawer({
           const isSelected = selectedType === type;
           const label =
             type === TimelineType.YEAR
-              ? 'Year'
+              ? t('timeline.year')
               : type === TimelineType.MONTH
-                ? 'Month'
+                ? t('timeline.month')
                 : type === TimelineType.WEEK
-                  ? 'Week'
-                  : 'Custom';
+                  ? t('timeline.week')
+                  : t('timeline.custom');
 
           return (
             <TouchableOpacity
@@ -282,7 +285,7 @@ export function TimelineFormDrawer({
               },
             ]}
           >
-            TITLE
+            {t('timelineForm.titleLabel')}
           </Text>
           <TextInput
             style={[
@@ -295,7 +298,7 @@ export function TimelineFormDrawer({
             ]}
             value={customTitle}
             onChangeText={setCustomTitle}
-            placeholder="Enter timeline name"
+            placeholder={t('timelineForm.titlePlaceholder')}
             placeholderTextColor={colors.textTertiary}
             maxLength={80}
           />
@@ -311,7 +314,7 @@ export function TimelineFormDrawer({
               },
             ]}
           >
-            START DATE
+            {t('timelineForm.startDate')}
           </Text>
           <TouchableOpacity
             style={[
@@ -331,7 +334,7 @@ export function TimelineFormDrawer({
                 },
               ]}
             >
-              {customStartDate.toLocaleDateString('en-US', {
+              {customStartDate.toLocaleDateString(getCurrentLocale(), {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -350,7 +353,7 @@ export function TimelineFormDrawer({
               },
             ]}
           >
-            END DATE
+            {t('timelineForm.endDate')}
           </Text>
           <TouchableOpacity
             style={[
@@ -370,7 +373,7 @@ export function TimelineFormDrawer({
                 },
               ]}
             >
-              {customEndDate.toLocaleDateString('en-US', {
+              {customEndDate.toLocaleDateString(getCurrentLocale(), {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -463,12 +466,12 @@ export function TimelineFormDrawer({
                 activeOpacity={0.6}
               >
                 <Text style={[styles.cancelButton, { color: colors.textSecondary }]}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
 
               <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-                {timeline ? 'Edit Timeline' : 'New Timeline'}
+                {timeline ? t('timelineForm.editTimeline') : t('timelineForm.newTimeline')}
               </Text>
 
               <TouchableOpacity
@@ -477,7 +480,7 @@ export function TimelineFormDrawer({
                 activeOpacity={0.7}
               >
                 <Text style={styles.saveButton}>
-                  Save
+                  {t('common.save')}
                 </Text>
               </TouchableOpacity>
             </View>

@@ -12,12 +12,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View, StyleSheet, Alert, ActivityIndicator, Text, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import RevenueCatUI from 'react-native-purchases-ui';
 
 const APPLE_SUBSCRIPTIONS_URL = 'https://apps.apple.com/account/subscriptions';
 
 export default function CustomerCenterScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
 
   const presentCustomerCenter = useCallback(async () => {
@@ -36,16 +38,16 @@ export default function CustomerCenterScreen() {
         console.error('Error opening Apple subscriptions page:', linkingError);
       }
 
-      Alert.alert('Error', 'Failed to load subscription management. Please try again.', [
+      Alert.alert(t('common.error'), t('customerCenter.errorMessage'), [
         {
-          text: 'OK',
+          text: t('common.ok'),
           onPress: () => router.back(),
         },
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [router]);
+  }, [router, t]);
 
   useEffect(() => {
     presentCustomerCenter();
@@ -55,7 +57,7 @@ export default function CustomerCenterScreen() {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Loading subscription management...</Text>
+        <Text style={styles.loadingText}>{t('customerCenter.loading')}</Text>
       </View>
     );
   }

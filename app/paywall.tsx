@@ -28,6 +28,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import { PurchasesPackage, PurchasesStoreProduct } from 'react-native-purchases';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
@@ -55,35 +56,11 @@ const PHONE_HEIGHT = Math.min(screenH * 0.42, 400);
 const PRICING_OVERLAP = 15;
 const AUTO_PLAY_MS = 3000;
 
-const SLIDES = [
-  {
-    key: 'lock',
-    source: require('../assets/new-paywall/cropped/lock-screen 2.png'),
-    line1: 'lock screen',
-    line2: 'widgets',
-    subtitle: 'Your time, always in view.',
-  },
-  {
-    key: 'small',
-    source: require('../assets/new-paywall/cropped/small-circular-percentage 2.png'),
-    line1: 'small',
-    line2: 'widgets',
-    subtitle: 'A quiet glance at your day, anytime.',
-  },
-  {
-    key: 'medium',
-    source: require('../assets/new-paywall/cropped/medium-text-circular 2.png'),
-    line1: 'medium',
-    line2: 'widgets',
-    subtitle: 'A clearer window into your day.',
-  },
-  {
-    key: 'big',
-    source: require('../assets/new-paywall/cropped/big-grid 2.png'),
-    line1: 'year',
-    line2: 'grid',
-    subtitle: 'See your entire year laid out in a grid.',
-  },
+const SLIDE_SOURCES = [
+  { key: 'lock', source: require('../assets/new-paywall/cropped/lock-screen 2.png') },
+  { key: 'small', source: require('../assets/new-paywall/cropped/small-circular-percentage 2.png') },
+  { key: 'medium', source: require('../assets/new-paywall/cropped/medium-text-circular 2.png') },
+  { key: 'big', source: require('../assets/new-paywall/cropped/big-grid 2.png') },
 ];
 
 type PlanType = 'yearly' | 'monthly';
@@ -97,6 +74,14 @@ export default function PaywallScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const styles = getStyles(colors);
+  const { t } = useTranslation();
+
+  const SLIDES = [
+    { key: 'lock', source: SLIDE_SOURCES[0].source, line1: t('paywall.slide1Line1'), line2: t('paywall.slide1Line2'), subtitle: t('paywall.slide1Subtitle') },
+    { key: 'small', source: SLIDE_SOURCES[1].source, line1: t('paywall.slide2Line1'), line2: t('paywall.slide2Line2'), subtitle: t('paywall.slide2Subtitle') },
+    { key: 'medium', source: SLIDE_SOURCES[2].source, line1: t('paywall.slide3Line1'), line2: t('paywall.slide3Line2'), subtitle: t('paywall.slide3Subtitle') },
+    { key: 'big', source: SLIDE_SOURCES[3].source, line1: t('paywall.slide4Line1'), line2: t('paywall.slide4Line2'), subtitle: t('paywall.slide4Subtitle') },
+  ];
 
   // --- offerings state ---
   const [selectedPlan, setSelectedPlan] = useState<PlanType>('yearly');
@@ -147,9 +132,9 @@ export default function PaywallScreen() {
 
       if (!offering) {
         Alert.alert(
-          'Not Available',
-          'Subscription options are not available at the moment.',
-          [{ text: 'OK', onPress: () => router.back() }]
+          t('alerts.notAvailable'),
+          t('alerts.notAvailableMessage'),
+          [{ text: t('common.ok'), onPress: () => router.back() }]
         );
         return;
       }
@@ -169,8 +154,8 @@ export default function PaywallScreen() {
       setYearlyPackage(yearly || null);
     } catch (error) {
       console.error('Error loading offerings:', error);
-      Alert.alert('Error', 'Failed to load subscription options. Please try again.', [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert(t('common.error'), t('alerts.failedToLoadOptions'), [
+        { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } finally {
       setIsLoading(false);
@@ -185,7 +170,7 @@ export default function PaywallScreen() {
     const packageToPurchase = selectedPlan === 'yearly' ? yearlyPackage : monthlyPackage;
 
     if (!packageToPurchase) {
-      Alert.alert('Error', 'Selected plan is not available.');
+      Alert.alert(t('common.error'), t('alerts.selectedPlanNotAvailable'));
       return;
     }
 
@@ -198,13 +183,13 @@ export default function PaywallScreen() {
       const hasProAccess = hasActiveEntitlement(customerInfo, ENTITLEMENTS.PRO);
 
       if (hasProAccess) {
-        Alert.alert('Welcome to Pro!', 'You now have access to all premium features.', [
-          { text: 'Get Started', onPress: () => router.back() },
+        Alert.alert(t('alerts.welcomeToPro'), t('alerts.welcomeToProMessage'), [
+          { text: t('alerts.getStarted'), onPress: () => router.back() },
         ]);
       }
     } catch (error: any) {
       console.error('Error purchasing:', error);
-      Alert.alert('Purchase Failed', error.message || 'Something went wrong. Please try again.');
+      Alert.alert(t('alerts.purchaseFailed'), error.message || t('alerts.purchaseFailedMessage'));
     } finally {
       setIsPurchasing(false);
     }
@@ -218,24 +203,18 @@ export default function PaywallScreen() {
       const hasProAccess = hasActiveEntitlement(customerInfo, ENTITLEMENTS.PRO);
 
       if (hasProAccess) {
-        Alert.alert('Purchases Restored', 'Your premium access has been restored.', [
-          { text: 'OK', onPress: () => router.back() },
+        Alert.alert(t('alerts.purchasesRestored'), t('alerts.purchasesRestoredMessage'), [
+          { text: t('common.ok'), onPress: () => router.back() },
         ]);
       } else if (customerInfo.allPurchasedProductIdentifiers.length > 0) {
         // User has past purchases but no active entitlement — likely expired
-        Alert.alert(
-          'Subscription Expired',
-          'A previous subscription was found but it appears to have expired. Please subscribe again to regain access.'
-        );
+        Alert.alert(t('alerts.subscriptionExpired'), t('alerts.subscriptionExpiredMessage'));
       } else {
-        Alert.alert(
-          'No Purchases Found',
-          'No purchases were found for this Apple ID. If you subscribed with a different account, please sign in with that Apple ID and try again.'
-        );
+        Alert.alert(t('alerts.noPurchasesFound'), t('alerts.noPurchasesFoundMessage'));
       }
     } catch (error: any) {
       console.error('Error restoring purchases:', error);
-      Alert.alert('Restore Failed', error.message || 'Failed to restore purchases.');
+      Alert.alert(t('alerts.restoreFailed'), error.message || t('alerts.restoreFailed'));
     } finally {
       setIsPurchasing(false);
     }
@@ -251,7 +230,7 @@ export default function PaywallScreen() {
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const next = (activeIndexRef.current + 1) % SLIDES.length;
+      const next = (activeIndexRef.current + 1) % SLIDE_SOURCES.length;
       flatListRef.current?.scrollToIndex({ index: next, animated: true });
       activeIndexRef.current = next;
       setActiveIndex(next);
@@ -354,17 +333,17 @@ export default function PaywallScreen() {
         <View style={styles.pricingBlock}>
           <View style={styles.plansRow}>
             <PricingCard
-              label="1-Month"
+              label={t('paywall.labelMonthly')}
               price={monthlyPackage?.product.priceString || '...'}
-              period="/ month"
+              period={t('paywall.perMonth')}
               isSelected={selectedPlan === 'monthly'}
               onPress={() => setSelectedPlan('monthly')}
               colors={colors}
             />
             <PricingCard
-              label="1-Year"
+              label={t('paywall.labelYearly')}
               price={yearlyPackage?.product.priceString || '...'}
-              period="/ year"
+              period={t('paywall.perYear')}
               isSelected={selectedPlan === 'yearly'}
               showBestValue
               introPrice={yearlyPackage?.product.introPrice ?? null}
@@ -377,7 +356,7 @@ export default function PaywallScreen() {
         {/* Pro features + CTA */}
         <View style={styles.ctaBlock}>
           <Text style={styles.featureDescription}>
-            Unlimited timelines, circular & text & percentage widgets, lock screen widgets, and more.
+            {t('paywall.featureDescription')}
           </Text>
 
           <TouchableOpacity
@@ -387,28 +366,28 @@ export default function PaywallScreen() {
             activeOpacity={0.85}
           >
             <Text style={styles.ctaText}>
-              {isPurchasing ? 'Processing...' : 'Subscribe'}
+              {isPurchasing ? t('paywall.processing') : t('paywall.subscribe')}
             </Text>
           </TouchableOpacity>
 
           <Text style={styles.billingNote}>
             {selectedPlan === 'yearly'
-              ? `Billed ${yearlyPackage?.product.priceString || '...'}/year. Renews annually. Cancel anytime.`
-              : `Billed ${monthlyPackage?.product.priceString || '...'}/month. Renews monthly. Cancel anytime.`}
+              ? t('paywall.billingYearly', { price: yearlyPackage?.product.priceString || '...' })
+              : t('paywall.billingMonthly', { price: monthlyPackage?.product.priceString || '...' })}
           </Text>
 
           <View style={styles.footerLinks}>
             <TouchableOpacity onPress={openTerms}>
-              <Text style={styles.footerLink}>Terms of Use</Text>
+              <Text style={styles.footerLink}>{t('paywall.termsOfUse')}</Text>
             </TouchableOpacity>
             <Text style={styles.footerSep}> · </Text>
             <TouchableOpacity onPress={openPrivacy}>
-              <Text style={styles.footerLink}>Privacy Policy</Text>
+              <Text style={styles.footerLink}>{t('paywall.privacyPolicy')}</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity onPress={handleRestore} disabled={isPurchasing}>
-            <Text style={styles.restoreLink}>Restore Purchases</Text>
+            <Text style={styles.restoreLink}>{t('paywall.restorePurchases')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -431,16 +410,21 @@ interface PricingCardProps {
   colors: typeof Colors.dark;
 }
 
-function formatTrialLabel(introPrice: IntroPrice): string {
-  const n = introPrice.periodNumberOfUnits;
-  const unit = introPrice.periodUnit.toLowerCase();
-  const unitLabel = n === 1 ? unit : `${unit}s`;
-  return `Try free for ${n} ${unitLabel}`;
-}
-
 function PricingCard({ label, price, period, isSelected, showBestValue, introPrice, onPress, colors }: PricingCardProps) {
   const styles = getStyles(colors);
+  const { t } = useTranslation();
   const hasFreeTrial = introPrice != null && introPrice.price === 0;
+
+  const trialLabel = hasFreeTrial
+    ? (() => {
+        const n = introPrice!.periodNumberOfUnits;
+        const unit = introPrice!.periodUnit.toLowerCase();
+        return n === 1
+          ? t('paywall.trialLabel', { n, unit })
+          : t('paywall.trialLabelPlural', { n, unit });
+      })()
+    : '';
+
   return (
     <TouchableOpacity
       style={[styles.pricingCard, { borderColor: isSelected ? '#007AFF' : colors.separator }]}
@@ -449,12 +433,12 @@ function PricingCard({ label, price, period, isSelected, showBestValue, introPri
     >
       {hasFreeTrial && (
         <View style={styles.freeTrialPill}>
-          <Text style={styles.freeTrialText}>{formatTrialLabel(introPrice!)}</Text>
+          <Text style={styles.freeTrialText}>{trialLabel}</Text>
         </View>
       )}
       {showBestValue && !hasFreeTrial && (
         <View style={styles.bestValuePill}>
-          <Text style={styles.bestValueText}>Best Value</Text>
+          <Text style={styles.bestValueText}>{t('paywall.bestValue')}</Text>
         </View>
       )}
       <View style={styles.pricingCardRow}>
@@ -464,7 +448,7 @@ function PricingCard({ label, price, period, isSelected, showBestValue, introPri
             {price} <Text style={styles.pricingPeriod}>{period}</Text>
           </Text>
           <Text style={styles.pricingRenewNote}>
-            {label === '1-Year' ? '1-year subscription · Auto-renews annually' : '1-month subscription · Auto-renews monthly'}
+            {label === t('paywall.labelYearly') ? t('paywall.renewYearly') : t('paywall.renewMonthly')}
           </Text>
         </View>
         <CheckCircle

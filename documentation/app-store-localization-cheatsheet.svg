@@ -1,0 +1,335 @@
+<svg width="1800" height="11820" viewBox="0 0 1800 11820" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1800" height="11820" fill="#0E1117"/>
+  <text x="70" y="90" fill="#F5F7FA" font-family="Satoshi, Inter, Arial, sans-serif" font-size="42" font-weight="700">App Store Localization Cheatsheet</text>
+  <text x="70" y="130" fill="#9CA3AF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="20" font-weight="500">Current 5-screen set. Import this SVG into Figma and copy text directly from the language cards.</text>
+
+  <!-- English US -->
+  <g transform="translate(50 180)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">English (US)</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Time is precious.</tspan>
+      <tspan x="36" dy="34">Make it visible.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Your life on your</tspan>
+      <tspan x="36" dy="34">Home Screen</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Widgets that stay in view.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">One app.</tspan>
+      <tspan x="36" dy="34">Multiple timelines.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Create timelines for anything important.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Track what matters</tspan>
+      <tspan x="36" dy="34">to you.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Quiet. Honest. Stoic.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Even on your Lock Screen.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Bug fixes and polish across the app and widgets.</tspan>
+    </text>
+  </g>
+
+  <!-- English UK -->
+  <g transform="translate(50 1190)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">English (UK)</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Time is precious.</tspan>
+      <tspan x="36" dy="34">Make it visible.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Your life on your</tspan>
+      <tspan x="36" dy="34">Home Screen</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Widgets that stay in view.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">One app.</tspan>
+      <tspan x="36" dy="34">Multiple timelines.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Create timelines for anything important.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Track what matters</tspan>
+      <tspan x="36" dy="34">to you.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Quiet. Honest. Stoic.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Even on your Lock Screen.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Bug fixes and polish across the app and widgets.</tspan>
+    </text>
+  </g>
+
+  <!-- Arabic -->
+  <g transform="translate(50 2200)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Arabic</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500" direction="rtl" unicode-bidi="plaintext">
+      <tspan x="1664" dy="0">S1 Headline</tspan>
+      <tspan x="1664" dy="34">الوقت ثمين.</tspan>
+      <tspan x="1664" dy="34">اجعله مرئياً.</tspan>
+      <tspan x="1664" dy="44">S2 Headline</tspan>
+      <tspan x="1664" dy="34">حياتك على</tspan>
+      <tspan x="1664" dy="34">شاشتك الرئيسية</tspan>
+      <tspan x="1664" dy="44">S2 Sub-text</tspan>
+      <tspan x="1664" dy="34">ودجات تبقى أمامك دائماً.</tspan>
+      <tspan x="1664" dy="44">S3 Headline</tspan>
+      <tspan x="1664" dy="34">تطبيق واحد.</tspan>
+      <tspan x="1664" dy="34">جداول زمنية متعددة.</tspan>
+      <tspan x="1664" dy="44">S3 Sub-text</tspan>
+      <tspan x="1664" dy="34">أنشئ جداول زمنية لكل ما يهمك.</tspan>
+      <tspan x="1664" dy="44">S4 Headline</tspan>
+      <tspan x="1664" dy="34">تتبّع ما</tspan>
+      <tspan x="1664" dy="34">يهمك فعلاً.</tspan>
+      <tspan x="1664" dy="44">S5 Headline</tspan>
+      <tspan x="1664" dy="34">هادئ. صادق. رواقي.</tspan>
+      <tspan x="1664" dy="44">S5 Sub-text</tspan>
+      <tspan x="1664" dy="34">حتى على شاشة القفل.</tspan>
+      <tspan x="1664" dy="44">What's New in This Version</tspan>
+      <tspan x="1664" dy="34">إصلاحات وتحسينات في التطبيق والودجات.</tspan>
+    </text>
+  </g>
+
+  <!-- Czech -->
+  <g transform="translate(50 3210)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Czech</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Čas je vzácný.</tspan>
+      <tspan x="36" dy="34">Udělej ho viditelným.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Tvůj život na</tspan>
+      <tspan x="36" dy="34">domovské obrazovce</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Widgety, které zůstávají na očích.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Jedna aplikace.</tspan>
+      <tspan x="36" dy="34">Více časových os.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Vytvářej časové osy pro všechno důležité.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Sleduj to,</tspan>
+      <tspan x="36" dy="34">na čem ti záleží.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Tiše. Upřímně. Stoicky.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">I na zamykací obrazovce.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Opravy chyb a vylepšení v aplikaci i widgetech.</tspan>
+    </text>
+  </g>
+
+  <!-- Danish -->
+  <g transform="translate(50 4220)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Danish</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Tiden er kostbar.</tspan>
+      <tspan x="36" dy="34">Gør den synlig.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Dit liv på din</tspan>
+      <tspan x="36" dy="34">hjemmeskærm</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Widgets, der altid er i syne.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Én app.</tspan>
+      <tspan x="36" dy="34">Flere tidslinjer.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Lav tidslinjer til alt, der betyder noget.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Spor det,</tspan>
+      <tspan x="36" dy="34">der betyder noget for dig.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Stille. Ærlig. Stoisk.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Selv på din låseskærm.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Fejlrettelser og finpudsning i appen og widgets.</tspan>
+    </text>
+  </g>
+
+  <!-- Finnish -->
+  <g transform="translate(50 5230)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Finnish</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Aika on arvokasta.</tspan>
+      <tspan x="36" dy="34">Tee siitä näkyvää.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Elämäsi</tspan>
+      <tspan x="36" dy="34">kotinäytöllä</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Widgetit, jotka pysyvät näkyvissä.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Yksi sovellus.</tspan>
+      <tspan x="36" dy="34">Monta aikajanaa.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Luo aikajanoja kaikelle tärkeälle.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Seuraa sitä,</tspan>
+      <tspan x="36" dy="34">mikä sinulle merkitsee.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Hiljaa. Rehellisesti. Stoalaisesti.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Jopa lukitusnäytölläsi.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Virheenkorjauksia ja viimeistelyä sovellukseen ja widgetteihin.</tspan>
+    </text>
+  </g>
+
+  <!-- French -->
+  <g transform="translate(50 6240)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">French</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Le temps est précieux.</tspan>
+      <tspan x="36" dy="34">Rendez-le visible.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Votre vie sur votre</tspan>
+      <tspan x="36" dy="34">écran d'accueil</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Des widgets toujours sous les yeux.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Une seule app.</tspan>
+      <tspan x="36" dy="34">Plusieurs chronologies.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Créez des chronologies pour tout ce qui compte.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Suivez ce qui compte</tspan>
+      <tspan x="36" dy="34">pour vous.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Calme. Honnête. Stoïque.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Même sur votre écran verrouillé.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Corrections de bugs et améliorations de l’app et des widgets.</tspan>
+    </text>
+  </g>
+
+  <!-- Greek -->
+  <g transform="translate(50 7250)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Greek</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Ο χρόνος είναι πολύτιμος.</tspan>
+      <tspan x="36" dy="34">Κάν’ τον ορατό.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Η ζωή σου στην</tspan>
+      <tspan x="36" dy="34">Αρχική Οθόνη</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Widgets που μένουν πάντα σε θέα.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Μία εφαρμογή.</tspan>
+      <tspan x="36" dy="34">Πολλές χρονικές γραμμές.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Φτιάξε χρονικές γραμμές για ό,τι έχει σημασία.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Παρακολούθησε ό,τι</tspan>
+      <tspan x="36" dy="34">έχει σημασία για σένα.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Ήσυχα. Ειλικρινά. Στωικά.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Ακόμα και στην Οθόνη Κλειδώματος.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Διορθώσεις σφαλμάτων και βελτιώσεις σε εφαρμογή και widgets.</tspan>
+    </text>
+  </g>
+
+  <!-- Hindi -->
+  <g transform="translate(50 8260)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Hindi</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">समय क़ीमती है।</tspan>
+      <tspan x="36" dy="34">उसे नज़र आने दो।</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">आपकी ज़िंदगी</tspan>
+      <tspan x="36" dy="34">होम स्क्रीन पर</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">विजेट जो हमेशा नज़र में रहें।</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">एक ही ऐप।</tspan>
+      <tspan x="36" dy="34">कई टाइमलाइन।</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">जो भी अहम हो, उसके लिए टाइमलाइन बनाइए।</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">जो मायने रखता है,</tspan>
+      <tspan x="36" dy="34">उसे ट्रैक करें।</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">शांत। सच्चा। स्टोइक।</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">लॉक स्क्रीन पर भी।</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">बग फिक्स और ऐप व विजेट्स में छोटे सुधार।</tspan>
+    </text>
+  </g>
+
+  <!-- Russian -->
+  <g transform="translate(50 9270)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Russian</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Время ценно.</tspan>
+      <tspan x="36" dy="34">Сделайте его видимым.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Ваша жизнь на</tspan>
+      <tspan x="36" dy="34">главном экране</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Виджеты, которые всегда на виду.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Одно приложение.</tspan>
+      <tspan x="36" dy="34">Несколько таймлайнов.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Создавайте таймлайны для всего важного.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Следите за тем,</tspan>
+      <tspan x="36" dy="34">что важно вам.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Тихо. Честно. По-стоически.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Даже на экране блокировки.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Исправления ошибок и улучшения в приложении и виджетах.</tspan>
+    </text>
+  </g>
+
+  <!-- Turkish -->
+  <g transform="translate(50 10280)">
+    <rect width="1700" height="980" rx="28" fill="#151A22" stroke="#252B36"/>
+    <text x="36" y="58" fill="#FFFFFF" font-family="Satoshi, Inter, Arial, sans-serif" font-size="28" font-weight="700">Turkish</text>
+    <text x="36" y="108" fill="#E5E7EB" font-family="Satoshi, Inter, Arial, sans-serif" font-size="22" font-weight="500">
+      <tspan x="36" dy="0">S1 Headline</tspan>
+      <tspan x="36" dy="34">Zaman değerli.</tspan>
+      <tspan x="36" dy="34">Onu görünür kıl.</tspan>
+      <tspan x="36" dy="44">S2 Headline</tspan>
+      <tspan x="36" dy="34">Hayatın</tspan>
+      <tspan x="36" dy="34">Ana Ekranında</tspan>
+      <tspan x="36" dy="44">S2 Sub-text</tspan>
+      <tspan x="36" dy="34">Hep göz önünde kalan widget'lar.</tspan>
+      <tspan x="36" dy="44">S3 Headline</tspan>
+      <tspan x="36" dy="34">Tek uygulama.</tspan>
+      <tspan x="36" dy="34">Birden fazla zaman çizelgesi.</tspan>
+      <tspan x="36" dy="44">S3 Sub-text</tspan>
+      <tspan x="36" dy="34">Önemli olan her şey için bir çizelge oluştur.</tspan>
+      <tspan x="36" dy="44">S4 Headline</tspan>
+      <tspan x="36" dy="34">Senin için önemli</tspan>
+      <tspan x="36" dy="34">olanı takip et.</tspan>
+      <tspan x="36" dy="44">S5 Headline</tspan>
+      <tspan x="36" dy="34">Sakin. Dürüst. Stoik.</tspan>
+      <tspan x="36" dy="44">S5 Sub-text</tspan>
+      <tspan x="36" dy="34">Kilit Ekranında bile.</tspan>
+      <tspan x="36" dy="44">What's New in This Version</tspan>
+      <tspan x="36" dy="34">Hata düzeltmeleri ve uygulama ile widget'larda ince iyileştirmeler.</tspan>
+    </text>
+  </g>
+</svg>

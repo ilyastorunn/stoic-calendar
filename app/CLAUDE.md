@@ -8,4 +8,20 @@
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #533 | 12:54 PM | 🟣 | Free trial promotion display added to yearly subscription paywall card | ~444 |
+
+### Mar 1, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #679 | 2:56 PM | 🔵 | Security audit reveals critical API key exposure and 10 vulnerabilities | ~671 |
+| #677 | 2:54 PM | 🔵 | Code audit reveals 20 bugs including critical race conditions and data corruption risks | ~662 |
+| #671 | 2:51 PM | 🔵 | Settings screen with Stoic philosophy and grid color customization | ~548 |
+| #670 | 2:50 PM | 🔵 | Home screen with auto-timeline management and staggered animations | ~499 |
+| #665 | 2:48 PM | 🔵 | Box Box Club-style paywall with phone carousel design | ~371 |
+
+### Mar 10, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #797 | 5:46 PM | 🔵 | Paywall UI Dynamically Loads Pricing from RevenueCat Offerings | ~383 |
 </claude-mem-context>

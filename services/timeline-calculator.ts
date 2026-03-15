@@ -4,6 +4,7 @@
  */
 
 import { Timeline, TimelineType } from '@/types/timeline';
+import i18n, { getCurrentLocale } from '@/services/i18n-service';
 import {
   getStartOfCurrentYear,
   getEndOfCurrentYear,
@@ -88,7 +89,7 @@ export function calculateTimelineFromType(
       const startDate = getStartOfMonth(year, month);
       const endDate = getEndOfMonth(year, month);
 
-      const monthName = startDate.toLocaleDateString('en-US', { month: 'long' });
+      const monthName = startDate.toLocaleDateString(getCurrentLocale(), { month: 'long' });
       const title = monthName;
 
       return {
@@ -106,7 +107,7 @@ export function calculateTimelineFromType(
       return {
         startDate: toISOString(startDate),
         endDate: toISOString(endDate),
-        title: 'This Week',
+        title: i18n.t('timeline.thisWeek'),
       };
     }
 
@@ -119,7 +120,7 @@ export function calculateTimelineFromType(
       return {
         startDate: toISOString(customOptions.startDate),
         endDate: toISOString(customOptions.endDate),
-        title: customOptions.title || 'Custom Timeline',
+        title: customOptions.title || i18n.t('timeline.customTimeline'),
       };
     }
 
@@ -236,7 +237,7 @@ export function updateWeekTimeline(timeline: Timeline): Timeline {
     ...timeline,
     startDate: config.startDate,
     endDate: config.endDate,
-    title: 'This Week',
+    title: i18n.t('timeline.thisWeek'),
   };
 }
 
@@ -430,6 +431,31 @@ export function validateTimeline(timeline: Partial<Timeline>): boolean {
 // ============================================================================
 
 /**
+ * Get the locale-aware display title for a timeline.
+ * For non-custom types, derives the title from the timeline's startDate and
+ * the active locale so it always reflects the current language — even after
+ * a language switch without re-creating the timeline.
+ *
+ * CUSTOM timelines keep their user-chosen title unchanged.
+ */
+export function getTimelineDisplayTitle(timeline: Timeline): string {
+  switch (timeline.type) {
+    case TimelineType.WEEK:
+      return i18n.t('timeline.thisWeek');
+    case TimelineType.MONTH: {
+      const date = new Date(timeline.startDate);
+      return date.toLocaleDateString(getCurrentLocale(), { month: 'long' });
+    }
+    case TimelineType.YEAR:
+      return new Date(timeline.startDate).getFullYear().toString();
+    case TimelineType.CUSTOM:
+      return timeline.title;
+    default:
+      return timeline.title;
+  }
+}
+
+/**
  * Get a human-readable description of a timeline
  * Examples: "Year · 1%", "Week · 100%", "Custom · 50%"
  *
@@ -441,14 +467,14 @@ export function getTimelineDescription(timeline: Timeline): string {
 
   const typeLabel =
     timeline.type === TimelineType.YEAR
-      ? 'Year'
+      ? i18n.t('timeline.year')
       : timeline.type === TimelineType.MONTH
-        ? 'Month'
+        ? i18n.t('timeline.month')
         : timeline.type === TimelineType.WEEK
-          ? 'Week'
-          : 'Custom';
+          ? i18n.t('timeline.week')
+          : i18n.t('timeline.custom');
 
-  return `${typeLabel} · ${stats.progressPercentage}%`;
+  return i18n.t('timeline.description', { type: typeLabel, percent: stats.progressPercentage });
 }
 
 /**
@@ -460,7 +486,7 @@ export function getTimelineDescription(timeline: Timeline): string {
  */
 export function getTimelineProgress(timeline: Timeline): string {
   const stats = calculateTimelineStats(timeline);
-  return `${stats.daysPassed} of ${stats.totalDays} days`;
+  return i18n.t('timeline.progress', { passed: stats.daysPassed, total: stats.totalDays });
 }
 
 /**
@@ -473,7 +499,7 @@ export function getTimelineProgress(timeline: Timeline): string {
 export function getTimelineRemaining(timeline: Timeline): string {
   const stats = calculateTimelineStats(timeline);
   const days = stats.daysRemaining;
-  return `${days} day${days === 1 ? '' : 's'} remaining`;
+  return i18n.t('timeline.remaining', { count: days });
 }
 
 /**

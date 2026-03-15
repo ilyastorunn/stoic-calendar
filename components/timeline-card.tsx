@@ -20,11 +20,13 @@ import {
   useColorScheme,
   Pressable,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Timeline } from '@/types/timeline';
 import { StoicGrid } from './stoic-grid';
 import {
   getTimelineDescription,
   getTimelineProgress,
+  getTimelineDisplayTitle,
 } from '@/services/timeline-calculator';
 import {
   Colors,
@@ -76,7 +78,9 @@ export function TimelineCard({
 }: TimelineCardProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
+  const { t } = useTranslation();
 
+  const displayTitle = getTimelineDisplayTitle(timeline);
   const description = getTimelineDescription(timeline);
   const progress = getTimelineProgress(timeline);
   const isCustomTimeline = timeline.type === 'custom';
@@ -106,7 +110,7 @@ export function TimelineCard({
               },
             ]}
           >
-            {timeline.title}
+            {displayTitle}
           </Text>
 
           <Text
@@ -149,7 +153,7 @@ export function TimelineCard({
                   },
                 ]}
               >
-                Edit
+                {t('common.edit')}
               </Text>
             </TouchableOpacity>
           )}

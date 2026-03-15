@@ -51,7 +51,8 @@
           }
         }
       ],
-      "@bacons/apple-targets"
+      "@bacons/apple-targets",
+      "expo-localization"
     ],
     "autolinking": {
       "nativeModulesDir": "./modules"

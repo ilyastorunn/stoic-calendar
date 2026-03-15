@@ -28,6 +28,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { X, Plus } from 'phosphor-react-native';
 import { Timeline } from '@/types/timeline';
 import { TimelineCard } from './timeline-card';
@@ -81,6 +82,7 @@ export function TimelineManagementModal({
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
+  const { t } = useTranslation();
 
   // Data state
   const [timelines, setTimelines] = useState<Timeline[]>([]);
@@ -195,7 +197,7 @@ export function TimelineManagementModal({
       setEditingTimeline(undefined);
 
       // Notify parent to refresh
-      onRefresh?.();
+      await onRefresh?.();
     } catch (error) {
       console.error('Error saving timeline:', error);
     }
@@ -213,15 +215,15 @@ export function TimelineManagementModal({
    */
   const handleTimelineDelete = (timeline: Timeline) => {
     Alert.alert(
-      'Delete Timeline',
-      `Are you sure you want to delete "${timeline.title}"?`,
+      t('management.deleteTimeline'),
+      t('management.deleteConfirm', { title: timeline.title }),
       [
         {
-          text: 'Cancel',
+          text: t('common.cancel'),
           style: 'cancel',
         },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -248,6 +250,7 @@ export function TimelineManagementModal({
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
+      onDismiss={onClose}
     >
       <BlurView
         intensity={100}
@@ -259,9 +262,9 @@ export function TimelineManagementModal({
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerLeft}>
-                <Text style={styles.title}>Timeline Management</Text>
+                <Text style={styles.title}>{t('management.timelineManagement')}</Text>
                 <Text style={styles.subtitle}>
-                  {timelines.length} timeline{timelines.length !== 1 ? 's' : ''}
+                  {t('management.timelineCount', { count: timelines.length })}
                 </Text>
               </View>
 
@@ -297,9 +300,9 @@ export function TimelineManagementModal({
 
               {!loading && timelines.length === 0 && (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyText}>No timelines yet</Text>
+                  <Text style={styles.emptyText}>{t('management.noTimelinesYet')}</Text>
                   <Text style={styles.emptySubtext}>
-                    Tap + to create your first timeline
+                    {t('management.tapToCreate')}
                   </Text>
                 </View>
               )}
@@ -314,7 +317,7 @@ export function TimelineManagementModal({
                   activeOpacity={0.6}
                 >
                   <Plus size={20} color={colors.background} weight="bold" />
-                  <Text style={styles.createButtonText}>Create Timeline</Text>
+                  <Text style={styles.createButtonText}>{t('management.createTimeline')}</Text>
                 </TouchableOpacity>
               </Animated.View>
             </ScrollView>
