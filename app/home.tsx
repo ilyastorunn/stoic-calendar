@@ -31,7 +31,15 @@ import { DateDisplayOverlay } from '@/components/date-display-overlay';
 import { TimelineDropdown } from '@/components/timeline-dropdown';
 import { TimelineFormDrawer } from '@/components/timeline-form-drawer';
 import { TimelineManagementModal } from '@/components/timeline-management-modal';
-import { getActiveTimeline, loadTimelines, saveTimeline, setActiveTimeline as setActiveTimelineInStorage, deleteTimeline } from '@/services/storage';
+import {
+  getActiveTimeline,
+  loadTimelines,
+  saveTimeline,
+  setActiveTimeline as setActiveTimelineInStorage,
+  deleteTimeline,
+  hasShownFirstLaunchPaywall,
+  markFirstLaunchPaywallShown,
+} from '@/services/storage';
 import {
   getTimelineProgress,
   getTimelineRemaining,
@@ -52,6 +60,8 @@ import {
   Spacing,
   Layout,
 } from '@/constants/theme';
+
+const FIRST_LAUNCH_PAYWALL_DELAY_MS = 4000;
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -99,6 +109,44 @@ export default function HomeScreen() {
   useEffect(() => {
     loadAllTimelines();
   }, [loadAllTimelines]);
+
+  /**
+   * Show paywall once for first-time users after a short delay.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const maybeShowFirstLaunchPaywall = async () => {
+      try {
+        const alreadyShown = await hasShownFirstLaunchPaywall();
+        if (alreadyShown) return;
+
+        const hasProAccess = await isPro();
+        if (hasProAccess) {
+          await markFirstLaunchPaywallShown();
+          return;
+        }
+
+        timer = setTimeout(async () => {
+          if (cancelled) return;
+          await markFirstLaunchPaywallShown();
+          router.push('/paywall');
+        }, FIRST_LAUNCH_PAYWALL_DELAY_MS);
+      } catch (error) {
+        console.error('Error handling first-launch paywall:', error);
+      }
+    };
+
+    maybeShowFirstLaunchPaywall();
+
+    return () => {
+      cancelled = true;
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, [router]);
 
   /**
    * Load active timeline

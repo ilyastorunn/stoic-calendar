@@ -256,26 +256,30 @@ export default function PaywallScreen() {
   // Render helpers
   // ---------------------------------------------------------------------------
 
-  const renderSlide = ({ item }: { item: (typeof SLIDES)[0] }) => (
-    <View style={styles.slideContainer}>
-      <Image
-        source={item.source}
-        style={styles.slideImage}
-        contentFit="contain"
-      />
-      {/* Bottom gradient fade */}
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
-        <Defs>
-          <LinearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="40%" stopColor={colors.background} stopOpacity={0} />
-            <Stop offset="75%" stopColor={colors.background} stopOpacity={0.6} />
-            <Stop offset="100%" stopColor={colors.background} stopOpacity={1} />
-          </LinearGradient>
-        </Defs>
-        <Rect x="0" y="0" width="100%" height="100%" fill="url(#bottomFade)" />
-      </Svg>
-    </View>
-  );
+  const renderSlide = ({ item }: { item: (typeof SLIDES)[0] }) => {
+    // Keep gradient IDs unique per slide to avoid SVG URL collisions in virtualized lists.
+    const gradientId = `bottomFade-${item.key}`;
+
+    return (
+      <View style={styles.slideContainer}>
+        <Image
+          source={item.source}
+          style={styles.slideImage}
+          contentFit="contain"
+        />
+        <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+          <Defs>
+            <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset={0.4} stopColor={colors.background} stopOpacity={0} />
+              <Stop offset={0.75} stopColor={colors.background} stopOpacity={0.6} />
+              <Stop offset={1} stopColor={colors.background} stopOpacity={1} />
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width="100%" height="100%" fill={`url(#${gradientId})`} />
+        </Svg>
+      </View>
+    );
+  };
 
   // ---------------------------------------------------------------------------
   // Render
@@ -283,7 +287,6 @@ export default function PaywallScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Close button — fixed top-right */}
       <TouchableOpacity
         style={styles.closeButton}
         onPress={() => router.back()}

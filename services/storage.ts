@@ -26,6 +26,7 @@ const STORAGE_KEYS = {
   TIMELINES: '@stoic_calendar:timelines',
   SETTINGS: '@stoic_calendar:settings',
   ACTIVE_TIMELINE_ID: '@stoic_calendar:active_timeline_id',
+  FIRST_LAUNCH_PAYWALL_SHOWN: '@stoic_calendar:first_launch_paywall_shown',
 } as const;
 
 /**
@@ -332,9 +333,35 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.TIMELINES,
       STORAGE_KEYS.SETTINGS,
       STORAGE_KEYS.ACTIVE_TIMELINE_ID,
+      STORAGE_KEYS.FIRST_LAUNCH_PAYWALL_SHOWN,
     ]);
   } catch (error) {
     console.error('Error clearing all data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check whether first-launch paywall has already been shown.
+ */
+export async function hasShownFirstLaunchPaywall(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.FIRST_LAUNCH_PAYWALL_SHOWN);
+    return value === 'true';
+  } catch (error) {
+    console.error('Error reading first-launch paywall state:', error);
+    return false;
+  }
+}
+
+/**
+ * Mark first-launch paywall as shown.
+ */
+export async function markFirstLaunchPaywallShown(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.FIRST_LAUNCH_PAYWALL_SHOWN, 'true');
+  } catch (error) {
+    console.error('Error marking first-launch paywall as shown:', error);
     throw error;
   }
 }
@@ -361,11 +388,13 @@ export async function exportData(): Promise<string> {
     const timelines = await loadTimelines();
     const settings = await loadSettings();
     const activeId = await getActiveTimelineId();
+    const firstLaunchPaywallShown = await hasShownFirstLaunchPaywall();
 
     const data = {
       timelines,
       settings,
       activeTimelineId: activeId,
+      firstLaunchPaywallShown,
       exportedAt: new Date().toISOString(),
     };
 

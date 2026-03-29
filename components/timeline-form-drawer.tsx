@@ -74,6 +74,24 @@ export function TimelineFormDrawer({
   const colors = Colors[colorScheme ?? 'dark'];
   const { t } = useTranslation();
 
+  // Keep native picker locale aligned with active app language.
+  const appLocale = getCurrentLocale();
+  const baseLocale = appLocale.toLowerCase().split('-')[0];
+  const pickerLocale =
+    appLocale.includes('-')
+      ? appLocale
+      : ({
+          en: 'en-US',
+          tr: 'tr-TR',
+          fr: 'fr-FR',
+          zh: 'zh-Hans',
+          es: 'es-ES',
+          ar: 'ar-SA',
+          da: 'da-DK',
+          el: 'el-GR',
+          ru: 'ru-RU',
+        }[baseLocale] ?? 'en-US');
+
   // Animation state
   const [scaleAnim] = useState(new Animated.Value(0.98));
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -385,9 +403,11 @@ export function TimelineFormDrawer({
         {/* Date Pickers */}
         {activePicker === 'start' && (
           <DateTimePicker
+            key={`start-${pickerLocale}`}
             value={customStartDate}
             mode="date"
             display="spinner"
+            locale={pickerLocale}
             maximumDate={customEndDate}
             onChange={(_, date) => {
               if (Platform.OS !== 'ios') {
@@ -400,9 +420,11 @@ export function TimelineFormDrawer({
 
         {activePicker === 'end' && (
           <DateTimePicker
+            key={`end-${pickerLocale}`}
             value={customEndDate}
             mode="date"
             display="spinner"
+            locale={pickerLocale}
             minimumDate={customStartDate}
             onChange={(_, date) => {
               if (Platform.OS !== 'ios') {
