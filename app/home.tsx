@@ -9,7 +9,7 @@
  * - Days remaining text (bottom)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -37,9 +37,15 @@ import {
   saveTimeline,
   setActiveTimeline as setActiveTimelineInStorage,
   deleteTimeline,
-  hasShownFirstLaunchPaywall,
-  markFirstLaunchPaywallShown,
 } from '@/services/storage';
+import {
+  getPaywallOfferingId,
+  hasReachedFirstValueMoment,
+  markFirstValueMoment,
+  markSoftUpsellPresented,
+  OFFERING_IDS,
+  shouldPresentSoftUpsell,
+} from '@/services/trial-service';
 import {
   getTimelineProgress,
   getTimelineRemaining,
@@ -61,7 +67,7 @@ import {
   Layout,
 } from '@/constants/theme';
 
-const FIRST_LAUNCH_PAYWALL_DELAY_MS = 4000;
+const FIRST_VALUE_PAYWALL_DELAY_MS = 2000;
 
 export default function HomeScreen() {
   const colorScheme = useColorScheme();
@@ -79,6 +85,7 @@ export default function HomeScreen() {
   const [editingTimeline, setEditingTimeline] = useState<Timeline | undefined>(undefined);
   const [timelines, setTimelines] = useState<Timeline[]>([]);
   const [titlePosition, setTitlePosition] = useState({ x: 0, y: 0 });
+  const paywallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Icon rotation animation
   const iconRotation = useSharedValue(0);
@@ -111,42 +118,99 @@ export default function HomeScreen() {
   }, [loadAllTimelines]);
 
   /**
-   * Show paywall once for first-time users after a short delay.
+   * Experiment-driven paywall behavior.
+   * default   => no automatic paywall
+   * variant_a => one-time dismissable upsell after first value
+   * variant_b => hard paywall after first value
    */
   useEffect(() => {
+    if (loading || !activeTimeline) {
+      return;
+    }
+
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const maybeShowFirstLaunchPaywall = async () => {
+    if (paywallTimerRef.current) {
+      clearTimeout(paywallTimerRef.current);
+      paywallTimerRef.current = null;
+    }
+
+    const schedulePaywall = (
+      dismissable: '0' | '1',
+      delayMs: number,
+      onBeforeNavigate?: () => Promise<void>
+    ) => {
+      paywallTimerRef.current = setTimeout(() => {
+        if (cancelled) return;
+
+        const navigate = async () => {
+          if (onBeforeNavigate) {
+            await onBeforeNavigate();
+          }
+
+          if (cancelled) return;
+          router.push({ pathname: '/paywall', params: { dismissable } });
+        };
+
+        navigate().catch((error) => {
+          console.error('Error navigating to paywall:', error);
+        });
+      }, delayMs);
+    };
+
+    const maybeShowPaywall = async () => {
       try {
-        const alreadyShown = await hasShownFirstLaunchPaywall();
-        if (alreadyShown) return;
-
         const hasProAccess = await isPro();
-        if (hasProAccess) {
-          await markFirstLaunchPaywallShown();
+        if (hasProAccess) return;
+
+        const offeringId = await getPaywallOfferingId();
+        if (offeringId === OFFERING_IDS.DEFAULT) {
           return;
         }
 
-        timer = setTimeout(async () => {
-          if (cancelled) return;
-          await markFirstLaunchPaywallShown();
-          router.push('/paywall');
-        }, FIRST_LAUNCH_PAYWALL_DELAY_MS);
+        const hasSeenFirstValue = await hasReachedFirstValueMoment();
+
+        if (offeringId === OFFERING_IDS.VARIANT_A) {
+          const shouldShowSoftUpsell = await shouldPresentSoftUpsell();
+
+          if (!shouldShowSoftUpsell) {
+            return;
+          }
+
+          if (!hasSeenFirstValue) {
+            await markFirstValueMoment();
+          }
+
+          schedulePaywall(
+            '1',
+            hasSeenFirstValue ? 0 : FIRST_VALUE_PAYWALL_DELAY_MS,
+            markSoftUpsellPresented
+          );
+          return;
+        }
+
+        if (!hasSeenFirstValue) {
+          await markFirstValueMoment();
+          schedulePaywall('0', FIRST_VALUE_PAYWALL_DELAY_MS);
+          return;
+        }
+
+        schedulePaywall('0', 0);
       } catch (error) {
-        console.error('Error handling first-launch paywall:', error);
+        console.error('Error handling paywall gate:', error);
       }
     };
 
-    maybeShowFirstLaunchPaywall();
+    maybeShowPaywall();
 
     return () => {
       cancelled = true;
-      if (timer) {
-        clearTimeout(timer);
+      if (paywallTimerRef.current) {
+        clearTimeout(paywallTimerRef.current);
+        paywallTimerRef.current = null;
       }
     };
-  }, [router]);
+  }, [activeTimeline, loading, router]);
 
   /**
    * Load active timeline

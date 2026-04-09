@@ -27,7 +27,14 @@ const STORAGE_KEYS = {
   SETTINGS: '@stoic_calendar:settings',
   ACTIVE_TIMELINE_ID: '@stoic_calendar:active_timeline_id',
   FIRST_LAUNCH_PAYWALL_SHOWN: '@stoic_calendar:first_launch_paywall_shown',
+  FIRST_OPEN_DATE: '@stoic_calendar:first_open_date',
+  AB_VARIANT: '@stoic_calendar:ab_variant',
+  PAYWALL_EXPERIMENT_VERSION: '@stoic_calendar:paywall_experiment_version',
+  PAYWALL_FIRST_VALUE_SEEN: '@stoic_calendar:paywall_first_value_seen',
+  PAYWALL_SOFT_UPSELL_SHOWN: '@stoic_calendar:paywall_soft_upsell_shown',
 } as const;
+
+const PAYWALL_EXPERIMENT_VERSION = '2';
 
 /**
  * Default Settings
@@ -334,10 +341,42 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.SETTINGS,
       STORAGE_KEYS.ACTIVE_TIMELINE_ID,
       STORAGE_KEYS.FIRST_LAUNCH_PAYWALL_SHOWN,
+      STORAGE_KEYS.FIRST_OPEN_DATE,
+      STORAGE_KEYS.AB_VARIANT,
+      STORAGE_KEYS.PAYWALL_EXPERIMENT_VERSION,
+      STORAGE_KEYS.PAYWALL_FIRST_VALUE_SEEN,
+      STORAGE_KEYS.PAYWALL_SOFT_UPSELL_SHOWN,
     ]);
   } catch (error) {
     console.error('Error clearing all data:', error);
     throw error;
+  }
+}
+
+/**
+ * Migrate persisted paywall experiment state when the gating model changes.
+ */
+export async function migratePaywallExperimentState(): Promise<void> {
+  try {
+    const storedVersion = await AsyncStorage.getItem(STORAGE_KEYS.PAYWALL_EXPERIMENT_VERSION);
+
+    if (storedVersion === PAYWALL_EXPERIMENT_VERSION) {
+      return;
+    }
+
+    await AsyncStorage.multiRemove([
+      STORAGE_KEYS.FIRST_LAUNCH_PAYWALL_SHOWN,
+      STORAGE_KEYS.FIRST_OPEN_DATE,
+      STORAGE_KEYS.AB_VARIANT,
+      STORAGE_KEYS.PAYWALL_FIRST_VALUE_SEEN,
+      STORAGE_KEYS.PAYWALL_SOFT_UPSELL_SHOWN,
+    ]);
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.PAYWALL_EXPERIMENT_VERSION,
+      PAYWALL_EXPERIMENT_VERSION
+    );
+  } catch (error) {
+    console.error('Error migrating paywall experiment state:', error);
   }
 }
 
@@ -363,6 +402,103 @@ export async function markFirstLaunchPaywallShown(): Promise<void> {
   } catch (error) {
     console.error('Error marking first-launch paywall as shown:', error);
     throw error;
+  }
+}
+
+/**
+ * Record the first time the app was opened (idempotent — only writes once).
+ */
+export async function recordFirstOpenDate(): Promise<void> {
+  try {
+    const existing = await AsyncStorage.getItem(STORAGE_KEYS.FIRST_OPEN_DATE);
+    if (!existing) {
+      await AsyncStorage.setItem(STORAGE_KEYS.FIRST_OPEN_DATE, new Date().toISOString());
+    }
+  } catch (error) {
+    console.error('Error recording first open date:', error);
+  }
+}
+
+/**
+ * Get the stored first-open date (ISO string), or null if not set.
+ */
+export async function getFirstOpenDate(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(STORAGE_KEYS.FIRST_OPEN_DATE);
+  } catch (error) {
+    console.error('Error getting first open date:', error);
+    return null;
+  }
+}
+
+/**
+ * Cache the RevenueCat A/B variant offering identifier.
+ */
+export async function cacheAbVariant(offeringId: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.AB_VARIANT, offeringId);
+  } catch (error) {
+    console.error('Error caching AB variant:', error);
+  }
+}
+
+/**
+ * Get the cached A/B variant offering identifier, or null if not yet fetched.
+ */
+export async function getCachedAbVariant(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(STORAGE_KEYS.AB_VARIANT);
+  } catch (error) {
+    console.error('Error getting cached AB variant:', error);
+    return null;
+  }
+}
+
+/**
+ * Record that the user has seen the first-value moment for the paywall experiment.
+ */
+export async function markPaywallFirstValueSeen(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.PAYWALL_FIRST_VALUE_SEEN, 'true');
+  } catch (error) {
+    console.error('Error marking paywall first value seen:', error);
+  }
+}
+
+/**
+ * Whether the user has already seen the first-value moment.
+ */
+export async function hasSeenPaywallFirstValue(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.PAYWALL_FIRST_VALUE_SEEN);
+    return value === 'true';
+  } catch (error) {
+    console.error('Error reading paywall first value state:', error);
+    return false;
+  }
+}
+
+/**
+ * Record that the one-time soft upsell has been shown.
+ */
+export async function markSoftUpsellShown(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.PAYWALL_SOFT_UPSELL_SHOWN, 'true');
+  } catch (error) {
+    console.error('Error marking soft upsell as shown:', error);
+  }
+}
+
+/**
+ * Whether the one-time soft upsell has already been shown.
+ */
+export async function hasShownSoftUpsell(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(STORAGE_KEYS.PAYWALL_SOFT_UPSELL_SHOWN);
+    return value === 'true';
+  } catch (error) {
+    console.error('Error reading soft upsell state:', error);
+    return false;
   }
 }
 

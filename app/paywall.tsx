@@ -27,7 +27,7 @@ import Animated, {
   useSharedValue,
   runOnJS,
 } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import { PurchasesPackage, PurchasesStoreProduct } from 'react-native-purchases';
@@ -71,6 +71,9 @@ type PlanType = 'yearly' | 'monthly';
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const { dismissable } = useLocalSearchParams<{ dismissable?: string }>();
+  // dismissable='0' → hard paywall (no close button), '1' or undefined → closeable
+  const isDismissable = dismissable !== '0';
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'dark'];
   const styles = getStyles(colors);
@@ -152,6 +155,7 @@ export default function PaywallScreen() {
 
       setMonthlyPackage(monthly || null);
       setYearlyPackage(yearly || null);
+      setSelectedPlan(yearly ? 'yearly' : 'monthly');
     } catch (error) {
       console.error('Error loading offerings:', error);
       Alert.alert(t('common.error'), t('alerts.failedToLoadOptions'), [
@@ -287,13 +291,15 @@ export default function PaywallScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={styles.closeButton}
-        onPress={() => router.back()}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <X size={22} color={colors.textSecondary} weight="bold" />
-      </TouchableOpacity>
+      {isDismissable && (
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <X size={22} color={colors.textSecondary} weight="bold" />
+        </TouchableOpacity>
+      )}
 
       <ScrollView
         style={styles.mainScroll}
@@ -340,6 +346,7 @@ export default function PaywallScreen() {
               price={monthlyPackage?.product.priceString || '...'}
               period={t('paywall.perMonth')}
               isSelected={selectedPlan === 'monthly'}
+              planType="monthly"
               onPress={() => setSelectedPlan('monthly')}
               colors={colors}
             />
@@ -349,6 +356,7 @@ export default function PaywallScreen() {
               period={t('paywall.perYear')}
               isSelected={selectedPlan === 'yearly'}
               showBestValue
+              planType="yearly"
               introPrice={yearlyPackage?.product.introPrice ?? null}
               onPress={() => setSelectedPlan('yearly')}
               colors={colors}
@@ -407,13 +415,24 @@ interface PricingCardProps {
   price: string;
   period: string;
   isSelected: boolean;
+  planType: PlanType;
   showBestValue?: boolean;
   introPrice?: IntroPrice | null;
   onPress: () => void;
   colors: typeof Colors.dark;
 }
 
-function PricingCard({ label, price, period, isSelected, showBestValue, introPrice, onPress, colors }: PricingCardProps) {
+function PricingCard({
+  label,
+  price,
+  period,
+  isSelected,
+  planType,
+  showBestValue,
+  introPrice,
+  onPress,
+  colors,
+}: PricingCardProps) {
   const styles = getStyles(colors);
   const { t } = useTranslation();
   const hasFreeTrial = introPrice != null && introPrice.price === 0;
@@ -451,7 +470,7 @@ function PricingCard({ label, price, period, isSelected, showBestValue, introPri
             {price} <Text style={styles.pricingPeriod}>{period}</Text>
           </Text>
           <Text style={styles.pricingRenewNote}>
-            {label === t('paywall.labelYearly') ? t('paywall.renewYearly') : t('paywall.renewMonthly')}
+            {planType === 'yearly' ? t('paywall.renewYearly') : t('paywall.renewMonthly')}
           </Text>
         </View>
         <CheckCircle

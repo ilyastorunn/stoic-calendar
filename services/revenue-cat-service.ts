@@ -18,6 +18,7 @@ import Purchases, {
   LOG_LEVEL,
 } from 'react-native-purchases';
 import { Platform } from 'react-native';
+import { cacheAbVariant } from '@/services/storage';
 
 // Initialization state tracking
 let isInitialized = false;
@@ -45,8 +46,11 @@ export const ENTITLEMENTS = {
  * Product identifiers
  */
 export const PRODUCT_IDS = {
-  MONTHLY: 'monthly',
-  YEARLY: 'yearly',
+  WEEKLY: 'com.mementocalendar.premium.weekly',
+  WEEKLY_DISCOUNTED: 'com.mementocalendar.premium.weekly.discounted',
+  MONTHLY: 'com.mementocalendar.premium.monthly',
+  YEARLY: 'com.mementocalendar.premium.yearly',
+  YEARLY_DISCOUNTED: 'com.mementocalendar.premium.yearly.discounted',
 } as const;
 
 /**
@@ -161,12 +165,15 @@ export async function isPro(): Promise<boolean> {
 // ---------------------------------------------------------------------------
 
 const MOCK_OFFERINGS_ENABLED = __DEV__ && false; // Set to `true` to use mock data in simulator
+// Toggle between 'variant_a' and 'variant_b' to test A/B scenarios in simulator
+const MOCK_VARIANT: 'default' | 'variant_a' | 'variant_b' = 'variant_a';
 
 function buildMockOffering(): PurchasesOffering {
   const makeProduct = (
     id: string,
     price: number,
-    priceString: string
+    priceString: string,
+    offeringId: string,
   ) =>
     ({
     productIdentifier: id,
@@ -191,39 +198,39 @@ function buildMockOffering(): PurchasesOffering {
     subscriptionPeriod: '',
     defaultOption: null,
     subscriptionOptions: [],
-    presentedOfferingIdentifier: 'default',
-    presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
+    presentedOfferingIdentifier: offeringId,
+    presentedOfferingContext: { offeringIdentifier: offeringId, placementIdentifier: null, targetingContext: null },
   }) as any as PurchasesStoreProduct;
 
   const monthly: PurchasesPackage = {
     identifier: '$rc_monthly',
     packageType: 'MONTHLY' as any,
-    product: makeProduct('memento_monthly', 2.99, '$2.99'),
-    offeringIdentifier: 'default',
-    presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
+    product: makeProduct(PRODUCT_IDS.MONTHLY, 1.99, '$1.99', MOCK_VARIANT),
+    offeringIdentifier: MOCK_VARIANT,
+    presentedOfferingContext: { offeringIdentifier: MOCK_VARIANT, placementIdentifier: null, targetingContext: null },
   };
 
   const yearly: PurchasesPackage = {
     identifier: '$rc_annual',
     packageType: 'ANNUAL' as any,
     product: {
-      ...makeProduct('memento_yearly', 19.99, '$19.99'),
+      ...makeProduct(PRODUCT_IDS.YEARLY, 14.99, '$14.99', MOCK_VARIANT),
       introPrice: {
         price: 0,
         priceString: 'Free',
-        period: 'P1W',
-        periodUnit: 'WEEK' as any,
-        periodNumberOfUnits: 1,
+        period: 'P3D',
+        periodUnit: 'DAY' as any,
+        periodNumberOfUnits: 3,
         cycles: 1,
       },
     },
-    offeringIdentifier: 'default',
-    presentedOfferingContext: { offeringIdentifier: 'default', placementIdentifier: null, targetingContext: null },
+    offeringIdentifier: MOCK_VARIANT,
+    presentedOfferingContext: { offeringIdentifier: MOCK_VARIANT, placementIdentifier: null, targetingContext: null },
   };
 
   return {
-    identifier: 'default',
-    serverDescription: 'Default offering',
+    identifier: MOCK_VARIANT,
+    serverDescription: `Mock offering (${MOCK_VARIANT})`,
     metadata: {},
     availablePackages: [monthly, yearly],
     lifetime: null,
@@ -256,6 +263,7 @@ export async function getOfferings(): Promise<PurchasesOffering | null> {
         'Available packages:',
         offerings.current.availablePackages.map((pkg) => pkg.identifier)
       );
+      await cacheAbVariant(offerings.current.identifier);
       return offerings.current;
     } else {
       console.log('No current offering available');
@@ -454,7 +462,7 @@ export async function logoutUser(): Promise<CustomerInfo> {
  * Feature limits for free tier
  */
 export const FREE_TIER_LIMITS = {
-  MAX_TIMELINES: 3,
+  MAX_TIMELINES: 1,
   MAX_CUSTOM_TIMELINES: 1,
   WIDGET_SIZES: ['small', 'medium'], // Pro unlocks 'large'
 } as const;
