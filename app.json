@@ -2,7 +2,7 @@
   "expo": {
     "name": "Memento Calendar",
     "slug": "stoic-calendar",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "stoiccalendar",
@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.ilyastorun.memento",
-      "buildNumber": "14",
+      "buildNumber": "15",
       "appleTeamId": "XC35LMM9B5",
       "entitlements": {
         "com.apple.security.application-groups": [
@@ -43,7 +43,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.stoiccalendar",
-      "versionCode": 14
+      "versionCode": 15
     },
     "web": {
       "output": "static",

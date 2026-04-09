@@ -25,6 +25,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { List, Moon, Sun, Monitor, Info, Sparkle, Bug, Check } from 'phosphor-react-native';
 import { setDebugLanguage, SUPPORTED_LOCALES, SupportedLocale } from '@/services/i18n-service';
@@ -75,6 +76,7 @@ export default function SettingsScreen() {
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
   const { t, i18n } = useTranslation();
+  const appVersion = Constants.expoConfig?.version ?? '1.0.6';
 
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('dark');
   const [currentGridColorTheme, setCurrentGridColorTheme] = useState<GridColorTheme>('classic');
@@ -279,7 +281,7 @@ export default function SettingsScreen() {
   const aboutItems = [
     {
       label: t('settings.version'),
-      value: '1.0.4',
+      value: appVersion,
       pressable: false,
       icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
