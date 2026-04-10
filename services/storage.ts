@@ -8,6 +8,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Timeline, AppSettings, ThemeMode, GridColorTheme } from '@/types/timeline';
+import { updateTimelineIfNeeded } from '@/services/timeline-calculator';
 
 // Lazy import to avoid require cycle with widget-data-service
 const syncWidgetData = async (type: 'timeline' | 'settings') => {
@@ -58,7 +59,21 @@ export async function loadTimelines(): Promise<Timeline[]> {
     if (!data) return [];
 
     const timelines: Timeline[] = JSON.parse(data);
-    return timelines;
+
+    let hasUpdates = false;
+    const normalizedTimelines = timelines.map((timeline) => {
+      const { timeline: updatedTimeline, wasUpdated } = updateTimelineIfNeeded(timeline);
+      if (wasUpdated) {
+        hasUpdates = true;
+      }
+      return updatedTimeline;
+    });
+
+    if (hasUpdates) {
+      await AsyncStorage.setItem(STORAGE_KEYS.TIMELINES, JSON.stringify(normalizedTimelines));
+    }
+
+    return normalizedTimelines;
   } catch (error) {
     console.error('Error loading timelines:', error);
     return [];

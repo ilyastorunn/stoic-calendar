@@ -25,6 +25,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { List, Moon, Sun, Monitor, Info, Sparkle, Bug, Check } from 'phosphor-react-native';
@@ -33,7 +34,7 @@ import { SettingsGroup } from '@/components/settings-group';
 import { TimelineManagementModal } from '@/components/timeline-management-modal';
 import { updateThemeMode, getThemeMode, updateGridColorTheme, getGridColorTheme } from '@/services/storage';
 import { ThemeMode, GridColorTheme } from '@/types/timeline';
-import { isPro } from '@/services/revenue-cat-service';
+import { getAnonymousUserId, isPro } from '@/services/revenue-cat-service';
 import {
   Colors,
   Fonts,
@@ -76,11 +77,12 @@ export default function SettingsScreen() {
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const appVersion = Constants.expoConfig?.version ?? '1.0.6';
+  const appVersion = Constants.expoConfig?.version ?? '1.0.7';
 
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('dark');
   const [currentGridColorTheme, setCurrentGridColorTheme] = useState<GridColorTheme>('classic');
   const [hasPro, setHasPro] = useState<boolean>(false);
+  const [appUserId, setAppUserId] = useState<string>('Loading...');
   const [isLoadingSubscription, setIsLoadingSubscription] = useState<boolean>(true);
   const [showTimelineManagement, setShowTimelineManagement] = useState<boolean>(false);
 
@@ -125,6 +127,19 @@ export default function SettingsScreen() {
   }, []);
 
   /**
+   * Load RevenueCat App User ID for support/debugging
+   */
+  const loadAppUserId = useCallback(async () => {
+    try {
+      const userId = await getAnonymousUserId();
+      setAppUserId(userId);
+    } catch (error) {
+      console.error('Error loading app user ID:', error);
+      setAppUserId('Unavailable');
+    }
+  }, []);
+
+  /**
    * Load settings when screen comes into focus
    */
   useFocusEffect(
@@ -132,8 +147,26 @@ export default function SettingsScreen() {
       loadThemeSetting();
       loadGridColorTheme();
       loadSubscriptionStatus();
-    }, [loadThemeSetting, loadGridColorTheme, loadSubscriptionStatus])
+      loadAppUserId();
+    }, [loadThemeSetting, loadGridColorTheme, loadSubscriptionStatus, loadAppUserId])
   );
+
+  const handleCopyUserId = async () => {
+    if (!appUserId || appUserId === 'Loading...' || appUserId === 'Unavailable') {
+      return;
+    }
+
+    try {
+      await Clipboard.setStringAsync(appUserId);
+      Alert.alert('Copied', 'User ID copied to clipboard.', [{ text: t('common.ok') }]);
+    } catch (error) {
+      console.error('Error copying user ID:', error);
+      Alert.alert('Copy Failed', appUserId, [{ text: t('common.ok') }]);
+    }
+  };
+
+  const displayUserId =
+    appUserId.length > 22 ? `${appUserId.slice(0, 10)}...${appUserId.slice(-8)}` : appUserId;
 
   /**
    * Handle theme change
@@ -308,6 +341,12 @@ export default function SettingsScreen() {
       onPress: () => Linking.openURL('mailto:stoic-calendar@forvibe.app'),
       icon: <Info size={20} color={colors.accent} weight="regular" />,
       showChevron: true,
+    },
+    {
+      label: 'User ID',
+      value: displayUserId,
+      onPress: handleCopyUserId,
+      icon: <Info size={20} color={colors.accent} weight="regular" />,
     },
   ];
 

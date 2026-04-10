@@ -23,6 +23,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Alert,
+  Keyboard,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
@@ -223,6 +224,14 @@ export function TimelineFormDrawer({
     }
   };
 
+  const openDatePicker = (picker: 'start' | 'end') => {
+    Keyboard.dismiss();
+
+    requestAnimationFrame(() => {
+      setActivePicker(picker);
+    });
+  };
+
   /**
    * Render type picker buttons
    */
@@ -342,7 +351,7 @@ export function TimelineFormDrawer({
                 borderColor: colors.separator,
               },
             ]}
-            onPress={() => setActivePicker('start')}
+            onPress={() => openDatePicker('start')}
           >
             <Text
               style={[
@@ -381,7 +390,7 @@ export function TimelineFormDrawer({
                 borderColor: colors.separator,
               },
             ]}
-            onPress={() => setActivePicker('end')}
+            onPress={() => openDatePicker('end')}
           >
             <Text
               style={[
