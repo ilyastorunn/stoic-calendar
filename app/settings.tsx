@@ -77,7 +77,7 @@ export default function SettingsScreen() {
   const colors = Colors[colorScheme ?? 'dark'];
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const appVersion = Constants.expoConfig?.version ?? '1.0.7';
+  const appVersion = Constants.expoConfig?.version ?? '1.0.6';
 
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>('dark');
   const [currentGridColorTheme, setCurrentGridColorTheme] = useState<GridColorTheme>('classic');
